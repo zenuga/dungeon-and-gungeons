@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class ChunkedMineGeneration : MonoBehaviour
 {
@@ -9,7 +10,10 @@ public class ChunkedMineGeneration : MonoBehaviour
     public GameObject singleFloorPrefab;
     public GameObject dungeonPrefab;
     public GameObject shopPrefab;
-    public GameObject playerPrefab;
+    public GameObject player1Prefab;
+    public GameObject player2Prefab;
+    public Image AnimationImage;
+    public int level = 1;
 
     [Header("UI & Spawn Settings")]
     public GameObject loadingImage;
@@ -33,8 +37,8 @@ public class ChunkedMineGeneration : MonoBehaviour
     public float chunkUpdateInterval = 0.5f;
 
     private const int DungeonCount = 5;
-    private static readonly Vector2Int DungeonSize = new Vector2Int(50, 50);
-    private static readonly Vector2Int ShopSize = new Vector2Int(20, 10);
+    private static readonly Vector2Int DungeonSize = new Vector2Int(20, 20);
+    private static readonly Vector2Int ShopSize = new Vector2Int(10, 5);
 
     private byte[,] _gridMap;
 
@@ -56,8 +60,12 @@ public class ChunkedMineGeneration : MonoBehaviour
         StartCoroutine(GenerateMineAndChunks());
     }
 
-    private IEnumerator GenerateMineAndChunks()
+    public IEnumerator GenerateMineAndChunks()
     {
+        if(level >= 1)
+        {
+        AnimationImage.gameObject.SetActive(true);
+        }
         _gridMap = new byte[gridWidth, gridLength];
 
         // 1. Reserve Areas
@@ -94,13 +102,16 @@ public class ChunkedMineGeneration : MonoBehaviour
         }
 
         // 4. Spawn Player
-        if (playerPrefab != null)
+        if (player1Prefab != null || player2Prefab != null)
         {
-            GameObject spawnedPlayer = Instantiate(playerPrefab, GetWorldCenterPosition(spawnRect), Quaternion.identity);
-            _playerTransform = spawnedPlayer.transform;
+            GameObject spawnedPlayer1 = Instantiate(player1Prefab, GetWorldCenterPosition(spawnRect), Quaternion.identity);
+            _playerTransform = spawnedPlayer1.transform;
+            GameObject spawnedPlayer2 = Instantiate(player2Prefab, GetWorldCenterPosition(spawnRect), Quaternion.identity);
+            _playerTransform = spawnedPlayer2.transform;
         }
 
         if (loadingImage != null) loadingImage.SetActive(false);
+        AnimationImage.gameObject.SetActive(false);
 
         // 5. Start Chunk Update Loop
         StartCoroutine(UpdateChunksRoutine());
