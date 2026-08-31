@@ -10,15 +10,15 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 1f61a59602a44f84bb52e85527189de8, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 8.174696
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 1f61a59602a44f84bb52e85527189de8, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 1f61a59602a44f84bb52e85527189de8, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 3.3726501
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 1f61a59602a44f84bb52e85527189de8, type: 3}
       propertyPath: m_LocalRotation.w
@@ -56,8 +56,41 @@ PrefabInstance:
       propertyPath: m_Name
       value: rock wall unity
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 1f61a59602a44f84bb52e85527189de8, type: 3}
+      propertyPath: m_TagString
+      value: wall
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 1f61a59602a44f84bb52e85527189de8, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7710531447644546238}
   m_SourcePrefab: {fileID: 100100000, guid: 1f61a59602a44f84bb52e85527189de8, type: 3}
+--- !u!1 &5144083273759640309 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 1f61a59602a44f84bb52e85527189de8, type: 3}
+  m_PrefabInstance: {fileID: 5449951116252280740}
+  m_PrefabAsset: {fileID: 0}
+--- !u!65 &7710531447644546238
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5144083273759640309}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1, y: 2, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}

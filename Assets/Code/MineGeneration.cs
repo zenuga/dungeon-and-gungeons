@@ -19,6 +19,10 @@ public class ChunkedMineGeneration : MonoBehaviour
     public GameObject loadingImage;
     public Vector2Int spawnClearanceSize = new Vector2Int(10, 10);
     public float subFloorYOffset = -1.0f;
+    [Tooltip("Vertical height offset applied to wall blocks if their pivot is centered.")]
+    public float wallYOffset = 0.0f;
+    [Tooltip("Location players will be teleported to on second and subsequent mine generations.")]
+    public Vector3 playerTeleportPosition = new Vector3(0f, 1f, 0f);
 
     [Header("Grid & Chunk Settings")]
     public int gridWidth = 250;
@@ -48,6 +52,11 @@ public class ChunkedMineGeneration : MonoBehaviour
     private Transform _playerTransform;
     private Vector2Int _currentPlayerChunk;
 
+    // Persistent player references across generations
+    private GameObject _spawnedPlayer1;
+    private GameObject _spawnedPlayer2;
+    private int _generationCount = 0;
+
     private class ChunkData
     {
         public GameObject ChunkObject;
@@ -62,9 +71,11 @@ public class ChunkedMineGeneration : MonoBehaviour
 
     public IEnumerator GenerateMineAndChunks()
     {
-        if(level >= 1)
+        _generationCount++;
+
+        if (level >= 1 && AnimationImage != null)
         {
-        AnimationImage.gameObject.SetActive(true);
+            AnimationImage.gameObject.SetActive(true);
         }
         _gridMap = new byte[gridWidth, gridLength];
 
@@ -101,20 +112,67 @@ public class ChunkedMineGeneration : MonoBehaviour
             }
         }
 
-        // 4. Spawn Player
-        if (player1Prefab != null || player2Prefab != null)
+        // 4. Handle Players (Spawn on 1st generation, Teleport on 2nd+ generation)
+        Vector3 spawnWorldPos = GetWorldCenterPosition(spawnRect);
+
+        if (_generationCount == 1)
         {
-            GameObject spawnedPlayer1 = Instantiate(player1Prefab, GetWorldCenterPosition(spawnRect), Quaternion.identity);
-            _playerTransform = spawnedPlayer1.transform;
-            GameObject spawnedPlayer2 = Instantiate(player2Prefab, GetWorldCenterPosition(spawnRect), Quaternion.identity);
-            _playerTransform = spawnedPlayer2.transform;
+            // FIRST GENERATION: Spawn Player 1 & Player 2
+            if (player1Prefab != null)
+            {
+                _spawnedPlayer1 = Instantiate(player1Prefab, spawnWorldPos, Quaternion.identity);
+                EnsurePickupScript(_spawnedPlayer1);
+                _playerTransform = _spawnedPlayer1.transform;
+            }
+            if (player2Prefab != null)
+            {
+                _spawnedPlayer2 = Instantiate(player2Prefab, spawnWorldPos, Quaternion.identity);
+                EnsurePickupScript(_spawnedPlayer2);
+                if (_playerTransform == null) _playerTransform = _spawnedPlayer2.transform;
+            }
+        }
+        else
+        {
+            // SECOND+ GENERATION: Teleport existing players so they keep items
+            if (_spawnedPlayer1 != null)
+            {
+                TeleportPlayer(_spawnedPlayer1, playerTeleportPosition);
+            }
+            if (_spawnedPlayer2 != null)
+            {
+                TeleportPlayer(_spawnedPlayer2, playerTeleportPosition);
+            }
         }
 
         if (loadingImage != null) loadingImage.SetActive(false);
-        AnimationImage.gameObject.SetActive(false);
+        if (AnimationImage != null) AnimationImage.gameObject.SetActive(false);
 
         // 5. Start Chunk Update Loop
         StartCoroutine(UpdateChunksRoutine());
+    }
+
+    private void EnsurePickupScript(GameObject playerObj)
+    {
+        if (playerObj == null) return;
+
+        PlayerPickupManager pickupManager = playerObj.GetComponent<PlayerPickupManager>();
+        if (pickupManager == null)
+        {
+            playerObj.AddComponent<PlayerPickupManager>();
+        }
+    }
+
+    private void TeleportPlayer(GameObject playerObj, Vector3 targetPosition)
+    {
+        if (playerObj == null) return;
+
+        // Temporarily disable CharacterController during transform modification to prevent position snapping back
+        CharacterController controller = playerObj.GetComponent<CharacterController>();
+        if (controller != null) controller.enabled = false;
+
+        playerObj.transform.position = targetPosition;
+
+        if (controller != null) controller.enabled = true;
     }
 
     private void CreateAndBuildChunk(int chunkX, int chunkZ)
@@ -126,7 +184,7 @@ public class ChunkedMineGeneration : MonoBehaviour
         ChunkData data = new ChunkData
         {
             ChunkObject = chunkObj,
-            IsCombined = false // Will be set to true in BuildChunkMesh
+            IsCombined = false
         };
 
         _chunks.Add(chunkCoord, data);
@@ -187,16 +245,21 @@ public class ChunkedMineGeneration : MonoBehaviour
     private void SpawnIndividualBlocks(Vector2Int chunkCoord, ChunkData chunkData)
     {
         // 1. Destroy the combined mesh components so we don't double-render
-        Destroy(chunkData.ChunkObject.GetComponent<MeshFilter>());
-        Destroy(chunkData.ChunkObject.GetComponent<MeshRenderer>());
-        Destroy(chunkData.ChunkObject.GetComponent<MeshCollider>());
+        MeshFilter mf = chunkData.ChunkObject.GetComponent<MeshFilter>();
+        if (mf != null) Destroy(mf);
+
+        MeshRenderer mr = chunkData.ChunkObject.GetComponent<MeshRenderer>();
+        if (mr != null) Destroy(mr);
+
+        MeshCollider mc = chunkData.ChunkObject.GetComponent<MeshCollider>();
+        if (mc != null) Destroy(mc);
 
         int startX = chunkCoord.x * chunkSize;
         int startZ = chunkCoord.y * chunkSize;
         int endX = Mathf.Min(startX + chunkSize, gridWidth);
         int endZ = Mathf.Min(startZ + chunkSize, gridLength);
 
-        // 2. Spawn real GameObjects
+        // 2. Spawn real GameObjects respecting original prefab scale and rotation
         for (int x = startX; x < endX; x++)
         {
             for (int z = startZ; z < endZ; z++)
@@ -204,12 +267,10 @@ public class ChunkedMineGeneration : MonoBehaviour
                 if (_gridMap[x, z] != 0) continue; 
                 if (_destroyedBlocks.Contains(new Vector2Int(x, z))) continue; 
 
-                Vector3 pos = transform.position + new Vector3(x * spacing, 0f, z * spacing);
-                GameObject realBlock = Instantiate(wallPrefab, pos, Quaternion.identity, chunkData.ChunkObject.transform);
+                Vector3 pos = transform.position + new Vector3(x * spacing, wallYOffset, z * spacing);
+                GameObject realBlock = Instantiate(wallPrefab, pos, wallPrefab.transform.rotation, chunkData.ChunkObject.transform);
                 
-                // Add a script or tag here if your raycast needs to identify it
                 realBlock.name = $"Wall_{x}_{z}";
-                
                 chunkData.IndividualBlocks.Add(realBlock);
             }
         }
@@ -222,6 +283,8 @@ public class ChunkedMineGeneration : MonoBehaviour
     // =========================================================================
     private void BuildChunkMesh(Vector2Int chunkCoord, ChunkData chunkData)
     {
+        if (wallPrefab == null) return;
+
         // 1. Destroy individual blocks if they exist to free RAM
         foreach (GameObject block in chunkData.IndividualBlocks)
         {
@@ -235,9 +298,27 @@ public class ChunkedMineGeneration : MonoBehaviour
         int endZ = Mathf.Min(startZ + chunkSize, gridLength);
 
         List<CombineInstance> combineList = new List<CombineInstance>();
-        Mesh sourceMesh = wallPrefab.GetComponent<MeshFilter>().sharedMesh;
+        MeshFilter prefabMeshFilter = wallPrefab.GetComponent<MeshFilter>();
+        
+        if (prefabMeshFilter == null || prefabMeshFilter.sharedMesh == null)
+        {
+            Debug.LogError("wallPrefab is missing a MeshFilter or Mesh!");
+            return;
+        }
 
-        // 2. Build the combined mesh
+        Mesh sourceMesh = prefabMeshFilter.sharedMesh;
+
+        // Verify Read/Write permissions on the mesh
+        if (!sourceMesh.isReadable)
+        {
+            Debug.LogError($"Mesh '{sourceMesh.name}' on '{wallPrefab.name}' is not Read/Write enabled! Select the asset in Unity and check 'Read/Write Enabled' in its Model Inspector.", wallPrefab);
+            return;
+        }
+
+        Vector3 prefabScale = wallPrefab.transform.localScale;
+        Quaternion prefabRotation = wallPrefab.transform.rotation;
+
+        // 2. Build the combined mesh using the prefab's local scale and rotation
         for (int x = startX; x < endX; x++)
         {
             for (int z = startZ; z < endZ; z++)
@@ -245,24 +326,28 @@ public class ChunkedMineGeneration : MonoBehaviour
                 if (_gridMap[x, z] != 0) continue;
                 if (_destroyedBlocks.Contains(new Vector2Int(x, z))) continue;
 
-                Vector3 pos = transform.position + new Vector3(x * spacing, 0f, z * spacing);
-                Matrix4x4 matrix = Matrix4x4.TRS(pos, Quaternion.identity, Vector3.one);
+                Vector3 pos = transform.position + new Vector3(x * spacing, wallYOffset, z * spacing);
+                Matrix4x4 matrix = Matrix4x4.TRS(pos, prefabRotation, prefabScale);
                 combineList.Add(new CombineInstance { mesh = sourceMesh, transform = matrix });
             }
         }
 
         if (combineList.Count > 0)
         {
-            MeshFilter mf = chunkData.ChunkObject.AddComponent<MeshFilter>();
+            MeshFilter mf = chunkData.ChunkObject.GetComponent<MeshFilter>();
+            if (mf == null) mf = chunkData.ChunkObject.AddComponent<MeshFilter>();
+
             Mesh combinedMesh = new Mesh();
             combinedMesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
             combinedMesh.CombineMeshes(combineList.ToArray(), true, true);
             mf.mesh = combinedMesh;
 
-            MeshRenderer mr = chunkData.ChunkObject.AddComponent<MeshRenderer>();
+            MeshRenderer mr = chunkData.ChunkObject.GetComponent<MeshRenderer>();
+            if (mr == null) mr = chunkData.ChunkObject.AddComponent<MeshRenderer>();
             mr.material = wallPrefab.GetComponent<MeshRenderer>().sharedMaterial;
 
-            MeshCollider mc = chunkData.ChunkObject.AddComponent<MeshCollider>();
+            MeshCollider mc = chunkData.ChunkObject.GetComponent<MeshCollider>();
+            if (mc == null) mc = chunkData.ChunkObject.AddComponent<MeshCollider>();
             mc.sharedMesh = combinedMesh;
         }
 
@@ -274,10 +359,8 @@ public class ChunkedMineGeneration : MonoBehaviour
     // =========================================================================
     public void RecordDestroyedBlock(int gridX, int gridZ)
     {
-        // When your player mines a block, call this function so it never regenerates!
         _destroyedBlocks.Add(new Vector2Int(gridX, gridZ));
     }
-
 
     // =========================================================================
     // UTILITIES
@@ -297,7 +380,10 @@ public class ChunkedMineGeneration : MonoBehaviour
         {
             RectInt candidate = new RectInt(Random.Range(0, gridWidth - width), Random.Range(0, gridLength - height), width, height);
             bool overlaps = false;
-            foreach (RectInt existing in existingRects) if (candidate.Overlaps(existing)) { overlaps = true; break; }
+            foreach (RectInt existing in existingRects) 
+            {
+                if (candidate.Overlaps(existing)) { overlaps = true; break; }
+            }
             if (!overlaps) return candidate;
         }
         return new RectInt(0, 0, width, height);
@@ -322,7 +408,7 @@ public class ChunkedMineGeneration : MonoBehaviour
         Vector3 center = transform.position + new Vector3(width / 2f - spacing / 2f, subFloorYOffset, length / 2f - spacing / 2f);
         GameObject floor = Instantiate(singleFloorPrefab, center, Quaternion.identity, transform);
         MeshFilter mf = floor.GetComponent<MeshFilter>();
-        floor.transform.localScale = (mf != null && mf.sharedMesh.name.Contains("Plane")) 
+        floor.transform.localScale = (mf != null && mf.sharedMesh != null && mf.sharedMesh.name.Contains("Plane")) 
             ? new Vector3(width / 10f, 1f, length / 10f) : new Vector3(width, 1f, length);
     }
 }
