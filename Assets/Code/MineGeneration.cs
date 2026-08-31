@@ -19,6 +19,10 @@ public class ChunkedMineGeneration : MonoBehaviour
     public GameObject loadingImage;
     public Vector2Int spawnClearanceSize = new Vector2Int(10, 10);
     public float subFloorYOffset = -1.0f;
+    [Tooltip("Offset applied to all dungeon/shop placement positions. Useful when the prefab pivot does not match the intended world origin.")]
+    public Vector3 dungeonSpawnOffset = Vector3.zero;
+    [Tooltip("Offset applied to the player spawn point created on the first generation.")]
+    public Vector3 playerSpawnOffset = Vector3.zero;
     [Tooltip("Vertical height offset applied to wall blocks if their pivot is centered.")]
     public float wallYOffset = 0.0f;
     [Tooltip("Location players will be teleported to on second and subsequent mine generations.")]
@@ -88,13 +92,21 @@ public class ChunkedMineGeneration : MonoBehaviour
             RectInt dungeonRect = GetRandomNonOverlappingRect(DungeonSize.x, DungeonSize.y, occupiedRects);
             occupiedRects.Add(dungeonRect);
             MarkGridArea(dungeonRect, 1);
-            if (dungeonPrefab != null) Instantiate(dungeonPrefab, GetWorldCenterPosition(dungeonRect), Quaternion.identity);
+            if (dungeonPrefab != null)
+            {
+                Vector3 spawnPosition = GetSpawnPosition(dungeonRect, dungeonSpawnOffset);
+                Instantiate(dungeonPrefab, spawnPosition, Quaternion.identity);
+            }
         }
 
         RectInt shopRect = GetRandomNonOverlappingRect(ShopSize.x, ShopSize.y, occupiedRects);
         occupiedRects.Add(shopRect);
         MarkGridArea(shopRect, 2);
-        if (shopPrefab != null) Instantiate(shopPrefab, GetWorldCenterPosition(shopRect), Quaternion.identity);
+        if (shopPrefab != null)
+        {
+            Vector3 spawnPosition = GetSpawnPosition(shopRect, dungeonSpawnOffset);
+            Instantiate(shopPrefab, spawnPosition, Quaternion.identity);
+        }
 
         // 2. Base Floor
         SpawnSingleScaledFloor();
@@ -113,7 +125,7 @@ public class ChunkedMineGeneration : MonoBehaviour
         }
 
         // 4. Handle Players (Spawn on 1st generation, Teleport on 2nd+ generation)
-        Vector3 spawnWorldPos = GetWorldCenterPosition(spawnRect);
+        Vector3 spawnWorldPos = GetSpawnPosition(spawnRect, playerSpawnOffset);
 
         if (_generationCount == 1)
         {
@@ -399,6 +411,11 @@ public class ChunkedMineGeneration : MonoBehaviour
     private Vector3 GetWorldCenterPosition(RectInt rect)
     {
         return transform.position + new Vector3((rect.x + rect.width / 2f) * spacing, 0f, (rect.y + rect.height / 2f) * spacing);
+    }
+
+    private Vector3 GetSpawnPosition(RectInt rect, Vector3 offset)
+    {
+        return GetWorldCenterPosition(rect) + offset;
     }
 
     private void SpawnSingleScaledFloor()

@@ -1079,13 +1079,13 @@ Rigidbody:
     m_Bits: 0
   m_ExcludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 64
   m_ImplicitCom: 1
   m_ImplicitTensor: 1
   m_UseGravity: 1
   m_IsKinematic: 0
   m_Interpolate: 0
-  m_Constraints: 48
+  m_Constraints: 80
   m_CollisionDetection: 0
 --- !u!143 &5147466260025464986
 CharacterController:
@@ -1126,7 +1126,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
   playerType: 1
   playerLayerName: Player
+  visualModel: {fileID: 8671723301485573298}
   moveSpeed: 5
+  rotationSpeed: 15
   gravity: -9.81
 --- !u!114 &4566925927615070481
 MonoBehaviour:

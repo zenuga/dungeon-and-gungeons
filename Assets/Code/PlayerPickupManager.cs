@@ -32,10 +32,10 @@ public class PlayerPickupManager : MonoBehaviour
     private int currentBombs = 0;
     
     private GameObject currentMeleeWeapon;
-    private WeaponData currentMeleeWeaponData; // Added to store data for dropping
+    private WeaponData currentMeleeWeaponData;
     
     private GameObject currentRangedWeapon;
-    private WeaponData currentRangedWeaponData; // Added to store data for dropping
+    private WeaponData currentRangedWeaponData;
     
     private GameObject currentMiscItem;
 
@@ -47,6 +47,14 @@ public class PlayerPickupManager : MonoBehaviour
 
         if (pickupRangeSphere != null)
         {
+            // Ensure a Rigidbody exists on the detector so trigger collisions fire reliably on new character models
+            Rigidbody rangeRb = pickupRangeSphere.GetComponent<Rigidbody>();
+            if (rangeRb == null)
+            {
+                rangeRb = pickupRangeSphere.AddComponent<Rigidbody>();
+            }
+            rangeRb.isKinematic = true;
+
             PickupTriggerDetector detector = pickupRangeSphere.GetComponent<PickupTriggerDetector>();
             if (detector == null)
             {
@@ -88,7 +96,6 @@ public class PlayerPickupManager : MonoBehaviour
         string fullName = playerType.ToString(); // "Player1" or "Player2"
         string prefix = (playerType == PlayerType.Player1) ? "P1_" : "P2_";
 
-        // 1. Search for main pickupUI root if not assigned
         if (pickupUI == null)
         {
             pickupUI = GameObject.Find(fullName + "_PickupUI");
@@ -97,12 +104,10 @@ public class PlayerPickupManager : MonoBehaviour
             if (pickupUI == null) pickupUI = GameObject.Find(prefix + "UI");
         }
 
-        // 2. Helper method to search within pickupUI or scene-wide by name variants
         T FindUIComponent<T>(params string[] possibleNames) where T : Component
         {
             foreach (string name in possibleNames)
             {
-                // Search inside pickupUI children first
                 if (pickupUI != null)
                 {
                     Transform targetTransform = pickupUI.transform.Find(name);
@@ -112,12 +117,10 @@ public class PlayerPickupManager : MonoBehaviour
                         if (comp != null) return comp;
                     }
 
-                    // Deep recursive search inside pickupUI
                     T deepComp = SearchDeep<T>(pickupUI.transform, name);
                     if (deepComp != null) return deepComp;
                 }
 
-                // Search scene-wide with player prefix/fullname
                 GameObject go = GameObject.Find(prefix + name);
                 if (go == null) go = GameObject.Find(fullName + "_" + name);
                 if (go == null) go = GameObject.Find(name + "_" + fullName);
@@ -132,7 +135,6 @@ public class PlayerPickupManager : MonoBehaviour
             return null;
         }
 
-        // 3. Auto-assign individual UI elements if missing
         if (weaponOrMiscImage == null) weaponOrMiscImage = FindUIComponent<Image>("WeaponOrMiscImage", "WeaponImage", "MiscImage");
         if (weaponOrMiscText == null)  weaponOrMiscText  = FindUIComponent<TextMeshProUGUI>("WeaponOrMiscText", "WeaponText", "MiscText");
         if (potionImage == null)       potionImage       = FindUIComponent<Image>("PotionImage");
@@ -179,9 +181,11 @@ public class PlayerPickupManager : MonoBehaviour
 
         foreach (var col in collidersInRange)
         {
-            CollectibleItem item = col.GetComponent<CollectibleItem>();
+            // Use GetComponentInParent to locate CollectibleItem if the trigger is on a child object
+            CollectibleItem item = col.GetComponentInParent<CollectibleItem>();
             if (item == null) continue;
 
+            GameObject targetGameObject = item.gameObject;
             string tagType = item.itemType.ToLower();
 
             if (tagType == "potion")
@@ -189,7 +193,7 @@ public class PlayerPickupManager : MonoBehaviour
                 if (currentPotions >= maxPotions) continue;
                 currentPotions += item.quantity;
                 UpdatePotionUI();
-                Destroy(col.gameObject);
+                Destroy(targetGameObject);
                 break;
             }
             else if (tagType == "bombs")
@@ -197,7 +201,7 @@ public class PlayerPickupManager : MonoBehaviour
                 if (currentBombs >= maxBombs) continue;
                 currentBombs += item.quantity;
                 UpdateBombUI();
-                Destroy(col.gameObject);
+                Destroy(targetGameObject);
                 break;
             }
             else if (tagType == "melee")
@@ -213,12 +217,10 @@ public class PlayerPickupManager : MonoBehaviour
                     currentMeleeWeapon.transform.localPosition = Vector3.zero;
                     currentMeleeWeapon.transform.localRotation = Quaternion.identity;
                     
-                    // Save the weapon data so we can re-assign it if we drop it later
                     currentMeleeWeaponData = item.weaponData;
-
                     UpdateWeaponUI(item.weaponData);
                 }
-                Destroy(col.gameObject);
+                Destroy(targetGameObject);
                 break;
             }
             else if (tagType == "ranged")
@@ -234,12 +236,10 @@ public class PlayerPickupManager : MonoBehaviour
                     currentRangedWeapon.transform.localPosition = Vector3.zero;
                     currentRangedWeapon.transform.localRotation = Quaternion.identity;
 
-                    // Save the weapon data so we can re-assign it if we drop it later
                     currentRangedWeaponData = item.weaponData;
-
                     UpdateWeaponUI(item.weaponData);
                 }
-                Destroy(col.gameObject);
+                Destroy(targetGameObject);
                 break;
             }
             else if (tagType == "misc")
@@ -249,8 +249,7 @@ public class PlayerPickupManager : MonoBehaviour
                     DropItem(currentMiscItem, "misc", null);
                 }
 
-                GameObject miscPrefab = col.gameObject;
-                currentMiscItem = Instantiate(miscPrefab, handTransform);
+                currentMiscItem = Instantiate(targetGameObject, handTransform);
                 currentMiscItem.transform.localPosition = Vector3.zero;
                 currentMiscItem.transform.localRotation = Quaternion.identity;
 
@@ -259,14 +258,13 @@ public class PlayerPickupManager : MonoBehaviour
                     Destroy(rbHeld);
                 }
 
-                UpdateMiscUI(miscPrefab.name);
-                Destroy(col.gameObject);
+                UpdateMiscUI(targetGameObject.name);
+                Destroy(targetGameObject);
                 break;
             }
         }
     }
 
-    // Updated to accept itemType and WeaponData so we can rebuild the CollectibleItem component
     private void DropItem(GameObject itemObj, string itemType, WeaponData weaponData)
     {
         itemObj.transform.parent = null;
@@ -288,7 +286,6 @@ public class PlayerPickupManager : MonoBehaviour
         if (rb == null) rb = itemObj.AddComponent<Rigidbody>();
         rb.isKinematic = false;
 
-        // Re-attach or retrieve the CollectibleItem script and assign its original data
         CollectibleItem dropData = itemObj.GetComponent<CollectibleItem>();
         if (dropData == null)
         {

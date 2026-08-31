@@ -13,9 +13,11 @@ public class PlayerController : MonoBehaviour
     [Header("Player Setup")]
     [SerializeField] private PlayerType playerType = PlayerType.Player1;
     [SerializeField] private string playerLayerName = "Player";
+    [SerializeField] private GameObject visualModel; // GameObject that rotates (defaults to this.gameObject if left empty)
 
     [Header("Movement Settings")]
     [SerializeField] private float moveSpeed = 5.0f;
+    [SerializeField] private float rotationSpeed = 15.0f;
     [SerializeField] private float gravity = -9.81f;
 
     private CharacterController _characterController;
@@ -24,6 +26,12 @@ public class PlayerController : MonoBehaviour
     private void Awake()
     {
         _characterController = GetComponent<CharacterController>();
+
+        // Default visual object to this transform if unassigned
+        if (visualModel == null)
+        {
+            visualModel = gameObject;
+        }
 
         // Set layer so physics/collisions use the "Player" layer settings
         int layerIndex = LayerMask.NameToLayer(playerLayerName);
@@ -75,12 +83,24 @@ public class PlayerController : MonoBehaviour
         // Get inputs based on assigned player type
         Vector2 inputVector = GetInput();
 
-        // Normalize input vector so moving diagonally isn't faster
-        inputVector = inputVector.normalized;
+        // If opposing keys are pressed, inputVector cancels out to zero
+        if (inputVector.sqrMagnitude > 0.001f)
+        {
+            // Normalize input vector so moving diagonally isn't faster
+            inputVector = inputVector.normalized;
 
-        // Apply movement on X and Z axes (3D space)
-        Vector3 moveDirection = new Vector3(inputVector.x, 0f, inputVector.y);
-        _characterController.Move(moveDirection * moveSpeed * Time.deltaTime);
+            // Apply movement on X and Z axes (3D space)
+            Vector3 moveDirection = new Vector3(inputVector.x, 0f, inputVector.y);
+            _characterController.Move(moveDirection * moveSpeed * Time.deltaTime);
+
+            // Handle direction rotation (W/I = North, S/K = South, A/J = West, D/L = East)
+            Quaternion targetRotation = Quaternion.LookRotation(moveDirection, Vector3.up);
+            visualModel.transform.rotation = Quaternion.Slerp(
+                visualModel.transform.rotation, 
+                targetRotation, 
+                rotationSpeed * Time.deltaTime
+            );
+        }
 
         // Apply continuous gravity (No Jump functionality)
         _velocity.y += gravity * Time.deltaTime;
