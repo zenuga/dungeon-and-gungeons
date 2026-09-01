@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Alexandramaterial
+  m_Name: Arrow
   m_Shader: {fileID: 4800000, guid: 933532a4fcc9baf4fa0491de14d08ed7, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
@@ -16,7 +16,7 @@ Material:
   - _METALLICSPECGLOSSMAP
   - _NORMALMAP
   m_InvalidKeywords: []
-  m_LightmapFlags: 2
+  m_LightmapFlags: 6
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: -1
@@ -29,11 +29,11 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _BaseMap:
-        m_Texture: {fileID: 2800000, guid: 19f81d8fc27483c43b33ab5bafc3f8aa, type: 3}
+        m_Texture: {fileID: 2800000, guid: 9a80e03dc17c7664184f7abe5561bc09, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _BumpMap:
-        m_Texture: {fileID: 2800000, guid: f9113d0aa795b5a47bf0e350cc1e5aa8, type: 3}
+        m_Texture: {fileID: 2800000, guid: ec4e1c58dceebe94d9c073a5ffc3be6a, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _DetailAlbedoMap:
@@ -49,15 +49,15 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _EmissionMap:
-        m_Texture: {fileID: 2800000, guid: 19f81d8fc27483c43b33ab5bafc3f8aa, type: 3}
+        m_Texture: {fileID: 2800000, guid: 97e27619b2b0bc1468485482e105a97d, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 2800000, guid: 19f81d8fc27483c43b33ab5bafc3f8aa, type: 3}
+        m_Texture: {fileID: 2800000, guid: 9a80e03dc17c7664184f7abe5561bc09, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MetallicGlossMap:
-        m_Texture: {fileID: 2800000, guid: 91f2b845110b22f4da439c985e5eebe1, type: 3}
+        m_Texture: {fileID: 2800000, guid: 640fdbe32b172284dbcb186dd043364e, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _OcclusionMap:
@@ -121,11 +121,11 @@ Material:
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
-    - _EmissionColor: {r: 1, g: 0.5411765, b: 0.5411765, a: 1}
+    - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
---- !u!114 &2566149686765952982
+--- !u!114 &1824093595260982240
 MonoBehaviour:
   m_ObjectHideFlags: 11
   m_CorrespondingSourceObject: {fileID: 0}

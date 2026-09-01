@@ -1,121 +1,142 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 public class WeaponAttack : MonoBehaviour
 {
-    [Header("Damage & Depth")]
-    [Tooltip("Reference depth value or connect to your depth system script.")]
-    [SerializeField] private int depth = 1;
+    [Header("Weapon Data")]
+    [SerializeField] private WeaponData weaponData;
 
-    [Header("Cooldown")]
-    [SerializeField] private float attackCooldown = 1.0f;
-    private float _nextAttackTime = 0f;
+    [Header("Swing Settings")]
+    [SerializeField] private float attackRange = 2.2f;
+    [SerializeField] private float attackRadius = 1.2f;
+    [SerializeField] private float swingAngle = 120f;
+    [SerializeField] private float attackCooldown = 0.5f;
 
     [Header("Target Tags")]
     [SerializeField] private List<string> validTags = new List<string> { "enemy", "wall", "boss", "Enemy", "Wall", "Boss" };
 
-    // Tracks targets currently inside the trigger zone
-    private List<Collider> _targetsInTrigger = new List<Collider>();
+    private float _nextAttackTime = 0f;
+    private HashSet<Collider> _hitThisSwing = new HashSet<Collider>();
+
+    public WeaponData WeaponData
+    {
+        get => weaponData;
+        set => weaponData = value;
+    }
 
     private void Update()
     {
-        // Check cooldown
-        if (Time.time < _nextAttackTime) return;
+        if (Time.time < _nextAttackTime || Keyboard.current == null) return;
 
-        if (Keyboard.current == null) return;
+        bool ePressed = Keyboard.current.eKey.wasPressedThisFrame;
+        bool oPressed = Keyboard.current.oKey.wasPressedThisFrame;
 
-        // Read input presses
-        bool fPressed = Keyboard.current.fKey.wasPressedThisFrame;
-        bool semicolonPressed = Keyboard.current.semicolonKey.wasPressedThisFrame;
+        if (!ePressed && !oPressed) return;
 
-        if (!fPressed && !semicolonPressed) return;
-
-        // Check parent tag requirements
-        Transform parentTransform = transform.parent;
-        if (parentTransform == null) return;
+        Transform ownerTransform = GetOwnerTransform();
+        if (ownerTransform == null) return;
 
         bool isValidInput = false;
-
-        if (fPressed && parentTransform.CompareTag("Player1"))
+        if (ePressed && ownerTransform.CompareTag("Player1"))
         {
             isValidInput = true;
         }
-        else if (semicolonPressed && parentTransform.CompareTag("Player2"))
+        else if (oPressed && ownerTransform.CompareTag("Player2"))
         {
             isValidInput = true;
         }
 
-        // Execute attack if validation passed
         if (isValidInput)
         {
-            ExecuteAttack();
+            ExecuteAttack(transform);
         }
     }
 
-    private void ExecuteAttack()
+    private Transform GetOwnerTransform()
     {
-        // Set cooldown timer
-        _nextAttackTime = Time.time + attackCooldown;
-
-        // Random damage between 10 and 30 (inclusive) multiplied by depth
-        int calculatedDamage = Random.Range(10, 31) * GetDepthValue();
-
-        // Deal damage to any hit targets inside the trigger
-        for (int i = _targetsInTrigger.Count - 1; i >= 0; i--)
+        Transform current = transform;
+        while (current != null)
         {
-            Collider col = _targetsInTrigger[i];
-
-            if (col == null)
+            if (current.CompareTag("Player1") || current.CompareTag("Player2"))
             {
-                _targetsInTrigger.RemoveAt(i);
-                continue;
+                return current;
             }
 
-            if (HasValidTargetTag(col.gameObject))
-            {
-                ApplyDamage(col.gameObject, calculatedDamage);
-            }
+            current = current.parent;
+        }
+
+        return null;
+    }
+
+    private void ExecuteAttack(Transform attackTransform)
+    {
+        Debug.Log($"Executing attack with weapon: {weaponData?.name ?? "Unknown Weapon"}");
+        _hitThisSwing.Clear();
+        int damageAmount = GetDamageFromWeapon();
+        float cooldown = GetCooldownFromWeapon();
+        _nextAttackTime = Time.time + cooldown;
+
+        Vector3 attackOrigin = attackTransform.position + attackTransform.forward * (attackRange * 0.5f);
+        Vector3 attackDirection = attackTransform.forward;
+        Collider[] hits = Physics.OverlapSphere(attackOrigin, attackRadius, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore);
+
+        for (int i = 0; i < hits.Length; i++)
+        {
+            Collider col = hits[i];
+            if (col == null || col.transform == attackTransform || col.gameObject == attackTransform.gameObject || _hitThisSwing.Contains(col)) continue;
+
+            if (!HasValidTargetTag(col.gameObject)) continue;
+
+            Vector3 directionToTarget = (col.bounds.center - attackTransform.position).normalized;
+            float angleToTarget = Vector3.Angle(attackDirection, directionToTarget);
+
+            if (angleToTarget > swingAngle * 0.5f) continue;
+
+            _hitThisSwing.Add(col);
+            ApplyDamage(col.gameObject, damageAmount);
         }
     }
 
-    private int GetDepthValue()
+    private int GetDamageFromWeapon()
     {
-        // Replace this with your actual Depth Manager reference if needed
-        // e.g., return DepthManager.Instance.currentDepth;
-        return Mathf.Max(1, depth);
+        if (weaponData != null && weaponData.damage > 0)
+        {
+            return weaponData.damage;
+        }
+
+        return 10;
+    }
+
+    private float GetCooldownFromWeapon()
+    {
+        if (weaponData != null && weaponData.cooldown > 0f)
+        {
+            return weaponData.cooldown;
+        }
+
+        return attackCooldown;
     }
 
     private bool HasValidTargetTag(GameObject obj)
     {
-        foreach (string targetTag in validTags)
+        if (obj == null) return false;
+
+        string targetTag = obj.tag;
+        foreach (string validTag in validTags)
         {
-            if (obj.CompareTag(targetTag)) return true;
+            if (string.Equals(targetTag, validTag, System.StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
         }
+
         return false;
     }
 
     private void ApplyDamage(GameObject target, int damageAmount)
     {
-        // Calls TakeDamage(int) on any script attached to the target object
         target.SendMessage("TakeDamage", damageAmount, SendMessageOptions.DontRequireReceiver);
         Debug.Log($"Hit {target.name} on tag '{target.tag}' for {damageAmount} damage!");
-    }
-
-    private void OnTriggerEnter(Collider other)
-    {
-        if (!_targetsInTrigger.Contains(other))
-        {
-            _targetsInTrigger.Add(other);
-        }
-    }
-
-    private void OnTriggerExit(Collider other)
-    {
-        if (_targetsInTrigger.Contains(other))
-        {
-            _targetsInTrigger.Remove(other);
-        }
     }
 }
