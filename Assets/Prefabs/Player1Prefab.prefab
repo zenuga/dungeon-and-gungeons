@@ -437,7 +437,7 @@ GameObject:
   - component: {fileID: 503010340834439444}
   m_Layer: 0
   m_Name: Player1Prefab
-  m_TagString: Untagged
+  m_TagString: Player1
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -474,7 +474,7 @@ CharacterController:
     m_Bits: 0
   m_ExcludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 64
   m_LayerOverridePriority: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
@@ -485,7 +485,7 @@ CharacterController:
   m_StepOffset: 0.3
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
-  m_Center: {x: 0, y: 1, z: 0}
+  m_Center: {x: 0, y: 1, z: -0.25}
 --- !u!114 &503010340834439444
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -907,6 +907,68 @@ Transform:
   - {fileID: 4299976894829522271}
   m_Father: {fileID: 1951157062675046614}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &2832623482776193662
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6894283038178325250}
+  - component: {fileID: 1443989846398787608}
+  - component: {fileID: 1680587104421562819}
+  m_Layer: 0
+  m_Name: Pickup
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6894283038178325250
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2832623482776193662}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 2.5998, y: 2.5998, z: 2.5998}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7476606693714571478}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!33 &1443989846398787608
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2832623482776193662}
+  m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!135 &1680587104421562819
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2832623482776193662}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 0.5
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &2915308843778805145
 GameObject:
   m_ObjectHideFlags: 0
@@ -1036,11 +1098,11 @@ RectTransform:
   - {fileID: 8883580164531684659}
   m_Father: {fileID: 3376320278053221006}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -491, y: 195}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 100, y: 0}
   m_SizeDelta: {x: 100, y: 100}
-  m_Pivot: {x: 0.5, y: 0.5}
+  m_Pivot: {x: 1, y: 1}
 --- !u!222 &490098501451653345
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -2211,7 +2273,6 @@ GameObject:
   m_Component:
   - component: {fileID: 7476606693714571478}
   - component: {fileID: 6122377625919755558}
-  - component: {fileID: 8315670807054394997}
   m_Layer: 0
   m_Name: Sphere.002
   m_TagString: Untagged
@@ -2232,9 +2293,8 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 4015196801229574863}
-  - {fileID: 7778275393416683353}
   - {fileID: 4749984698107924746}
+  - {fileID: 6894283038178325250}
   m_Father: {fileID: 2245866072804269066}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!137 &6122377625919755558
@@ -2344,27 +2404,6 @@ SkinnedMeshRenderer:
     m_Center: {x: -0.0014448166, y: 0.101082265, z: 0.11374452}
     m_Extent: {x: 0.65652776, y: 1.024363, z: 0.26752645}
   m_DirtyAABB: 0
---- !u!65 &8315670807054394997
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5458467455497281431}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 1.3130555, y: 2.048726, z: 0.5350529}
-  m_Center: {x: -0.00669384, y: 0.9956657, z: -0.1587393}
 --- !u!1 &5552942559087707582
 GameObject:
   m_ObjectHideFlags: 0
@@ -2703,6 +2742,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 7177117236420824212}
+  - {fileID: 7778275393416683353}
   m_Father: {fileID: 2245866072804269066}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &6151561010415659703
@@ -2842,7 +2882,7 @@ GameObject:
   - component: {fileID: 7778275393416683353}
   m_Layer: 6
   m_Name: Hand (1)
-  m_TagString: Untagged
+  m_TagString: Player1
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -2856,11 +2896,11 @@ Transform:
   m_GameObject: {fileID: 7554312465064523354}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -4.6083374, y: 0, z: -0.9826431}
+  m_LocalPosition: {x: 0.474, y: 0.824, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 7476606693714571478}
+  m_Father: {fileID: 8586828545001062}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &7720182404397269683
 GameObject:
@@ -3077,12 +3117,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8099457237540796688}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -5.090332, y: 0, z: -0.3946457}
+  m_LocalRotation: {x: 0.7071068, y: -0, z: -0, w: 0.7071068}
+  m_LocalPosition: {x: 0, y: -0.5990002, z: 1.125}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 7476606693714571478}
+  m_Father: {fileID: 7177117236420824212}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &8166486245552099285
 GameObject:
@@ -3261,6 +3301,7 @@ Transform:
   - {fileID: 4899437951350960120}
   - {fileID: 7116370218714899728}
   - {fileID: 3443973879190448158}
+  - {fileID: 4015196801229574863}
   m_Father: {fileID: 8586828545001062}
   m_LocalEulerAnglesHint: {x: -90, y: 0, z: 0}
 --- !u!114 &3590084183559634365
@@ -3276,7 +3317,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerPickupManager
   playerType: 0
-  pickupRangeSphere: {fileID: 5458467455497281431}
+  pickupRangeSphere: {fileID: 2832623482776193662}
   handTransform: {fileID: 7778275393416683353}
   dropPoint: {fileID: 4015196801229574863}
   pickupUI: {fileID: 5755501725869682789}
@@ -3323,11 +3364,11 @@ RectTransform:
   - {fileID: 362554082276970140}
   m_Father: {fileID: 3376320278053221006}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -363.923, y: -185.51208}
-  m_SizeDelta: {x: 356.1541, y: 116.9758}
-  m_Pivot: {x: 0.5, y: 0.5}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 356.15405, y: 0}
+  m_SizeDelta: {x: 356.15405, y: 116.9758}
+  m_Pivot: {x: 1, y: 0}
 --- !u!222 &6960525559876597628
 CanvasRenderer:
   m_ObjectHideFlags: 0
