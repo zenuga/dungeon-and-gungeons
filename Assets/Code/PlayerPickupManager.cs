@@ -216,7 +216,13 @@ public class PlayerPickupManager : MonoBehaviour
                     currentMeleeWeapon = Instantiate(item.weaponData.weaponPrefab, handTransform);
                     currentMeleeWeapon.transform.localPosition = Vector3.zero;
                     currentMeleeWeapon.transform.localRotation = Quaternion.identity;
-                    
+
+                    WeaponAttack meleeAttack = currentMeleeWeapon.GetComponentInChildren<WeaponAttack>();
+                    if (meleeAttack != null)
+                    {
+                        meleeAttack.WeaponData = item.weaponData;
+                    }
+
                     currentMeleeWeaponData = item.weaponData;
                     UpdateWeaponUI(item.weaponData);
                 }
