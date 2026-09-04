@@ -146,5 +146,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CollectibleItem
   itemType: bombs
+  potionType: 0
   quantity: 1
-  weaponData: {fileID: 0}
+  weaponData: {fileID: 11400000, guid: 11a25e377da988b109de119ef4149d6f, type: 2}

@@ -21,6 +21,25 @@ public class Projectile : MonoBehaviour
     private Vector3 direction;
     private float timer;
     private string ownerTag;
+    private float ignorePlayerUntil;
+
+    private void Awake()
+    {
+        Rigidbody body = GetComponent<Rigidbody>();
+        if (body == null)
+        {
+            body = gameObject.AddComponent<Rigidbody>();
+        }
+        body.isKinematic = true;
+
+        Collider[] colliders = GetComponentsInChildren<Collider>(true);
+        foreach (Collider collider in colliders)
+        {
+            collider.isTrigger = true;
+        }
+
+        ignorePlayerUntil = Time.time + 0.5f;
+    }
 
     public void SetDirection(Vector3 newDirection)
     {
@@ -67,17 +86,48 @@ public class Projectile : MonoBehaviour
             return;
         }
 
-        if (!string.IsNullOrEmpty(ownerTag) && other.CompareTag(ownerTag))
+        if (Time.time < ignorePlayerUntil && IsOnPlayerLayer(other.transform))
         {
             return;
         }
 
-        if (!IsDamageableTarget(other.gameObject))
+        EnemyAi enemy = other.GetComponentInParent<EnemyAi>();
+        PlayerHealth player = other.GetComponentInParent<PlayerHealth>();
+        WallHealth wall = other.GetComponentInParent<WallHealth>();
+
+        if (wall != null)
         {
+            wall.TakeDamage(Mathf.Max(1, Mathf.RoundToInt(damage * 0.1f)));
             return;
         }
 
-        TriggerImpact();
+        if (IsWall(other.gameObject))
+        {
+            other.gameObject.SendMessage(
+                "TakeDamage",
+                Mathf.Max(1, Mathf.RoundToInt(damage * 0.1f)),
+                SendMessageOptions.DontRequireReceiver);
+            return;
+        }
+
+        if (enemy != null)
+        {
+            if (IsEnemyProjectile())
+            {
+                enemy.TakeDamage(damage);
+                Destroy(gameObject);
+            }
+            return;
+        }
+
+        if (player != null)
+        {
+            if (!IsEnemyProjectile())
+            {
+                player.TakeDamage(damage);
+                Destroy(gameObject);
+            }
+        }
     }
 
     private bool IsDamageableTarget(GameObject target)
@@ -89,6 +139,40 @@ public class Projectile : MonoBehaviour
 
         string tag = target.tag;
         return tag == "Player" || tag == "Player1" || tag == "Player2" || tag == "Enemy" || tag == "enemy" || tag == "Boss" || tag == "boss" || tag == "Wall" || tag == "wall" || tag == "walls";
+    }
+
+    private bool IsEnemyProjectile()
+    {
+        return ownerTag == "Enemy" || ownerTag == "enemy" || ownerTag == "Boss" || ownerTag == "boss";
+    }
+
+    private static bool IsWall(GameObject target)
+    {
+        string tag = target.tag;
+        return tag == "Wall" || tag == "wall" || tag == "walls";
+    }
+
+    private static bool IsOnPlayerLayer(Transform target)
+    {
+        Transform current = target;
+        int playerLayer = LayerMask.NameToLayer("Player");
+
+        if (playerLayer == -1)
+        {
+            return false;
+        }
+
+        while (current != null)
+        {
+            if (current.gameObject.layer == playerLayer)
+            {
+                return true;
+            }
+
+            current = current.parent;
+        }
+
+        return false;
     }
 
     private void TriggerImpact()

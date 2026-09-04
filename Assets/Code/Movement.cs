@@ -22,6 +22,14 @@ public class PlayerController : MonoBehaviour
 
     private CharacterController _characterController;
     private Vector3 _velocity;
+    private float speedMultiplier = 1f;
+
+    public Vector3 FacingDirection => visualModel != null ? visualModel.transform.forward : transform.forward;
+
+    public void SetSpeedMultiplier(float multiplier)
+    {
+        speedMultiplier = Mathf.Max(0f, multiplier);
+    }
 
     private void Awake()
     {
@@ -91,7 +99,7 @@ public class PlayerController : MonoBehaviour
 
             // Apply movement on X and Z axes (3D space)
             Vector3 moveDirection = new Vector3(inputVector.x, 0f, inputVector.y);
-            _characterController.Move(moveDirection * moveSpeed * Time.deltaTime);
+            _characterController.Move(moveDirection * moveSpeed * speedMultiplier * Time.deltaTime);
 
             // Handle direction rotation (W/I = North, S/K = South, A/J = West, D/L = East)
             Quaternion targetRotation = Quaternion.LookRotation(moveDirection, Vector3.up);

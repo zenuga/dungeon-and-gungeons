@@ -10,15 +10,15 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: c358d63b7aced9749887c494203645f9, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 8.02
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: c358d63b7aced9749887c494203645f9, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.52699995
+      value: 1.5
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: c358d63b7aced9749887c494203645f9, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -0.87
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: c358d63b7aced9749887c494203645f9, type: 3}
       propertyPath: m_LocalRotation.w
@@ -103,6 +103,12 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: c358d63b7aced9749887c494203645f9, type: 3}
       insertIndex: -1
       addedObject: {fileID: -4582896863226592969}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: c358d63b7aced9749887c494203645f9, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2186121586077037284}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: c358d63b7aced9749887c494203645f9, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1043889023016354187}
   m_SourcePrefab: {fileID: 100100000, guid: c358d63b7aced9749887c494203645f9, type: 3}
 --- !u!1 &6354120891964402117 stripped
 GameObject:
@@ -131,3 +137,37 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 0}
+--- !u!111 &2186121586077037284
+Animation:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6354120891964402117}
+  m_Enabled: 1
+  serializedVersion: 4
+  m_Animation: {fileID: 7400000, guid: 6a37c013ada453732bd35e81a4820161, type: 2}
+  m_Animations:
+  - {fileID: 7400000, guid: 6a37c013ada453732bd35e81a4820161, type: 2}
+  m_WrapMode: 0
+  m_PlayAutomatically: 1
+  m_AnimatePhysics: 0
+  m_UpdateMode: 0
+  m_CullingType: 0
+--- !u!114 &1043889023016354187
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6354120891964402117}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e307d7760c9fe722db62d2a75b4aa8f0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RewardChest
+  minimumWeapons: 1
+  maximumWeapons: 3
+  weaponSpawnDistance: 1.25
+  weaponSpawnHeight: 0.25
+  chestAnimator: {fileID: 2186121586077037284}

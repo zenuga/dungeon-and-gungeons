@@ -12,6 +12,9 @@ public class PlayerHealth : MonoBehaviour
 
     private int currentHealth;
 
+    public int CurrentHealth => currentHealth;
+    public int MaxHealthValue => maxHealth;
+
     private void Awake()
     {
         currentHealth = maxHealth;
@@ -72,6 +75,11 @@ public class PlayerHealth : MonoBehaviour
 
         currentHealth = Mathf.Min(maxHealth, currentHealth + amount);
         UpdateHealthBar();
+    }
+
+    public void HealPercentOfMax(float percent)
+    {
+        Heal(Mathf.RoundToInt(maxHealth * Mathf.Max(0f, percent)));
     }
 
     public float GetHealthPercent()

@@ -23,13 +23,23 @@ public class PlayerPickupManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI potionText;
     [SerializeField] private Image bombImage;
     [SerializeField] private TextMeshProUGUI bombText;
+    [SerializeField] private GameObject activePotionEffectImage;
+    [SerializeField] private TextMeshProUGUI activePotionEffectCountdown;
 
     [Header("Inventory Limits")]
-    [SerializeField] private int maxPotions = 10;
-    [SerializeField] private int maxBombs = 10;
+    [SerializeField] private int maxPotions = 5;
+    [SerializeField] private int maxBombs = 15;
+    [SerializeField] private float bombRange = 3f;
 
     private int currentPotions = 0;
     private int currentBombs = 0;
+    private PotionType currentPotionType;
+    private WeaponData currentPotionData;
+    private float potionEffectTimeRemaining;
+    private PlayerHealth playerHealth;
+    private PlayerController playerController;
+    private PotionType activePotionType;
+    private bool hasActivePotionEffect;
     
     private GameObject currentMeleeWeapon;
     private WeaponData currentMeleeWeaponData;
@@ -43,6 +53,8 @@ public class PlayerPickupManager : MonoBehaviour
 
     private void Start()
     {
+        playerHealth = GetComponentInParent<PlayerHealth>();
+        playerController = GetComponentInParent<PlayerController>();
         AutoFindUIReferences();
 
         if (pickupRangeSphere != null)
@@ -69,6 +81,7 @@ public class PlayerPickupManager : MonoBehaviour
 
     private void Update()
     {
+        UpdatePotionEffect();
         if (Keyboard.current == null) return;
 
         bool actionPressed = false;
@@ -84,6 +97,22 @@ public class PlayerPickupManager : MonoBehaviour
         if (actionPressed)
         {
             TryPickupItem();
+        }
+
+        bool bombPressed = playerType == PlayerType.Player1
+            ? Keyboard.current.qKey.wasPressedThisFrame
+            : Keyboard.current.uKey.wasPressedThisFrame;
+        if (bombPressed)
+        {
+            UseBomb();
+        }
+
+        bool potionPressed = playerType == PlayerType.Player1
+            ? Keyboard.current.rKey.wasPressedThisFrame
+            : Keyboard.current.pKey.wasPressedThisFrame;
+        if (potionPressed)
+        {
+            UsePotion();
         }
     }
 
@@ -141,6 +170,162 @@ public class PlayerPickupManager : MonoBehaviour
         if (potionText == null)        potionText        = FindUIComponent<TextMeshProUGUI>("PotionText");
         if (bombImage == null)         bombImage         = FindUIComponent<Image>("BombImage");
         if (bombText == null)          bombText          = FindUIComponent<TextMeshProUGUI>("BombText");
+        if (activePotionEffectCountdown == null)
+        {
+            activePotionEffectCountdown = FindUIComponent<TextMeshProUGUI>("PotionEffectCountdown", "EffectCountdown");
+        }
+
+        if (activePotionEffectImage == null)
+        {
+            activePotionEffectImage = FindUIObject("ActivePotionEffect", "PotionEffectImage");
+        }
+
+        if (activePotionEffectCountdown == null && activePotionEffectImage != null)
+        {
+            activePotionEffectCountdown = activePotionEffectImage.GetComponentInChildren<TextMeshProUGUI>(true);
+        }
+    }
+
+    public float DamageMultiplier => hasActivePotionEffect && activePotionType == PotionType.Strength ? 1.5f : 1f;
+
+    private void UseBomb()
+    {
+        if (currentBombs <= 0)
+        {
+            return;
+        }
+
+        currentBombs--;
+        UpdateBombUI();
+
+        Vector3 explosionPosition = transform.position;
+        Collider[] hits = Physics.OverlapSphere(explosionPosition, bombRange, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore);
+        HashSet<PlayerHealth> affectedPlayers = new HashSet<PlayerHealth>();
+        HashSet<EnemyAi> affectedEnemies = new HashSet<EnemyAi>();
+
+        foreach (Collider hit in hits)
+        {
+            if (hit == null)
+            {
+                continue;
+            }
+
+            PlayerHealth targetPlayer = hit.GetComponentInParent<PlayerHealth>();
+            if (targetPlayer != null && affectedPlayers.Add(targetPlayer))
+            {
+                targetPlayer.TakeDamage(Mathf.RoundToInt(targetPlayer.MaxHealthValue * 0.2f));
+                continue;
+            }
+
+            EnemyAi targetEnemy = hit.GetComponentInParent<EnemyAi>();
+            if (targetEnemy != null && affectedEnemies.Add(targetEnemy))
+            {
+                bool isBoss = targetEnemy.CompareTag("Boss") || targetEnemy.CompareTag("boss");
+                if (!isBoss)
+                {
+                    targetEnemy.TakeDamage(Mathf.RoundToInt(targetEnemy.CurrentHealth * 0.5f));
+                }
+            }
+        }
+    }
+
+    private void UsePotion()
+    {
+        if (currentPotions <= 0)
+        {
+            return;
+        }
+
+        currentPotions--;
+        UpdatePotionUI();
+
+        if (currentPotionType == PotionType.Health)
+        {
+            if (playerHealth != null)
+            {
+                playerHealth.HealPercentOfMax(0.3f);
+            }
+            return;
+        }
+
+        if (activePotionType == PotionType.Speed && playerController != null)
+        {
+            playerController.SetSpeedMultiplier(1f);
+        }
+
+        hasActivePotionEffect = true;
+        activePotionType = currentPotionType;
+        potionEffectTimeRemaining = 30f;
+
+        if (activePotionType == PotionType.Speed && playerController != null)
+        {
+            playerController.SetSpeedMultiplier(1.25f);
+        }
+
+        UpdatePotionEffectUI();
+    }
+
+    private void UpdatePotionEffect()
+    {
+        if (!hasActivePotionEffect)
+        {
+            return;
+        }
+
+        potionEffectTimeRemaining -= Time.deltaTime;
+        UpdatePotionEffectUI();
+
+        if (potionEffectTimeRemaining > 0f)
+        {
+            return;
+        }
+
+        hasActivePotionEffect = false;
+        if (activePotionType == PotionType.Speed && playerController != null)
+        {
+            playerController.SetSpeedMultiplier(1f);
+        }
+
+        UpdatePotionEffectUI();
+    }
+
+    private void UpdatePotionEffectUI()
+    {
+        if (activePotionEffectImage != null)
+        {
+            activePotionEffectImage.SetActive(hasActivePotionEffect);
+        }
+
+        if (activePotionEffectCountdown != null)
+        {
+            activePotionEffectCountdown.text = hasActivePotionEffect ? Mathf.CeilToInt(potionEffectTimeRemaining).ToString() : string.Empty;
+        }
+    }
+
+    private void DropPotion()
+    {
+        if (currentPotionData == null || currentPotionData.weaponPrefab == null)
+        {
+            return;
+        }
+
+        GameObject droppedPotion = Instantiate(currentPotionData.weaponPrefab, dropPoint != null ? dropPoint.position : transform.position + transform.forward * 1.5f, Quaternion.identity);
+        CollectibleItem item = droppedPotion.GetComponent<CollectibleItem>();
+        if (item == null)
+        {
+            item = droppedPotion.AddComponent<CollectibleItem>();
+        }
+
+        item.itemType = "potion";
+        item.potionType = currentPotionType;
+        item.weaponData = currentPotionData;
+        item.quantity = currentPotions;
+        Collider collider = droppedPotion.GetComponentInChildren<Collider>();
+        if (collider == null)
+        {
+            collider = droppedPotion.AddComponent<BoxCollider>();
+        }
+        collider.isTrigger = true;
     }
 
     private T SearchDeep<T>(Transform parent, string targetName) where T : Component
@@ -190,8 +375,21 @@ public class PlayerPickupManager : MonoBehaviour
 
             if (tagType == "potion")
             {
+                if (currentPotions > 0 && currentPotionType != item.potionType)
+                {
+                    DropPotion();
+                    currentPotions = 0;
+                }
+
                 if (currentPotions >= maxPotions) continue;
+                currentPotionType = item.potionType;
+                currentPotionData = item.weaponData;
                 currentPotions += item.quantity;
+                currentPotions = Mathf.Min(currentPotions, maxPotions);
+                if (currentPotionData != null && potionImage != null)
+                {
+                    potionImage.sprite = currentPotionData.weaponImage;
+                }
                 UpdatePotionUI();
                 Destroy(targetGameObject);
                 break;
@@ -200,6 +398,11 @@ public class PlayerPickupManager : MonoBehaviour
             {
                 if (currentBombs >= maxBombs) continue;
                 currentBombs += item.quantity;
+                currentBombs = Mathf.Min(currentBombs, maxBombs);
+                if (item.weaponData != null && bombImage != null)
+                {
+                    bombImage.sprite = item.weaponData.weaponImage;
+                }
                 UpdateBombUI();
                 Destroy(targetGameObject);
                 break;
@@ -241,6 +444,12 @@ public class PlayerPickupManager : MonoBehaviour
                     currentRangedWeapon = Instantiate(item.weaponData.weaponPrefab, handTransform);
                     currentRangedWeapon.transform.localPosition = Vector3.zero;
                     currentRangedWeapon.transform.localRotation = Quaternion.identity;
+
+                    RangedWeapon rangedWeapon = currentRangedWeapon.GetComponentInChildren<RangedWeapon>();
+                    if (rangedWeapon != null)
+                    {
+                        rangedWeapon.SetWeaponData(item.weaponData);
+                    }
 
                     currentRangedWeaponData = item.weaponData;
                     UpdateWeaponUI(item.weaponData);
@@ -306,13 +515,73 @@ public class PlayerPickupManager : MonoBehaviour
     private void UpdatePotionUI()
     {
         if (potionText != null) potionText.text = currentPotions.ToString();
-        if (potionImage != null) potionImage.gameObject.SetActive(currentPotions > 0);
+        UpdateSlotOpacity(potionImage, currentPotions > 0);
     }
 
     private void UpdateBombUI()
     {
         if (bombText != null) bombText.text = currentBombs.ToString();
-        if (bombImage != null) bombImage.gameObject.SetActive(currentBombs > 0);
+        UpdateSlotOpacity(bombImage, currentBombs > 0);
+    }
+
+    private static void UpdateSlotOpacity(Image image, bool hasItems)
+    {
+        if (image == null)
+        {
+            return;
+        }
+
+        Color color = image.color;
+        color.a = hasItems ? 1f : 0.4f;
+        image.color = color;
+        image.gameObject.SetActive(true);
+    }
+
+    private GameObject FindUIObject(params string[] possibleNames)
+    {
+        string fullName = playerType.ToString();
+        string prefix = playerType == PlayerType.Player1 ? "P1_" : "P2_";
+
+        foreach (string name in possibleNames)
+        {
+            if (pickupUI != null)
+            {
+                Transform found = SearchDeepObject(pickupUI.transform, name);
+                if (found != null)
+                {
+                    return found.gameObject;
+                }
+            }
+
+            GameObject result = GameObject.Find(prefix + name);
+            if (result == null) result = GameObject.Find(fullName + "_" + name);
+            if (result == null) result = GameObject.Find(name);
+            if (result != null)
+            {
+                return result;
+            }
+        }
+
+        return null;
+    }
+
+    private static Transform SearchDeepObject(Transform parent, string targetName)
+    {
+        foreach (Transform child in parent)
+        {
+            if (child.name.Equals(targetName, System.StringComparison.OrdinalIgnoreCase))
+            {
+                return child;
+            }
+
+            Transform result = SearchDeepObject(child, targetName);
+            if (result != null)
+            {
+                return result;
+            }
+        }
+
+        return null;
     }
 
     private void UpdateWeaponUI(WeaponData data)

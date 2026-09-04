@@ -9,9 +9,19 @@ public class RangedWeapon : MonoBehaviour
     [SerializeField] private float fireRate = 0.5f;
     [SerializeField] private float maxAimDistance = 20f;
     [SerializeField] private LayerMask obstacleMask;
-    [SerializeField] private string[] enemyTags = { "Enemy", "enemy", "Boss", "boss" };
+    [SerializeField] private string[] EnemyTags = { "Enemy", "Boss"};
+    private WeaponData weaponData;
 
     private float nextFireTime;
+
+    public void SetWeaponData(WeaponData data)
+    {
+        weaponData = data;
+        if (data != null)
+        {
+            fireRate = data.cooldown > 0f ? data.cooldown : fireRate;
+        }
+    }
 
     private void Awake()
     {
@@ -23,20 +33,30 @@ public class RangedWeapon : MonoBehaviour
 
     private void Update()
     {
-        if (projectilePrefab == null)
+        if (projectilePrefab == null || Keyboard.current == null || Mouse.current == null)
         {
             return;
         }
 
-        bool firePressed = Input.GetKeyDown(KeyCode.Mouse0);
-        if (!firePressed && Keyboard.current != null)
+        Transform owner = GetOwnerTransform();
+        if (owner == null || !IsPlayerOwner(owner))
         {
-            firePressed = Keyboard.current.spaceKey.wasPressedThisFrame;
+            return;
+        }
+
+        bool firePressed = Mouse.current.leftButton.wasPressedThisFrame;
+        if (owner.CompareTag("Player1"))
+        {
+            firePressed |= Keyboard.current.spaceKey.wasPressedThisFrame;
+        }
+        else if (owner.CompareTag("Player2"))
+        {
+            firePressed |= Keyboard.current.enterKey.wasPressedThisFrame;
         }
 
         if (!firePressed)
         {
-            AimAtNearestVisibleEnemy();
+            AimAtNearestVisibleEnemy(owner);
             return;
         }
 
@@ -46,17 +66,11 @@ public class RangedWeapon : MonoBehaviour
         }
 
         nextFireTime = Time.time + fireRate;
-        Fire();
+        Fire(owner);
     }
 
-    private void AimAtNearestVisibleEnemy()
+    private void AimAtNearestVisibleEnemy(Transform owner)
     {
-        Transform owner = GetOwnerTransform();
-        if (owner == null)
-        {
-            return;
-        }
-
         Transform bestTarget = FindNearestVisibleEnemy();
         if (bestTarget == null)
         {
@@ -71,7 +85,8 @@ public class RangedWeapon : MonoBehaviour
             return;
         }
 
-        owner.rotation = Quaternion.LookRotation(targetDirection.normalized, Vector3.up);
+        Transform highestOwner = GetHighestPlayerParent(owner);
+        highestOwner.rotation = Quaternion.LookRotation(targetDirection.normalized, Vector3.up);
     }
 
     private Transform FindNearestVisibleEnemy()
@@ -79,26 +94,26 @@ public class RangedWeapon : MonoBehaviour
         Transform nearest = null;
         float nearestDistance = Mathf.Infinity;
 
-        foreach (string tag in enemyTags)
+        foreach (string tag in EnemyTags)
         {
-            GameObject[] enemies = GameObject.FindGameObjectsWithTag(tag);
-            foreach (GameObject enemy in enemies)
+            GameObject[] Enemies = GameObject.FindGameObjectsWithTag(tag);
+            foreach (GameObject Enemy in Enemies)
             {
-                if (enemy == null)
+                if (Enemy == null)
                 {
                     continue;
                 }
 
-                if (!HasLineOfSight(enemy.transform.position))
+                if (!HasLineOfSight(Enemy.transform.position))
                 {
                     continue;
                 }
 
-                float dist = Vector3.Distance(muzzlePoint.position, enemy.transform.position);
+                float dist = Vector3.Distance(muzzlePoint.position, Enemy.transform.position);
                 if (dist < nearestDistance)
                 {
                     nearestDistance = dist;
-                    nearest = enemy.transform;
+                    nearest = Enemy.transform;
                 }
             }
         }
@@ -141,15 +156,9 @@ public class RangedWeapon : MonoBehaviour
         return true;
     }
 
-    private void Fire()
+    private void Fire(Transform owner)
     {
-        Transform owner = GetOwnerTransform();
-        if (owner == null)
-        {
-            return;
-        }
-
-        Vector3 fireDirection = owner.forward;
+        Vector3 fireDirection = GetPlayerFacingDirection(owner);
         Transform target = FindNearestVisibleEnemy();
         if (target != null)
         {
@@ -166,21 +175,69 @@ public class RangedWeapon : MonoBehaviour
 
         projectile.SetDirection(fireDirection.normalized);
         projectile.SetOwnerTag(owner.tag);
+        if (weaponData != null)
+        {
+            PlayerPickupManager pickupManager = owner.GetComponentInParent<PlayerPickupManager>();
+            float damageMultiplier = pickupManager != null ? pickupManager.DamageMultiplier : 1f;
+            projectile.SetDamage(Mathf.RoundToInt(Mathf.Max(1, weaponData.damage) * damageMultiplier));
+        }
+    }
+
+    private static Vector3 GetPlayerFacingDirection(Transform owner)
+    {
+        PlayerController playerController = owner.GetComponent<PlayerController>();
+        if (playerController != null)
+        {
+            Vector3 facingDirection = playerController.FacingDirection;
+            facingDirection.y = 0f;
+            if (facingDirection.sqrMagnitude > 0.001f)
+            {
+                return facingDirection.normalized;
+            }
+        }
+
+        Vector3 ownerDirection = owner.forward;
+        ownerDirection.y = 0f;
+        return ownerDirection.sqrMagnitude > 0.001f ? ownerDirection.normalized : Vector3.forward;
     }
 
     private Transform GetOwnerTransform()
     {
         Transform current = transform;
+        Transform highestPlayer = null;
         while (current != null)
         {
-            if (current.CompareTag("Player1") || current.CompareTag("Player2") || current.CompareTag("Player") || current.CompareTag("Enemy") || current.CompareTag("enemy"))
+            if (current.CompareTag("Player1") || current.CompareTag("Player2"))
             {
-                return current;
+                highestPlayer = current;
             }
 
             current = current.parent;
         }
 
-        return null;
+        return highestPlayer;
+    }
+
+    private static Transform GetHighestPlayerParent(Transform owner)
+    {
+        Transform current = owner;
+        Transform highestPlayer = owner;
+
+        while (current != null)
+        {
+            if (current.CompareTag("Player1") || current.CompareTag("Player2"))
+            {
+                highestPlayer = current;
+            }
+
+            current = current.parent;
+        }
+
+        return highestPlayer;
+    }
+
+    private static bool IsPlayerOwner(Transform owner)
+    {
+        return owner.CompareTag("Player1") || owner.CompareTag("Player2");
     }
 }

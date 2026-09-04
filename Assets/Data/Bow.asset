@@ -10,10 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b74311f2ef630af179f5ec643a6e5609, type: 3}
-  m_Name: Sword
+  m_Name: Bow
   m_EditorClassIdentifier: Assembly-CSharp::WeaponData
-  weaponName: Sword
-  weaponImage: {fileID: 21300000, guid: 7228e7109fc3cc38abfe71945baf03f2, type: 3}
-  weaponPrefab: {fileID: 8039010276732677699, guid: a5c592cebfe3f4147be5c6a417c4e956, type: 3}
-  damage: 1000
-  cooldown: 0.01
+  itemType: 0
+  weaponName: bow
+  weaponImage: {fileID: 0}
+  weaponPrefab: {fileID: 4676626773651786350, guid: 07a92624606f558499ce8c955ad76184, type: 3}
+  damage: 40
+  cooldown: 0
+  potionType: 0

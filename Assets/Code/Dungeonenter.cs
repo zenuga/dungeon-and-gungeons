@@ -16,36 +16,45 @@ public class Dungeonenter : MonoBehaviour
         {
             dungeonWaveManager = GetComponent<DungeonWaveManager>();
         }
+
+        FindPlayers();
     }
 
     private void OnTriggerEnter(Collider other)
     {
         // 1. Activate wall children attached to this GameObject
-        foreach (Transform child in transform)
+        if (dungeonWaveManager != null && dungeonWaveManager.IsDungeonCompleted)
         {
-            if (child.CompareTag("walls"))
+            DisableWalls();
+        }
+        else
+        {
+            foreach (Transform child in transform)
             {
-                child.gameObject.SetActive(true);
+                if (child.CompareTag("walls"))
+                {
+                    child.gameObject.SetActive(true);
+                }
             }
         }
 
         // 2. Check the incoming trigger object ('other') and teleport the players
-        if (other.CompareTag("Player1"))
+        GameObject enteringPlayer = GetPlayerObject(other);
+        if (enteringPlayer != null)
         {
-            if (player2 != null && player1 != null)
+            FindPlayers();
+
+            if (enteringPlayer.CompareTag("Player1") && player2 != null)
             {
-                player2.transform.position = player1.transform.position;
+                player2.transform.position = enteringPlayer.transform.position;
             }
-        }
-        else if (other.CompareTag("Player2"))
-        {
-            if (player1 != null && player2 != null)
+            else if (enteringPlayer.CompareTag("Player2") && player1 != null)
             {
-                player1.transform.position = player2.transform.position;
+                player1.transform.position = enteringPlayer.transform.position;
             }
         }
 
-        if (other.CompareTag("Player") || other.CompareTag("Player1") || other.CompareTag("Player2"))
+        if (enteringPlayer != null)
         {
             dungeonWaveManager?.DungeonEntered();
         }
@@ -54,5 +63,45 @@ public class Dungeonenter : MonoBehaviour
     private void OnTriggerExit(Collider other)
     {
         dungeonsDone++;
+    }
+
+    public void DisableWalls()
+    {
+        foreach (Transform child in transform)
+        {
+            if (child.CompareTag("walls"))
+            {
+                child.gameObject.SetActive(false);
+            }
+        }
+    }
+
+    private void FindPlayers()
+    {
+        if (player1 == null)
+        {
+            player1 = GameObject.FindGameObjectWithTag("Player1");
+        }
+
+        if (player2 == null)
+        {
+            player2 = GameObject.FindGameObjectWithTag("Player2");
+        }
+    }
+
+    private static GameObject GetPlayerObject(Collider other)
+    {
+        Transform current = other.transform;
+        while (current != null)
+        {
+            if (current.CompareTag("Player") || current.CompareTag("Player1") || current.CompareTag("Player2"))
+            {
+                return current.gameObject;
+            }
+
+            current = current.parent;
+        }
+
+        return null;
     }
 }

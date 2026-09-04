@@ -1803,6 +1803,9 @@ MonoBehaviour:
   spawnPoints: []
   chestPrefab: {fileID: 6354120891964402117, guid: e44e89a4d2b37164da40e0761b41f888, type: 3}
   chestSpawnPoint: {fileID: 8186129745059342250}
+  rewardItems:
+  - {fileID: 11400000, guid: 11a25e377da988b109de119ef4149d6f, type: 2}
+  - {fileID: 11400000, guid: 5b823bec0262f5235b2abe497f37fb7a, type: 2}
 --- !u!1 &1017272494787225740
 GameObject:
   m_ObjectHideFlags: 0

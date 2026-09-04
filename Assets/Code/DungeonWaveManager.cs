@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.Serialization;
 
 public class DungeonWaveManager : MonoBehaviour
 {
@@ -17,6 +18,8 @@ public class DungeonWaveManager : MonoBehaviour
     [Header("Rewards & Exit")]
     public GameObject chestPrefab;
     public Transform chestSpawnPoint; // Drag empty GameObject located in middle of room
+    [FormerlySerializedAs("rewardWeaponTemplates")]
+    public List<WeaponData> rewardItems = new List<WeaponData>();
 
     private int currentWave = 0;
     private List<GameObject> activeEnemies = new List<GameObject>();
@@ -24,6 +27,18 @@ public class DungeonWaveManager : MonoBehaviour
     private bool dungeonStarted = false;
     private bool playerIsInsideTrigger = false;
     private GameObject currentTriggerObject;
+    private Dungeonenter dungeonEnter;
+
+    public bool IsDungeonCompleted => dungeonCompleted;
+
+    private void Awake()
+    {
+        dungeonEnter = GetComponent<Dungeonenter>();
+        if (dungeonEnter == null)
+        {
+            dungeonEnter = GetComponentInChildren<Dungeonenter>(true);
+        }
+    }
 
     public void DungeonEntered()
     {
@@ -160,12 +175,22 @@ public class DungeonWaveManager : MonoBehaviour
 
         // 1. Spawn Chest in the middle of the dungeon
         Vector3 spawnPosition = chestSpawnPoint != null ? chestSpawnPoint.position : transform.position;
-        Instantiate(chestPrefab, spawnPosition, Quaternion.identity);
-
-        // 2. Disable walls if player is currently in the trigger zone
-        if (playerIsInsideTrigger && currentTriggerObject != null)
+        if (chestPrefab != null)
         {
-            OpenWalls(currentTriggerObject);
+            GameObject chest = Instantiate(chestPrefab, spawnPosition, Quaternion.identity);
+            RewardChest rewardChest = chest.GetComponentInChildren<RewardChest>(true);
+            if (rewardChest == null)
+            {
+                rewardChest = chest.AddComponent<RewardChest>();
+            }
+
+            rewardChest.Configure(rewardItems);
+        }
+
+        // 2. Disable the walls owned by Dungeonenter.
+        if (dungeonEnter != null)
+        {
+            dungeonEnter.DisableWalls();
         }
     }
 

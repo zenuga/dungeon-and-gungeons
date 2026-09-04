@@ -73,15 +73,20 @@ public class WeaponAttack : MonoBehaviour
     {
         Debug.Log($"Executing attack with weapon: {weaponData?.name ?? "Unknown Weapon"}");
         _hitThisSwing.Clear();
-        int damageAmount = GetDamageFromWeapon();
-        float cooldown = GetCooldownFromWeapon();
-        _nextAttackTime = Time.time + cooldown;
-
         Transform ownerTransform = GetOwnerTransform();
         if (ownerTransform == null)
         {
             return;
         }
+
+        int damageAmount = GetDamageFromWeapon();
+        PlayerPickupManager pickupManager = ownerTransform.GetComponentInParent<PlayerPickupManager>();
+        if (pickupManager != null)
+        {
+            damageAmount = Mathf.RoundToInt(damageAmount * pickupManager.DamageMultiplier);
+        }
+        float cooldown = GetCooldownFromWeapon();
+        _nextAttackTime = Time.time + cooldown;
 
         Vector3 attackOrigin = attackTransform.position + attackTransform.forward * (attackRange * 0.5f);
         Vector3 attackDirection = attackTransform.forward;
