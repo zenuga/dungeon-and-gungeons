@@ -1,3 +1,4 @@
+
 using System;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -72,7 +73,7 @@ public class SessionManager : MonoBehaviour
     }
 
     // =========================================================
-    // CREATE GAME
+    // CREATE GAME / HOST
     // =========================================================
 
     public async void CreateGame()
@@ -81,7 +82,6 @@ public class SessionManager : MonoBehaviour
         Debug.Log("CREATE GAME");
         Debug.Log("=================================");
 
-        // Check Unity Services
         if (!servicesInitialized)
         {
             Debug.LogError("Unity Services are not initialized yet!");
@@ -89,7 +89,6 @@ public class SessionManager : MonoBehaviour
             return;
         }
 
-        // Check NetworkManager
         if (NetworkManager.Singleton == null)
         {
             Debug.LogError(
@@ -101,7 +100,10 @@ public class SessionManager : MonoBehaviour
             return;
         }
 
-        Debug.Log("NetworkManager found: " + NetworkManager.Singleton.gameObject.name);
+        Debug.Log(
+            "NetworkManager found: " +
+            NetworkManager.Singleton.gameObject.name
+        );
 
         try
         {
@@ -130,9 +132,11 @@ public class SessionManager : MonoBehaviour
 
             SetStatus("Game created!");
 
-            // Host blijft voorlopig in de menu scene.
-            // We gaan pas naar GameScene wanneer we zeker weten
-            // dat de multiplayer setup werkt.
+            // Give the network a moment to finish starting.
+            await Task.Delay(500);
+
+            // The host now goes to the GameScene.
+            LoadGameSceneAsHost();
         }
         catch (Exception e)
         {
@@ -146,7 +150,7 @@ public class SessionManager : MonoBehaviour
     }
 
     // =========================================================
-    // JOIN GAME
+    // JOIN GAME / CLIENT
     // =========================================================
 
     public async void JoinGame()
@@ -199,7 +203,9 @@ public class SessionManager : MonoBehaviour
 
             SetStatus("Joined game!");
 
-            LoadGameScene();
+            // The host controls the network scene.
+            // The client should NOT independently load GameScene here.
+            Debug.Log("Waiting for host to change the network scene...");
         }
         catch (Exception e)
         {
@@ -213,10 +219,10 @@ public class SessionManager : MonoBehaviour
     }
 
     // =========================================================
-    // LOAD GAME SCENE
+    // HOST SCENE LOADING
     // =========================================================
 
-    private void LoadGameScene()
+    private void LoadGameSceneAsHost()
     {
         if (string.IsNullOrEmpty(gameSceneName))
         {
@@ -224,9 +230,26 @@ public class SessionManager : MonoBehaviour
             return;
         }
 
-        Debug.Log("Loading game scene: " + gameSceneName);
+        if (NetworkManager.Singleton == null)
+        {
+            Debug.LogError("Cannot load GameScene: NetworkManager is missing!");
+            return;
+        }
 
-        SceneManager.LoadScene(gameSceneName);
+        if (!NetworkManager.Singleton.IsHost)
+        {
+            Debug.LogError(
+                "Cannot load GameScene as host because NetworkManager is not the host."
+            );
+            return;
+        }
+
+        Debug.Log("Host loading network scene: " + gameSceneName);
+
+        NetworkManager.Singleton.SceneManager.LoadScene(
+            gameSceneName,
+            LoadSceneMode.Single
+        );
     }
 
     // =========================================================
@@ -243,3 +266,4 @@ public class SessionManager : MonoBehaviour
         }
     }
 }
+
