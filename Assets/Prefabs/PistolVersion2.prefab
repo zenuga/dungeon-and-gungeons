@@ -56,8 +56,39 @@ PrefabInstance:
       propertyPath: m_Name
       value: PistolVersion2
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 100f6ddacdac42e48b8a1a6f59877d9e, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 100f6ddacdac42e48b8a1a6f59877d9e, type: 3}
+      propertyPath: m_TagString
+      value: Ranged
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 100f6ddacdac42e48b8a1a6f59877d9e, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 462754780718285676}
   m_SourcePrefab: {fileID: 100100000, guid: 100f6ddacdac42e48b8a1a6f59877d9e, type: 3}
+--- !u!1 &1884982695874162285 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 100f6ddacdac42e48b8a1a6f59877d9e, type: 3}
+  m_PrefabInstance: {fileID: 1651031160309633852}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &462754780718285676
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1884982695874162285}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 913e69cb19e4e2a79b1bdb3f66604281, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CollectibleItem
+  itemType: bombs
+  quantity: 1
+  weaponData: {fileID: 0}

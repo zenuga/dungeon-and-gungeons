@@ -56,8 +56,63 @@ PrefabInstance:
       propertyPath: m_Name
       value: Speer
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 7d2e9a32863314746a93321dd1aeee1f, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 7d2e9a32863314746a93321dd1aeee1f, type: 3}
+      propertyPath: m_TagString
+      value: Melee
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 7d2e9a32863314746a93321dd1aeee1f, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4784402157481599763}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 7d2e9a32863314746a93321dd1aeee1f, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2594354125673556393}
   m_SourcePrefab: {fileID: 100100000, guid: 7d2e9a32863314746a93321dd1aeee1f, type: 3}
+--- !u!1 &7285653075161928030 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 7d2e9a32863314746a93321dd1aeee1f, type: 3}
+  m_PrefabInstance: {fileID: 7627618990215359503}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &4784402157481599763
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7285653075161928030}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6ac33dd4d9ef9ff58bc87075025f2bc0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WeaponAttack
+  weaponData: {fileID: 0}
+  attackRange: 2.2
+  attackRadius: 1.2
+  swingAngle: 120
+  attackCooldown: 1
+  validTags:
+  - enemy
+  - wall
+  - boss
+--- !u!114 &2594354125673556393
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7285653075161928030}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 913e69cb19e4e2a79b1bdb3f66604281, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CollectibleItem
+  itemType: bombs
+  quantity: 1
+  weaponData: {fileID: 0}

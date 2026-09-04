@@ -14,7 +14,7 @@ public class WeaponAttack : MonoBehaviour
     [SerializeField] private float attackCooldown = 0.5f;
 
     [Header("Target Tags")]
-    [SerializeField] private List<string> validTags = new List<string> { "enemy", "wall", "boss", "Enemy", "Wall", "Boss" };
+    [SerializeField] private List<string> validTags = new List<string> { "Enemy", "wall", "boss", "Enemy", "Wall", "Boss" };
 
     private float _nextAttackTime = 0f;
     private HashSet<Collider> _hitThisSwing = new HashSet<Collider>();
@@ -77,6 +77,12 @@ public class WeaponAttack : MonoBehaviour
         float cooldown = GetCooldownFromWeapon();
         _nextAttackTime = Time.time + cooldown;
 
+        Transform ownerTransform = GetOwnerTransform();
+        if (ownerTransform == null)
+        {
+            return;
+        }
+
         Vector3 attackOrigin = attackTransform.position + attackTransform.forward * (attackRange * 0.5f);
         Vector3 attackDirection = attackTransform.forward;
         Collider[] hits = Physics.OverlapSphere(attackOrigin, attackRadius, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore);
@@ -86,7 +92,7 @@ public class WeaponAttack : MonoBehaviour
             Collider col = hits[i];
             if (col == null || col.transform == attackTransform || col.gameObject == attackTransform.gameObject || _hitThisSwing.Contains(col)) continue;
 
-            if (!HasValidTargetTag(col.gameObject)) continue;
+            if (!HasValidTargetTag(col.gameObject, ownerTransform)) continue;
 
             Vector3 directionToTarget = (col.bounds.center - attackTransform.position).normalized;
             float angleToTarget = Vector3.Angle(attackDirection, directionToTarget);
@@ -118,11 +124,26 @@ public class WeaponAttack : MonoBehaviour
         return attackCooldown;
     }
 
-    private bool HasValidTargetTag(GameObject obj)
+    private bool HasValidTargetTag(GameObject obj, Transform owner)
     {
-        if (obj == null) return false;
+        if (obj == null || owner == null) return false;
 
         string targetTag = obj.tag;
+        string ownerTag = owner.tag;
+
+        bool ownerIsPlayer = ownerTag == "Player" || ownerTag == "Player1" || ownerTag == "Player2";
+        bool ownerIsEnemy = ownerTag == "Enemy" || ownerTag == "enemy" || ownerTag == "Boss" || ownerTag == "boss";
+
+        if (ownerIsPlayer)
+        {
+            return targetTag == "Enemy" || targetTag == "enemy" || targetTag == "Boss" || targetTag == "boss" || targetTag == "Wall" || targetTag == "wall" || targetTag == "walls";
+        }
+
+        if (ownerIsEnemy)
+        {
+            return targetTag == "Player" || targetTag == "Player1" || targetTag == "Player2" || targetTag == "Wall" || targetTag == "wall" || targetTag == "walls";
+        }
+
         foreach (string validTag in validTags)
         {
             if (string.Equals(targetTag, validTag, System.StringComparison.OrdinalIgnoreCase))
@@ -136,7 +157,43 @@ public class WeaponAttack : MonoBehaviour
 
     private void ApplyDamage(GameObject target, int damageAmount)
     {
-        target.SendMessage("TakeDamage", damageAmount, SendMessageOptions.DontRequireReceiver);
+        if (target == null)
+        {
+            return;
+        }
+
+        ApplyDamageToTarget(target, damageAmount);
         Debug.Log($"Hit {target.name} on tag '{target.tag}' for {damageAmount} damage!");
+    }
+
+    private void ApplyDamageToTarget(GameObject target, int damageAmount)
+    {
+        if (target == null)
+        {
+            return;
+        }
+
+        PlayerHealth playerHealth = target.GetComponentInParent<PlayerHealth>();
+        if (playerHealth != null)
+        {
+            playerHealth.TakeDamage(damageAmount);
+            return;
+        }
+
+        EnemyAi enemyAi = target.GetComponentInParent<EnemyAi>();
+        if (enemyAi != null)
+        {
+            enemyAi.TakeDamage(damageAmount);
+            return;
+        }
+
+        WallHealth wallHealth = target.GetComponentInParent<WallHealth>();
+        if (wallHealth != null)
+        {
+            wallHealth.TakeDamage(damageAmount);
+            return;
+        }
+
+        target.SendMessage("TakeDamage", damageAmount, SendMessageOptions.DontRequireReceiver);
     }
 }

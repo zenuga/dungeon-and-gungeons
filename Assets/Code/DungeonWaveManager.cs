@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.AI;
 
 public class DungeonWaveManager : MonoBehaviour
 {
@@ -20,17 +21,27 @@ public class DungeonWaveManager : MonoBehaviour
     private int currentWave = 0;
     private List<GameObject> activeEnemies = new List<GameObject>();
     private bool dungeonCompleted = false;
+    private bool dungeonStarted = false;
     private bool playerIsInsideTrigger = false;
     private GameObject currentTriggerObject;
 
     public void DungeonEntered()
     {
+        if (dungeonCompleted || dungeonStarted)
+        {
+            return;
+        }
+
+        dungeonStarted = true;
         StartNextWave();
     }
 
     private void Update()
     {
-        if (dungeonCompleted) return;
+        if (!dungeonStarted || dungeonCompleted)
+        {
+            return;
+        }
 
         // Clear destroyed enemies from tracking list
         activeEnemies.RemoveAll(enemy => enemy == null);
@@ -51,17 +62,62 @@ public class DungeonWaveManager : MonoBehaviour
 
     private void StartNextWave()
     {
+        if (!dungeonStarted)
+        {
+            return;
+        }
+
         currentWave++;
         int enemiesToSpawn = baseEnemiesPerWave + ((currentWave - 1) * enemiesAddedPerWave);
 
         for (int i = 0; i < enemiesToSpawn; i++)
         {
             GameObject enemyToSpawn = GetWeightedRandomEnemy();
+            if (enemyToSpawn == null)
+            {
+                continue;
+            }
+
             Transform spawnPoint = spawnPoints.Length > 0 ? spawnPoints[Random.Range(0, spawnPoints.Length)] : transform;
-            
-            GameObject spawnedEnemy = Instantiate(enemyToSpawn, spawnPoint.position, spawnPoint.rotation);
-            activeEnemies.Add(spawnedEnemy);
+            Vector3 spawnPosition = GetSpawnPositionOnNavMesh(spawnPoint.position);
+
+            GameObject spawnedEnemy = Instantiate(enemyToSpawn, spawnPosition, spawnPoint.rotation);
+            RegisterEnemy(spawnedEnemy);
         }
+    }
+
+    public void RegisterEnemy(GameObject enemy)
+    {
+        if (enemy == null)
+        {
+            return;
+        }
+
+        if (!activeEnemies.Contains(enemy))
+        {
+            activeEnemies.Add(enemy);
+        }
+    }
+
+    public void UnregisterEnemy(GameObject enemy)
+    {
+        if (enemy == null)
+        {
+            return;
+        }
+
+        activeEnemies.Remove(enemy);
+    }
+
+    private Vector3 GetSpawnPositionOnNavMesh(Vector3 desiredPosition)
+    {
+        NavMeshHit hit;
+        if (NavMesh.SamplePosition(desiredPosition, out hit, 3f, NavMesh.AllAreas))
+        {
+            return hit.position;
+        }
+
+        return desiredPosition;
     }
 
     private GameObject GetWeightedRandomEnemy()

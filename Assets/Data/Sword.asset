@@ -16,4 +16,4 @@ MonoBehaviour:
   weaponImage: {fileID: 21300000, guid: 7228e7109fc3cc38abfe71945baf03f2, type: 3}
   weaponPrefab: {fileID: 8039010276732677699, guid: a5c592cebfe3f4147be5c6a417c4e956, type: 3}
   damage: 10
-  cooldown: 1
+  cooldown: 0.01

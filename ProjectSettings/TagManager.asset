@@ -9,6 +9,10 @@ TagManager:
   - wall
   - Melee
   - Ranged
+  - Enemy
+  - Wall
+  - Bombs
+  - walls
   layers:
   - Default
   - TransparentFX
@@ -17,8 +21,8 @@ TagManager:
   - Water
   - UI
   - Player
-  - 
-  - 
+  - weapon
+  - Enemy
   - 
   - 
   - 

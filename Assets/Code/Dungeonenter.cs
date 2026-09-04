@@ -2,13 +2,21 @@ using UnityEngine;
 
 public class Dungeonenter : MonoBehaviour
 {
-    DungeonWaveManager DungeonWaveManager;
-    
-    
+    private DungeonWaveManager dungeonWaveManager;
+
     public GameObject player1;
     public GameObject player2;
 
     private int dungeonsDone;
+
+    private void Awake()
+    {
+        dungeonWaveManager = GetComponentInParent<DungeonWaveManager>();
+        if (dungeonWaveManager == null)
+        {
+            dungeonWaveManager = GetComponent<DungeonWaveManager>();
+        }
+    }
 
     private void OnTriggerEnter(Collider other)
     {
@@ -24,16 +32,22 @@ public class Dungeonenter : MonoBehaviour
         // 2. Check the incoming trigger object ('other') and teleport the players
         if (other.CompareTag("Player1"))
         {
-            // Teleport Player 1 to Player 2's position
-            player2.transform.position = player1.transform.position;
+            if (player2 != null && player1 != null)
+            {
+                player2.transform.position = player1.transform.position;
+            }
         }
         else if (other.CompareTag("Player2"))
         {
-            // Teleport Player 2 to Player 1's position
-            player1.transform.position = player2.transform.position;
+            if (player1 != null && player2 != null)
+            {
+                player1.transform.position = player2.transform.position;
+            }
         }
+
+        if (other.CompareTag("Player") || other.CompareTag("Player1") || other.CompareTag("Player2"))
         {
-            DungeonWaveManager.DungeonEntered();
+            dungeonWaveManager?.DungeonEntered();
         }
     }
 
