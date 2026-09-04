@@ -124,36 +124,16 @@ public class ChunkedMineGeneration : MonoBehaviour
             }
         }
 
-        // 4. Handle Players (Spawn on 1st generation, Teleport on 2nd+ generation)
+        // 4. Handle existing players without spawning duplicate characters.
         Vector3 spawnWorldPos = GetSpawnPosition(spawnRect, playerSpawnOffset);
 
         if (_generationCount == 1)
         {
-            // FIRST GENERATION: Spawn Player 1 & Player 2
-            if (player1Prefab != null)
-            {
-                _spawnedPlayer1 = Instantiate(player1Prefab, spawnWorldPos, Quaternion.identity);
-                EnsurePickupScript(_spawnedPlayer1);
-                _playerTransform = _spawnedPlayer1.transform;
-            }
-            if (player2Prefab != null)
-            {
-                _spawnedPlayer2 = Instantiate(player2Prefab, spawnWorldPos, Quaternion.identity);
-                EnsurePickupScript(_spawnedPlayer2);
-                if (_playerTransform == null) _playerTransform = _spawnedPlayer2.transform;
-            }
+            TeleportTaggedPlayers(spawnWorldPos);
         }
         else
         {
-            // SECOND+ GENERATION: Teleport existing players so they keep items
-            if (_spawnedPlayer1 != null)
-            {
-                TeleportPlayer(_spawnedPlayer1, playerTeleportPosition);
-            }
-            if (_spawnedPlayer2 != null)
-            {
-                TeleportPlayer(_spawnedPlayer2, playerTeleportPosition);
-            }
+            TeleportTaggedPlayers(playerTeleportPosition);
         }
 
         if (loadingImage != null) loadingImage.SetActive(false);
@@ -185,6 +165,62 @@ public class ChunkedMineGeneration : MonoBehaviour
         playerObj.transform.position = targetPosition;
 
         if (controller != null) controller.enabled = true;
+    }
+
+    private void TeleportTaggedPlayers(Vector3 targetPosition)
+    {
+        List<GameObject> players = new List<GameObject>();
+        AddPlayersWithTag("Player", players);
+        AddPlayersWithTag("Player1", players);
+        AddPlayersWithTag("Player2", players);
+
+        foreach (GameObject player in players)
+        {
+            TeleportPlayer(player, targetPosition);
+        }
+
+        if (players.Count > 0)
+        {
+            _playerTransform = players[0].transform;
+            _spawnedPlayer1 = FindPlayerWithTag("Player1");
+            _spawnedPlayer2 = FindPlayerWithTag("Player2");
+        }
+        else
+        {
+            _playerTransform = null;
+            Debug.LogWarning("MineGeneration found no existing player objects with Player, Player1, or Player2 tags.", this);
+        }
+    }
+
+    private static void AddPlayersWithTag(string tag, List<GameObject> players)
+    {
+        try
+        {
+            GameObject[] taggedPlayers = GameObject.FindGameObjectsWithTag(tag);
+            foreach (GameObject player in taggedPlayers)
+            {
+                if (player != null && !players.Contains(player))
+                {
+                    players.Add(player);
+                }
+            }
+        }
+        catch (UnityException)
+        {
+            // Ignore tags that have not been created in the project.
+        }
+    }
+
+    private static GameObject FindPlayerWithTag(string tag)
+    {
+        try
+        {
+            return GameObject.FindGameObjectWithTag(tag);
+        }
+        catch (UnityException)
+        {
+            return null;
+        }
     }
 
     private void CreateAndBuildChunk(int chunkX, int chunkZ)
