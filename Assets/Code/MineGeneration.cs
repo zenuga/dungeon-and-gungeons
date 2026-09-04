@@ -27,6 +27,8 @@ public class ChunkedMineGeneration : MonoBehaviour
     public float wallYOffset = 0.0f;
     [Tooltip("Location players will be teleported to on second and subsequent mine generations.")]
     public Vector3 playerTeleportPosition = new Vector3(0f, 1f, 0f);
+    [Tooltip("Offset from Player1's position where Player2 will be placed.")]
+    public Vector3 player2SpawnOffset = new Vector3(1.5f, 0f, 0f);
 
     [Header("Grid & Chunk Settings")]
     public int gridWidth = 250;
@@ -174,9 +176,31 @@ public class ChunkedMineGeneration : MonoBehaviour
         AddPlayersWithTag("Player1", players);
         AddPlayersWithTag("Player2", players);
 
+        GameObject player1 = FindPlayerInList(players, "Player1");
+        GameObject player2 = FindPlayerInList(players, "Player2");
+
+        if (player1 == null && players.Count > 0)
+        {
+            player1 = players[0];
+        }
+
+        if (player1 != null)
+        {
+            TeleportPlayer(player1, targetPosition);
+        }
+
+        if (player2 != null)
+        {
+            Vector3 player2Position = targetPosition + player2SpawnOffset;
+            TeleportPlayer(player2, player2Position);
+        }
+
         foreach (GameObject player in players)
         {
-            TeleportPlayer(player, targetPosition);
+            if (player != player1 && player != player2)
+            {
+                TeleportPlayer(player, targetPosition);
+            }
         }
 
         if (players.Count > 0)
@@ -221,6 +245,19 @@ public class ChunkedMineGeneration : MonoBehaviour
         {
             return null;
         }
+    }
+
+    private static GameObject FindPlayerInList(List<GameObject> players, string tag)
+    {
+        foreach (GameObject player in players)
+        {
+            if (player != null && player.CompareTag(tag))
+            {
+                return player;
+            }
+        }
+
+        return null;
     }
 
     private void CreateAndBuildChunk(int chunkX, int chunkZ)
