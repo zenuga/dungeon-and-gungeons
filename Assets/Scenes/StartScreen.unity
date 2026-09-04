@@ -1553,7 +1553,7 @@ MonoBehaviour:
     Address: 127.0.0.1
     Port: 7777
     WebSocketPath: /
-    ServerListenAddress: 127.0.0.1
+    ServerListenAddress: 0.0.0.0
     ClientBindPort: 0
   DebugSimulator:
     PacketDelayMS: 0
@@ -2716,8 +2716,8 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 377752749}
-        m_TargetAssemblyTypeName: StartScreen, Assembly-CSharp
+      - m_Target: {fileID: 1254523434}
+        m_TargetAssemblyTypeName: SessionManager, Assembly-CSharp
         m_MethodName: StartGame
         m_Mode: 1
         m_Arguments:
@@ -2796,6 +2796,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SessionManager
   maxPlayers: 2
+  minimumPlayersToStart: 2
   gameSceneName: SampleScene
   joinCodeText: {fileID: 863992449}
   joinCodeInput: {fileID: 1435975067}
