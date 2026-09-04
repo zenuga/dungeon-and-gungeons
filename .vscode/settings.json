@@ -67,5 +67,5 @@
         "*.sln": "*.csproj",
         "*.slnx": "*.csproj"
     },
-    "dotnet.defaultSolution": "dungeon-and-gungeons.slnx"
+    "dotnet.defaultSolution": "dungeon and gungeons.slnx"
 }

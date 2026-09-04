@@ -894,7 +894,7 @@ Transform:
   m_GameObject: {fileID: 8671723301485573298}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 533.2924, y: -0.42002013, z: 113.08212}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -1078,8 +1078,11 @@ MonoBehaviour:
   potionText: {fileID: 4262862493354170118}
   bombImage: {fileID: 5627272130790481821}
   bombText: {fileID: 114443448960467001}
+  activePotionEffectImage: {fileID: 0}
+  activePotionEffectCountdown: {fileID: 0}
   maxPotions: 10
   maxBombs: 15
+  bombRange: 3
 --- !u!1 &8755928825176714312
 GameObject:
   m_ObjectHideFlags: 0

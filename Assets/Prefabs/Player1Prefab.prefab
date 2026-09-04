@@ -123,7 +123,7 @@ AudioListener:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 519880774383046997}
-  m_Enabled: 1
+  m_Enabled: 0
 --- !u!114 &2937331494399882995
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -559,7 +559,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 0
+  GlobalObjectIdHash: 3448812692
   InScenePlacedSourceGlobalObjectIdHash: 0
   m_InScenePlacedDisabledByDefault: 0
   DeferredDespawnTick: 0
@@ -3397,8 +3397,11 @@ MonoBehaviour:
   potionText: {fileID: 7755042085367161267}
   bombImage: {fileID: 8900074555360056101}
   bombText: {fileID: 2622718647841061094}
+  activePotionEffectImage: {fileID: 0}
+  activePotionEffectCountdown: {fileID: 0}
   maxPotions: 10
   maxBombs: 15
+  bombRange: 3
 --- !u!1 &8987601014569882829
 GameObject:
   m_ObjectHideFlags: 0
