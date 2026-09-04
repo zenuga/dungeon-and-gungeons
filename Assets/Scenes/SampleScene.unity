@@ -862,6 +862,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1950396549}
   - component: {fileID: 1950396548}
+  - component: {fileID: 1950396550}
   m_Layer: 0
   m_Name: MineGeneration
   m_TagString: Untagged
@@ -886,7 +887,7 @@ MonoBehaviour:
   dungeonPrefab: {fileID: 950601075600074490, guid: 90c0a59319f36675b9369824ce481a53, type: 3}
   shopPrefab: {fileID: 5853818831316959973, guid: 945eab0e9e8045f21830148436bee066, type: 3}
   player1Prefab: {fileID: 1468520820315375280, guid: 7ec0fdf7870fb51bab08c7195b63e867, type: 3}
-  player2Prefab: {fileID: 8671723301485573298, guid: 6a4eba899b63be455885c09b2f4be712, type: 3}
+  player2Prefab: {fileID: 0}
   AnimationImage: {fileID: 1727700905}
   level: 1
   loadingImage: {fileID: 1727700903}
@@ -918,6 +919,33 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1950396550
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1950396547}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 2969707325
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  m_InScenePlacedDisabledByDefault: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  m_InScenePlaced: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 0
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
 --- !u!1001 &7587099912424168493
 PrefabInstance:
   m_ObjectHideFlags: 0
