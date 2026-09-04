@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -159,6 +160,12 @@ public class ChunkedMineGeneration : MonoBehaviour
     private void TeleportPlayer(GameObject playerObj, Vector3 targetPosition)
     {
         if (playerObj == null) return;
+
+        NetworkObject networkObject = playerObj.GetComponent<NetworkObject>();
+        if (networkObject != null && networkObject.IsSpawned && NetworkManager.Singleton != null && !NetworkManager.Singleton.IsServer)
+        {
+            return;
+        }
 
         // Temporarily disable CharacterController during transform modification to prevent position snapping back
         CharacterController controller = playerObj.GetComponent<CharacterController>();
