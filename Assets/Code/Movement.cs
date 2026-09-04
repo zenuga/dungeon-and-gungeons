@@ -82,6 +82,11 @@ public class PlayerController : MonoBehaviour
 
     private void Update()
     {
+        if (!NetworkOwnership.CanControl(this))
+        {
+            return;
+        }
+
         // Keep player grounded properly
         if (_characterController.isGrounded && _velocity.y < 0)
         {

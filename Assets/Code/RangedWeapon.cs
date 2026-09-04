@@ -33,6 +33,11 @@ public class RangedWeapon : MonoBehaviour
 
     private void Update()
     {
+        if (!NetworkOwnership.CanControl(this))
+        {
+            return;
+        }
+
         if (projectilePrefab == null || Keyboard.current == null || Mouse.current == null)
         {
             return;

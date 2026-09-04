@@ -27,6 +27,11 @@ public class WeaponAttack : MonoBehaviour
 
     private void Update()
     {
+        if (!NetworkOwnership.CanControl(this))
+        {
+            return;
+        }
+
         if (Time.time < _nextAttackTime || Keyboard.current == null) return;
 
         bool ePressed = Keyboard.current.eKey.wasPressedThisFrame;

@@ -14,7 +14,7 @@ public class SessionManager : MonoBehaviour
     public static SessionManager Instance;
 
     [Header("Settings")]
-    [SerializeField] private int maxPlayers = 4;
+    [SerializeField] private int maxPlayers = 2;
     [SerializeField] private int minimumPlayersToStart = 2;
     [SerializeField] private string gameSceneName = "GameScene";
 
@@ -29,6 +29,9 @@ public class SessionManager : MonoBehaviour
 
     private async void Awake()
     {
+        maxPlayers = Mathf.Clamp(maxPlayers, 1, 2);
+        minimumPlayersToStart = Mathf.Clamp(minimumPlayersToStart, 1, maxPlayers);
+
         if (Instance != null && Instance != this)
         {
             Destroy(gameObject);

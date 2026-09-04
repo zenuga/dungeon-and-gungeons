@@ -81,6 +81,11 @@ public class PlayerPickupManager : MonoBehaviour
 
     private void Update()
     {
+        if (!NetworkOwnership.CanControl(this))
+        {
+            return;
+        }
+
         UpdatePotionEffect();
         if (Keyboard.current == null) return;
 
