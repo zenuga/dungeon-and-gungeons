@@ -27,6 +27,9 @@ public class NetworkPlayerSpawner : NetworkBehaviour
             return;
         }
 
+        RegisterPlayerPrefab(player1Prefab);
+        RegisterPlayerPrefab(player2Prefab);
+
         NetworkManager.OnClientConnectedCallback += SpawnPlayerForClient;
         NetworkManager.OnClientDisconnectCallback += RemovePlayerForClient;
 
@@ -76,6 +79,16 @@ public class NetworkPlayerSpawner : NetworkBehaviour
         NetworkObject player = Instantiate(prefab, spawnPosition, Quaternion.identity);
         player.SpawnAsPlayerObject(clientId, true);
         playersByClient.Add(clientId, player);
+    }
+
+    private void RegisterPlayerPrefab(NetworkObject prefab)
+    {
+        if (prefab == null || NetworkManager.NetworkConfig.Prefabs.Contains(prefab.gameObject))
+        {
+            return;
+        }
+
+        NetworkManager.AddNetworkPrefab(prefab.gameObject);
     }
 
     private static void UpdateLocalPlayerCameras()
