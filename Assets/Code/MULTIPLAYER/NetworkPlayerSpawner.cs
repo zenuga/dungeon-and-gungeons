@@ -15,6 +15,11 @@ public class NetworkPlayerSpawner : NetworkBehaviour
 
     private readonly Dictionary<ulong, NetworkObject> playersByClient = new Dictionary<ulong, NetworkObject>();
 
+    private void Update()
+    {
+        UpdateLocalPlayerCameras();
+    }
+
     public override void OnNetworkSpawn()
     {
         if (!IsServer)
@@ -71,6 +76,29 @@ public class NetworkPlayerSpawner : NetworkBehaviour
         NetworkObject player = Instantiate(prefab, spawnPosition, Quaternion.identity);
         player.SpawnAsPlayerObject(clientId, true);
         playersByClient.Add(clientId, player);
+    }
+
+    private static void UpdateLocalPlayerCameras()
+    {
+        NetworkObject[] players = FindObjectsByType<NetworkObject>(FindObjectsSortMode.None);
+        foreach (NetworkObject player in players)
+        {
+            if (!player.IsSpawned || player.GetComponent<PlayerController>() == null)
+            {
+                continue;
+            }
+
+            bool isLocalPlayer = player.IsOwner;
+            foreach (Camera playerCamera in player.GetComponentsInChildren<Camera>(true))
+            {
+                playerCamera.enabled = isLocalPlayer;
+            }
+
+            foreach (AudioListener audioListener in player.GetComponentsInChildren<AudioListener>(true))
+            {
+                audioListener.enabled = isLocalPlayer;
+            }
+        }
     }
 
     private void RemovePlayerForClient(ulong clientId)
