@@ -15,11 +15,10 @@ public class PlayerController : MonoBehaviour
     [Header("Player Setup")]
     [SerializeField] private PlayerType playerType = PlayerType.Player1;
     [SerializeField] private string playerLayerName = "Player";
-    [SerializeField] private GameObject visualModel; // GameObject that rotates (defaults to this.gameObject if left empty)
+    [SerializeField] private GameObject visualModel;
 
     [Header("Movement Settings")]
     [SerializeField] private float moveSpeed = 5.0f;
-    [SerializeField] private float rotationSpeed = 15.0f;
     [SerializeField] private float gravity = -9.81f;
 
     private CharacterController _characterController;
@@ -27,6 +26,7 @@ public class PlayerController : MonoBehaviour
     private float speedMultiplier = 1f;
 
     public Vector3 FacingDirection => visualModel != null ? visualModel.transform.forward : transform.forward;
+    public Transform VisualModelTransform => visualModel != null ? visualModel.transform : transform;
 
     public void SetSpeedMultiplier(float multiplier)
     {
@@ -40,6 +40,11 @@ public class PlayerController : MonoBehaviour
         if (GetComponent<NetworkObject>() != null && GetComponent<NetworkTransform>() == null)
         {
             gameObject.AddComponent<NetworkTransform>();
+        }
+
+        if (GetComponent<PlayerMouseAim>() == null)
+        {
+            gameObject.AddComponent<PlayerMouseAim>();
         }
 
         // Default visual object to this transform if unassigned
@@ -100,7 +105,7 @@ public class PlayerController : MonoBehaviour
             _velocity.y = -2f;
         }
 
-        // Get inputs based on assigned player type
+        // Both players use the same WASD movement on their own computer.
         Vector2 inputVector = GetInput();
 
         // If opposing keys are pressed, inputVector cancels out to zero
@@ -113,13 +118,6 @@ public class PlayerController : MonoBehaviour
             Vector3 moveDirection = new Vector3(inputVector.x, 0f, inputVector.y);
             _characterController.Move(moveDirection * moveSpeed * speedMultiplier * Time.deltaTime);
 
-            // Handle direction rotation (W/I = North, S/K = South, A/J = West, D/L = East)
-            Quaternion targetRotation = Quaternion.LookRotation(moveDirection, Vector3.up);
-            visualModel.transform.rotation = Quaternion.Slerp(
-                visualModel.transform.rotation, 
-                targetRotation, 
-                rotationSpeed * Time.deltaTime
-            );
         }
 
         // Apply continuous gravity (No Jump functionality)
@@ -133,22 +131,10 @@ public class PlayerController : MonoBehaviour
 
         Vector2 input = Vector2.zero;
 
-        if (playerType == PlayerType.Player1)
-        {
-            // WASD Controls
-            if (Keyboard.current.wKey.isPressed) input.y += 1f;
-            if (Keyboard.current.sKey.isPressed) input.y -= 1f;
-            if (Keyboard.current.aKey.isPressed) input.x -= 1f;
-            if (Keyboard.current.dKey.isPressed) input.x += 1f;
-        }
-        else if (playerType == PlayerType.Player2)
-        {
-            // IJKL Controls
-            if (Keyboard.current.iKey.isPressed) input.y += 1f;
-            if (Keyboard.current.kKey.isPressed) input.y -= 1f;
-            if (Keyboard.current.jKey.isPressed) input.x -= 1f;
-            if (Keyboard.current.lKey.isPressed) input.x += 1f;
-        }
+        if (Keyboard.current.wKey.isPressed) input.y += 1f;
+        if (Keyboard.current.sKey.isPressed) input.y -= 1f;
+        if (Keyboard.current.aKey.isPressed) input.x -= 1f;
+        if (Keyboard.current.dKey.isPressed) input.x += 1f;
 
         return input;
     }
