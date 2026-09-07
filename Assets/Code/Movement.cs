@@ -4,7 +4,7 @@ using Unity.Netcode;
 using Unity.Netcode.Components;
 
 [RequireComponent(typeof(CharacterController))]
-public class PlayerController : MonoBehaviour
+public class PlayerController : NetworkBehaviour
 {
     public enum PlayerType
     {
@@ -40,11 +40,6 @@ public class PlayerController : MonoBehaviour
         if (GetComponent<NetworkObject>() != null && GetComponent<NetworkTransform>() == null)
         {
             gameObject.AddComponent<NetworkTransform>();
-        }
-
-        if (GetComponent<PlayerMouseAim>() == null)
-        {
-            gameObject.AddComponent<PlayerMouseAim>();
         }
 
         // Default visual object to this transform if unassigned
@@ -94,7 +89,7 @@ public class PlayerController : MonoBehaviour
 
     private void Update()
     {
-        if (!NetworkOwnership.CanControl(this))
+        if ((IsSpawned && !IsOwner) || !NetworkOwnership.CanControl(this))
         {
             return;
         }

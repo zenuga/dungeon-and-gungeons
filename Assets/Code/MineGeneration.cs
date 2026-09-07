@@ -312,6 +312,11 @@ public class ChunkedMineGeneration : MonoBehaviour
             Vector2Int chunkCoord = kvp.Key;
             ChunkData chunkData = kvp.Value;
 
+            if (chunkData == null || chunkData.ChunkObject == null)
+            {
+                continue;
+            }
+
             // Calculate chunk distance from player
             int distX = Mathf.Abs(chunkCoord.x - _currentPlayerChunk.x);
             int distZ = Mathf.Abs(chunkCoord.y - _currentPlayerChunk.y);

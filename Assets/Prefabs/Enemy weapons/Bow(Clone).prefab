@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 4931333140243072201}
   - component: {fileID: 539508392792491213}
   - component: {fileID: 6989867899524552119}
+  - component: {fileID: -5530034911185795031}
   - component: {fileID: 8669185720619223763}
   - component: {fileID: 3458010535496468135}
   - component: {fileID: 4327668542869246364}
@@ -110,6 +111,33 @@ MonoBehaviour:
   potionType: 0
   quantity: 1
   weaponData: {fileID: 11400000, guid: d3c55173fd08446529f383f523bb5c59, type: 2}
+--- !u!114 &-5530034911185795031
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8253426937756891954}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 1558044411
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  m_InScenePlacedDisabledByDefault: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  m_InScenePlaced: 0
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
 --- !u!114 &8669185720619223763
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -122,16 +150,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5b4c147efea3b4d6c890c0c603b4732d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RangedWeapon
+  ShowTopMostFoldoutHeaderGroup: 1
   projectilePrefab: {fileID: 3496048274240114491, guid: c983b00dfe6625349b95bc550bd65a6a, type: 3}
   muzzlePoint: {fileID: 307314820234287879}
   fireRate: 0.5
   maxAimDistance: 5
   obstacleMask:
     serializedVersion: 2
-    m_Bits: 1
+    m_Bits: 321
   EnemyTags:
-  - Enemy
-  - Boss
+  - player1
+  - player2
 --- !u!65 &3458010535496468135
 BoxCollider:
   m_ObjectHideFlags: 0

@@ -2864,8 +2864,8 @@ GameObject:
   m_Component:
   - component: {fileID: 7241729558534245746}
   - component: {fileID: 5147466260025464986}
-  - component: {fileID: 2134821178231584483}
   - component: {fileID: 9000000000000000001}
+  - component: {fileID: 2134821178231584483}
   - component: {fileID: 6638607713950294724}
   - component: {fileID: 8058023396980503578}
   m_Layer: 6
@@ -2884,7 +2884,7 @@ Transform:
   m_GameObject: {fileID: 8671723301485573298}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 551.2924, y: -0.42002013, z: 103.90621}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -2923,23 +2923,6 @@ CharacterController:
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &2134821178231584483
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8671723301485573298}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5fea6daec7d458b3c9f49ca120f5489c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerController
-  playerType: 1
-  playerLayerName: Player
-  visualModel: {fileID: 8671723301485573298}
-  moveSpeed: 5
-  gravity: -9.81
 --- !u!114 &9000000000000000001
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2959,7 +2942,7 @@ MonoBehaviour:
   Ownership: 1
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
-  m_InScenePlaced: 1
+  m_InScenePlaced: 0
   ActiveSceneSynchronization: 0
   SceneMigrationSynchronization: 0
   SpawnWithObservers: 1
@@ -2967,6 +2950,24 @@ MonoBehaviour:
   AutoObjectParentSync: 1
   SyncOwnerTransformWhenParented: 1
   AllowOwnerToParent: 0
+--- !u!114 &2134821178231584483
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8671723301485573298}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5fea6daec7d458b3c9f49ca120f5489c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerController
+  ShowTopMostFoldoutHeaderGroup: 1
+  playerType: 1
+  playerLayerName: Player
+  visualModel: {fileID: 9192138319999135469}
+  moveSpeed: 5
+  gravity: -9.81
 --- !u!114 &6638607713950294724
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -12,12 +12,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ffb886eae21f9d925914b4c4958b713b, type: 3}
   m_Name: BetaTestEnemy
   m_EditorClassIdentifier: Assembly-CSharp::EnemyData
-  walkSpeed: 2.5
-  stopDistance: 1.25
+  maxHealth: 100
+  walkSpeed: 1.5
+  stopDistance: 2.25
   rotationSpeed: 5
   attackType: 0
-  minAttackDistance: 0.8
-  maxAttackDistance: 2.2
+  minAttackDistance: 2
+  maxAttackDistance: 3
   attackCooldown: 1
   weaponPrefab: {fileID: 8039010276732677699, guid: a5c592cebfe3f4147be5c6a417c4e956, type: 3}
   projectilePrefab: {fileID: 0}

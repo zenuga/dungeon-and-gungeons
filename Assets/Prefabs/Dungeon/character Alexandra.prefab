@@ -594,6 +594,9 @@ PrefabInstance:
       addedObject: {fileID: 6279282128423210824}
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 2b2738d0691349044b2a4d86da8da239, type: 3}
       insertIndex: -1
+      addedObject: {fileID: -4600887304870249114}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 2b2738d0691349044b2a4d86da8da239, type: 3}
+      insertIndex: -1
       addedObject: {fileID: 2834533064618703918}
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 2b2738d0691349044b2a4d86da8da239, type: 3}
       insertIndex: -1
@@ -626,6 +629,33 @@ NavMeshAgent:
   m_BaseOffset: 0
   m_WalkableMask: 1
   m_ObstacleAvoidanceType: 4
+--- !u!114 &-4600887304870249114
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5839397389604201623}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 1258830792
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  m_InScenePlacedDisabledByDefault: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  m_InScenePlaced: 0
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
 --- !u!114 &2834533064618703918
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -638,8 +668,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 049e5b8aa9c27c850a5c772f88be1353, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyAi
+  ShowTopMostFoldoutHeaderGroup: 1
   enemyData: {fileID: 11400000, guid: 9cdb43be3c28ec255af563151649fefd, type: 2}
-  projectileSpawnPoint: {fileID: 6808149721776374513}
+  projectileSpawnPoint: {fileID: 7267576067222533369, guid: f06e060dca8895eefbca5b0b1201cfbd, type: 3}
   targetTags:
   - Player1
   - Player2
@@ -670,10 +701,5 @@ CapsuleCollider:
 --- !u!4 &6503871108230676013 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 2b2738d0691349044b2a4d86da8da239, type: 3}
-  m_PrefabInstance: {fileID: 6757894426778835398}
-  m_PrefabAsset: {fileID: 0}
---- !u!4 &6808149721776374513 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 266756041941277495, guid: 2b2738d0691349044b2a4d86da8da239, type: 3}
   m_PrefabInstance: {fileID: 6757894426778835398}
   m_PrefabAsset: {fileID: 0}

@@ -76,8 +76,6 @@ public class EnemyAi : NetworkBehaviour
             return;
         }
 
-        Debug.Log(name + " health: " + HealthText, this);
-
         if (target == null)
         {
             target = FindClosestTarget();
@@ -99,7 +97,7 @@ public class EnemyAi : NetworkBehaviour
             StopMovement();
         }
 
-        if (distanceToTarget >= MinAttackDistance && distanceToTarget <= MaxAttackDistance && Time.time >= nextAttackTime)
+        if (distanceToTarget <= MaxAttackDistance && Time.time >= nextAttackTime)
         {
             nextAttackTime = Time.time + AttackCooldown;
             PerformAttack(target.position);
@@ -145,8 +143,6 @@ public class EnemyAi : NetworkBehaviour
 
     protected virtual void SwingAttack()
     {
-        Debug.Log(name + " performs a melee swing attack.");
-
         Collider[] hits = Physics.OverlapSphere(transform.position + transform.forward * (StopDistance + 0.5f), 1.2f, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore);
         foreach (Collider hit in hits)
         {
@@ -155,11 +151,10 @@ public class EnemyAi : NetworkBehaviour
                 continue;
             }
 
-            string targetTag = hit.gameObject.tag;
-            if (targetTag == "Player" || targetTag == "Player1" || targetTag == "Player2")
+            PlayerHealth playerHealth = hit.GetComponentInParent<PlayerHealth>();
+            if (playerHealth != null)
             {
-                ApplyDamageToTarget(hit.gameObject, 10);
-                Debug.Log("Enemy hit player: " + hit.gameObject.name);
+                playerHealth.TakeDamage(10);
             }
         }
     }
@@ -202,7 +197,19 @@ public class EnemyAi : NetworkBehaviour
             return;
         }
 
-        currentWeapon = Instantiate(WeaponPrefab, projectileSpawnPoint != null ? projectileSpawnPoint : transform);
+        Transform weaponPoint = projectileSpawnPoint != null ? projectileSpawnPoint : transform;
+        currentWeapon = Instantiate(
+            WeaponPrefab,
+            weaponPoint.position,
+            weaponPoint.rotation);
+
+        NetworkObject weaponNetworkObject = currentWeapon.GetComponent<NetworkObject>();
+        if (weaponNetworkObject != null && !weaponNetworkObject.IsSpawned)
+        {
+            weaponNetworkObject.enabled = false;
+        }
+
+        currentWeapon.transform.SetParent(transform, true);
     }
 
     protected virtual bool weaponPrefabExists()
@@ -268,8 +275,6 @@ public class EnemyAi : NetworkBehaviour
     {
 
         currentHealth = Mathf.Max(0, currentHealth - amount);
-        Debug.Log(name + " health: " + HealthText, this);
-
         if (currentHealth <= 0)
         {
             OnDeath();

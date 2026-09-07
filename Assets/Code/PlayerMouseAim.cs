@@ -4,7 +4,7 @@ using UnityEngine.InputSystem;
 public class PlayerMouseAim : MonoBehaviour
 {
     [SerializeField] private float rotationSpeed = 20f;
-    [SerializeField] private float modelBaseRotation = -90f;
+    [SerializeField] private GameObject rotationOnlyObject;
 
     private void Update()
     {
@@ -12,11 +12,6 @@ public class PlayerMouseAim : MonoBehaviour
         {
             return;
         }
-
-        PlayerController playerController = GetComponent<PlayerController>();
-        Transform modelTransform = playerController != null
-            ? playerController.VisualModelTransform
-            : transform;
 
         Ray mouseRay = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
         Plane movementPlane = new Plane(Vector3.up, transform.position);
@@ -36,13 +31,20 @@ public class PlayerMouseAim : MonoBehaviour
         }
 
         Quaternion aimRotation = Quaternion.LookRotation(aimDirection.normalized, Vector3.up);
-        Quaternion targetRotation = Quaternion.Euler(
-            modelBaseRotation,
-            aimRotation.eulerAngles.y,
-            0f);
-        modelTransform.rotation = Quaternion.Slerp(
-            modelTransform.rotation,
+        float targetYaw = aimRotation.eulerAngles.y;
+        Quaternion targetRotation = Quaternion.Euler(-90f, targetYaw, 0f);
+        transform.localRotation = Quaternion.Slerp(
+            transform.localRotation,
             targetRotation,
             rotationSpeed * Time.deltaTime);
+
+        if (rotationOnlyObject != null && rotationOnlyObject.transform != transform)
+        {
+            Quaternion rotationOnlyTarget = Quaternion.Euler(0f, targetYaw, 0f);
+            rotationOnlyObject.transform.localRotation = Quaternion.Slerp(
+                rotationOnlyObject.transform.localRotation,
+                rotationOnlyTarget,
+                rotationSpeed * Time.deltaTime);
+        }
     }
 }
