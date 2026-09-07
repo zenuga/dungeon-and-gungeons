@@ -30,6 +30,10 @@ public class ChunkedMineGeneration : MonoBehaviour
     public Vector3 playerTeleportPosition = new Vector3(0f, 1f, 0f);
     [Tooltip("Offset from Player1's position where Player2 will be placed.")]
     public Vector3 player2SpawnOffset = new Vector3(1.5f, 0f, 0f);
+    [Tooltip("Optional explicit spawn point for Player 1. If empty, the generated mine spawn is used.")]
+    public Transform player1SpawnPoint;
+    [Tooltip("Optional explicit spawn point for Player 2. If empty, Player 2 uses the legacy offset fallback.")]
+    public Transform player2SpawnPoint;
 
     [Header("Grid & Chunk Settings")]
     public int gridWidth = 250;
@@ -132,7 +136,7 @@ public class ChunkedMineGeneration : MonoBehaviour
 
         if (_generationCount == 1)
         {
-            TeleportTaggedPlayers(spawnWorldPos);
+            TeleportTaggedPlayers(GetPlayer1SpawnPosition(spawnWorldPos));
         }
         else
         {
@@ -198,7 +202,9 @@ public class ChunkedMineGeneration : MonoBehaviour
 
         if (player2 != null)
         {
-            Vector3 player2Position = targetPosition + player2SpawnOffset;
+            Vector3 player2Position = _generationCount == 1
+                ? GetPlayer2SpawnPosition(targetPosition)
+                : targetPosition + player2SpawnOffset;
             TeleportPlayer(player2, player2Position);
         }
 
@@ -513,6 +519,16 @@ public class ChunkedMineGeneration : MonoBehaviour
     private Vector3 GetSpawnPosition(RectInt rect, Vector3 offset)
     {
         return GetWorldCenterPosition(rect) + offset;
+    }
+
+    private Vector3 GetPlayer1SpawnPosition(Vector3 fallbackPosition)
+    {
+        return player1SpawnPoint != null ? player1SpawnPoint.position : fallbackPosition;
+    }
+
+    private Vector3 GetPlayer2SpawnPosition(Vector3 player1Position)
+    {
+        return player2SpawnPoint != null ? player2SpawnPoint.position : player1Position + player2SpawnOffset;
     }
 
     private void SpawnSingleScaledFloor()
