@@ -43,6 +43,7 @@ public class SessionManager : MonoBehaviour
 
         Instance = this;
         DontDestroyOnLoad(gameObject);
+        SceneManager.sceneLoaded += OnSceneLoaded;
 
         await InitializeUnityServices();
     }
@@ -55,6 +56,7 @@ public class SessionManager : MonoBehaviour
         }
 
         shuttingDown = true;
+        SceneManager.sceneLoaded -= OnSceneLoaded;
 
         if (currentSession != null)
         {
@@ -63,6 +65,16 @@ public class SessionManager : MonoBehaviour
         }
 
         Instance = null;
+    }
+
+    private void OnSceneLoaded(Scene scene, LoadSceneMode loadSceneMode)
+    {
+        if (shuttingDown || scene.name != gameSceneName)
+        {
+            return;
+        }
+
+        SetStatus("In game");
     }
 
     private async Task InitializeUnityServices()
@@ -349,7 +361,7 @@ public class SessionManager : MonoBehaviour
             Debug.Log("Players: " + currentSession.PlayerCount);
             Debug.Log("=================================");
 
-            SetStatus("Joined! Waiting for host...");
+            SetStatus("Connected. Loading game...");
 
             // The client does NOT load the GameScene itself.
             // The host controls the network scene.
