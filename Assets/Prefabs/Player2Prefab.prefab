@@ -293,7 +293,7 @@ GameObject:
   - component: {fileID: 974157019887445430}
   m_Layer: 6
   m_Name: Camera
-  m_TagString: Untagged
+  m_TagString: MainCamera
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -2889,13 +2889,13 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 9192138319999135469}
+  - {fileID: 369711544517188654}
   - {fileID: 3666025517401912817}
   - {fileID: 5906451791358255546}
   - {fileID: 840098832119753000}
   - {fileID: 5662031012401174691}
   - {fileID: 7628234121105843296}
   - {fileID: 5023675559057443123}
-  - {fileID: 369711544517188654}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!143 &5147466260025464986

@@ -112,6 +112,15 @@ public class NetworkPlayerSpawner : NetworkBehaviour
             foreach (Camera playerCamera in player.GetComponentsInChildren<Camera>(true))
             {
                 playerCamera.enabled = isLocalPlayer;
+
+                if (isLocalPlayer)
+                {
+                    playerCamera.tag = "MainCamera";
+                }
+                else if (playerCamera.CompareTag("MainCamera"))
+                {
+                    playerCamera.tag = "Untagged";
+                }
             }
 
             foreach (AudioListener audioListener in player.GetComponentsInChildren<AudioListener>(true))
