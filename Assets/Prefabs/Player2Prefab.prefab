@@ -2965,7 +2965,7 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   playerType: 1
   playerLayerName: Player
-  visualModel: {fileID: 9192138319999135469}
+  visualModel: {fileID: 8416666903961985974}
   moveSpeed: 5
   gravity: -9.81
 --- !u!114 &6638607713950294724
