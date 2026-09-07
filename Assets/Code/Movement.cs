@@ -92,6 +92,11 @@ public class PlayerController : NetworkBehaviour
         SetLocalCamera(IsOwner);
     }
 
+    public override void OnGainedOwnership()
+    {
+        SetLocalCamera(true);
+    }
+
     private void SetLocalCamera(bool isLocalPlayer)
     {
         foreach (Camera playerCamera in GetComponentsInChildren<Camera>(true))
