@@ -57,6 +57,13 @@ public class NetworkPlayerSpawner : NetworkBehaviour
             return;
         }
 
+        if (NetworkManager.ConnectedClients.TryGetValue(clientId, out NetworkClient client) &&
+            client.PlayerObject != null)
+        {
+            playersByClient[clientId] = client.PlayerObject;
+            return;
+        }
+
         if (playersByClient.Count >= 2)
         {
             Debug.LogWarning("A third client tried to spawn, but this game supports only two players.");

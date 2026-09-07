@@ -1,6 +1,7 @@
 using UnityEngine;
+using Unity.Netcode;
 
-public class ExplosionArea : MonoBehaviour
+public class ExplosionArea : NetworkBehaviour
 {
     [SerializeField] private float radius = 2.5f;
     [SerializeField] private int damage = 10;

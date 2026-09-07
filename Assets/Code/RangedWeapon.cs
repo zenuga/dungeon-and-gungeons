@@ -1,7 +1,8 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Unity.Netcode;
 
-public class RangedWeapon : MonoBehaviour
+public class RangedWeapon : NetworkBehaviour
 {
     [Header("Weapon Setup")]
     [SerializeField] private GameObject projectilePrefab;

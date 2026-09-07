@@ -4,8 +4,9 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
 using TMPro;
+using Unity.Netcode;
 
-public class PlayerPickupManager : MonoBehaviour
+public class PlayerPickupManager : NetworkBehaviour
 {
     public enum PlayerType { Player1, Player2 }
 

@@ -1,4 +1,5 @@
 using UnityEngine;
+using Unity.Netcode;
 
 public enum ProjectileType
 {
@@ -6,7 +7,7 @@ public enum ProjectileType
     Explosive
 }
 
-public class Projectile : MonoBehaviour
+public class Projectile : NetworkBehaviour
 {
     [Header("Projectile")]
     [SerializeField] private float speed = 12f;

@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.UI;
+using Unity.Netcode;
 
 public enum EnemyAttackType
 {
@@ -8,7 +9,7 @@ public enum EnemyAttackType
     Ranged
 }
 
-public class EnemyAi : MonoBehaviour
+public class EnemyAi : NetworkBehaviour
 {
     [Header("Enemy Data")]
     [SerializeField] protected EnemyData enemyData;
@@ -70,6 +71,11 @@ public class EnemyAi : MonoBehaviour
 
     protected virtual void Update()
     {
+        if (IsSpawned && !IsServer)
+        {
+            return;
+        }
+
         Debug.Log(name + " health: " + HealthText, this);
 
         if (target == null)
@@ -242,6 +248,24 @@ public class EnemyAi : MonoBehaviour
         {
             return;
         }
+
+        if (IsSpawned && !IsServer)
+        {
+            TakeDamageServerRpc(amount);
+            return;
+        }
+
+        ApplyDamage(amount);
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void TakeDamageServerRpc(int amount)
+    {
+        ApplyDamage(amount);
+    }
+
+    private void ApplyDamage(int amount)
+    {
 
         currentHealth = Mathf.Max(0, currentHealth - amount);
         Debug.Log(name + " health: " + HealthText, this);

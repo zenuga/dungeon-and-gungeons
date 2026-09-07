@@ -1,6 +1,7 @@
 using UnityEngine;
+using Unity.Netcode;
 
-public class WallHealth : MonoBehaviour
+public class WallHealth : NetworkBehaviour
 {
     private Depth depth;
     public int Health = 10;
@@ -27,10 +28,39 @@ public class WallHealth : MonoBehaviour
 
     public void TakeDamage(int amount)
     {
+        if (amount <= 0)
+        {
+            return;
+        }
+
+        if (IsSpawned && !IsServer)
+        {
+            TakeDamageServerRpc(amount);
+            return;
+        }
+
+        ApplyDamage(amount);
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void TakeDamageServerRpc(int amount)
+    {
+        ApplyDamage(amount);
+    }
+
+    private void ApplyDamage(int amount)
+    {
         Health -= amount;
         if (Health <= 0)
         {
-            Destroy(gameObject);
+            if (IsSpawned && IsServer)
+            {
+                NetworkObject.Despawn(true);
+            }
+            else
+            {
+                Destroy(gameObject);
+            }
         }
     }
 }

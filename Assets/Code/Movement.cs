@@ -1,5 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Unity.Netcode;
+using Unity.Netcode.Components;
 
 [RequireComponent(typeof(CharacterController))]
 public class PlayerController : MonoBehaviour
@@ -34,6 +36,11 @@ public class PlayerController : MonoBehaviour
     private void Awake()
     {
         _characterController = GetComponent<CharacterController>();
+
+        if (GetComponent<NetworkObject>() != null && GetComponent<NetworkTransform>() == null)
+        {
+            gameObject.AddComponent<NetworkTransform>();
+        }
 
         // Default visual object to this transform if unassigned
         if (visualModel == null)

@@ -1,8 +1,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Unity.Netcode;
 
-public class WeaponAttack : MonoBehaviour
+public class WeaponAttack : NetworkBehaviour
 {
     [Header("Weapon Data")]
     [SerializeField] private WeaponData weaponData;
