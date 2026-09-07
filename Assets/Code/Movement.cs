@@ -87,6 +87,33 @@ public class PlayerController : NetworkBehaviour
         }
     }
 
+    public override void OnNetworkSpawn()
+    {
+        SetLocalCamera(IsOwner);
+    }
+
+    private void SetLocalCamera(bool isLocalPlayer)
+    {
+        foreach (Camera playerCamera in GetComponentsInChildren<Camera>(true))
+        {
+            playerCamera.enabled = isLocalPlayer;
+
+            if (isLocalPlayer)
+            {
+                playerCamera.tag = "MainCamera";
+            }
+            else if (playerCamera.CompareTag("MainCamera"))
+            {
+                playerCamera.tag = "Untagged";
+            }
+        }
+
+        foreach (AudioListener audioListener in GetComponentsInChildren<AudioListener>(true))
+        {
+            audioListener.enabled = isLocalPlayer;
+        }
+    }
+
     private void Update()
     {
         if ((IsSpawned && !IsOwner) || !NetworkOwnership.CanControl(this))
