@@ -26,6 +26,9 @@ public class SessionManager : MonoBehaviour
     private ISession currentSession;
     private bool servicesInitialized = false;
     private bool gameStarting = false;
+    private bool joinInProgress = false;
+    private bool shuttingDown = false;
+    private bool waitingToStartGame = false;
 
     private async void Awake()
     {
@@ -44,6 +47,24 @@ public class SessionManager : MonoBehaviour
         await InitializeUnityServices();
     }
 
+    private void OnDestroy()
+    {
+        if (Instance != this)
+        {
+            return;
+        }
+
+        shuttingDown = true;
+
+        if (currentSession != null)
+        {
+            currentSession.PlayerJoined -= OnPlayerJoined;
+            currentSession.PlayerLeaving -= OnPlayerLeft;
+        }
+
+        Instance = null;
+    }
+
     private async Task InitializeUnityServices()
     {
         try
@@ -56,6 +77,11 @@ public class SessionManager : MonoBehaviour
             if (!AuthenticationService.Instance.IsSignedIn)
             {
                 await AuthenticationService.Instance.SignInAnonymouslyAsync();
+            }
+
+            if (shuttingDown || !Application.isPlaying)
+            {
+                return;
             }
 
             servicesInitialized = true;
@@ -82,6 +108,11 @@ public class SessionManager : MonoBehaviour
 
     public async void CreateGame()
     {
+        if (shuttingDown || !Application.isPlaying)
+        {
+            return;
+        }
+
         Debug.Log("=================================");
         Debug.Log("CREATE GAME");
         Debug.Log("=================================");
@@ -118,6 +149,11 @@ public class SessionManager : MonoBehaviour
             currentSession =
                 await MultiplayerService.Instance.CreateSessionAsync(options);
 
+            if (shuttingDown || !Application.isPlaying)
+            {
+                return;
+            }
+
             Debug.Log("=================================");
             Debug.Log("SESSION CREATED");
             Debug.Log("Join Code: " + currentSession.Code);
@@ -143,6 +179,11 @@ public class SessionManager : MonoBehaviour
         }
         catch (Exception e)
         {
+            if (shuttingDown || !Application.isPlaying)
+            {
+                return;
+            }
+
             Debug.LogError("=================================");
             Debug.LogError("CREATE GAME FAILED");
             Debug.LogError("=================================");
@@ -171,7 +212,49 @@ public class SessionManager : MonoBehaviour
                 currentSession.PlayerCount
             );
 
+            WaitForPlayersAndStartGame();
+        }
+    }
+
+    private async void WaitForPlayersAndStartGame()
+    {
+        if (waitingToStartGame || gameStarting || NetworkManager.Singleton == null)
+        {
+            return;
+        }
+
+        waitingToStartGame = true;
+
+        try
+        {
+            float deadline = Time.realtimeSinceStartup + 10f;
+            while (!shuttingDown &&
+                   Application.isPlaying &&
+                   !gameStarting &&
+                   NetworkManager.Singleton.IsListening &&
+                   NetworkManager.Singleton.ConnectedClientsIds.Count < minimumPlayersToStart &&
+                   Time.realtimeSinceStartup < deadline)
+            {
+                await Task.Delay(100);
+            }
+
+            if (shuttingDown || !Application.isPlaying || gameStarting)
+            {
+                return;
+            }
+
+            if (NetworkManager.Singleton.ConnectedClientsIds.Count < minimumPlayersToStart)
+            {
+                Debug.LogWarning("Timed out waiting for all players to connect to Netcode.");
+                SetStatus("Waiting for network connection...");
+                return;
+            }
+
             StartGame();
+        }
+        finally
+        {
+            waitingToStartGame = false;
         }
     }
 
@@ -194,6 +277,25 @@ public class SessionManager : MonoBehaviour
     // =========================================================
 
     public async void JoinGame()
+    {
+        if (shuttingDown || !Application.isPlaying || joinInProgress)
+        {
+            return;
+        }
+
+        joinInProgress = true;
+
+        try
+        {
+            await JoinGameAsync();
+        }
+        finally
+        {
+            joinInProgress = false;
+        }
+    }
+
+    private async Task JoinGameAsync()
     {
         if (!servicesInitialized)
         {
@@ -236,6 +338,11 @@ public class SessionManager : MonoBehaviour
             currentSession =
                 await MultiplayerService.Instance.JoinSessionByCodeAsync(code);
 
+            if (shuttingDown || !Application.isPlaying)
+            {
+                return;
+            }
+
             Debug.Log("=================================");
             Debug.Log("JOINED SESSION");
             Debug.Log("Session ID: " + currentSession.Id);
@@ -249,6 +356,11 @@ public class SessionManager : MonoBehaviour
         }
         catch (Exception e)
         {
+            if (shuttingDown || !Application.isPlaying)
+            {
+                return;
+            }
+
             Debug.LogError("=================================");
             Debug.LogError("JOIN GAME FAILED");
             Debug.LogError("=================================");
@@ -286,6 +398,23 @@ public class SessionManager : MonoBehaviour
         if (!NetworkManager.Singleton.IsHost)
         {
             Debug.LogWarning("Only the host can start the game.");
+            return;
+        }
+
+        if (!NetworkManager.Singleton.IsListening)
+        {
+            Debug.LogError("Cannot load the game scene because Netcode is not connected yet.");
+            SetStatus("Network is still connecting...");
+            return;
+        }
+
+        if (!Application.CanStreamedLevelBeLoaded(gameSceneName))
+        {
+            Debug.LogError(
+                "Cannot load game scene '" + gameSceneName +
+                "'. Add the scene to Build Settings and check its exact name."
+            );
+            SetStatus("Game scene is not in Build Settings");
             return;
         }
 
@@ -339,10 +468,17 @@ public class SessionManager : MonoBehaviour
         Debug.Log("Scene: " + gameSceneName);
         Debug.Log("=================================");
 
-        NetworkManager.Singleton.SceneManager.LoadScene(
+        var sceneLoadStatus = NetworkManager.Singleton.SceneManager.LoadScene(
             gameSceneName,
             LoadSceneMode.Single
         );
+
+        if (sceneLoadStatus != SceneEventProgressStatus.Started)
+        {
+            gameStarting = false;
+            Debug.LogError("Network scene load failed: " + sceneLoadStatus);
+            SetStatus("Could not start game scene");
+        }
     }
 
     // =========================================================
