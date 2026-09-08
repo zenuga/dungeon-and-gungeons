@@ -68,6 +68,9 @@ PrefabInstance:
       addedObject: {fileID: -5252619261798650210}
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 0cdbcaa107526c5459ca813790b24591, type: 3}
       insertIndex: -1
+      addedObject: {fileID: -1964721992501905328}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 0cdbcaa107526c5459ca813790b24591, type: 3}
+      insertIndex: -1
       addedObject: {fileID: 8951823202029994106}
   m_SourcePrefab: {fileID: 100100000, guid: 0cdbcaa107526c5459ca813790b24591, type: 3}
 --- !u!1 &3496048274240114491 stripped
@@ -123,6 +126,33 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.043887503, y: 1.070414, z: 0.11779469}
   m_Center: {x: 0, y: 0.16656868, z: 0}
+--- !u!114 &-1964721992501905328
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3496048274240114491}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 2018942443
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  m_InScenePlacedDisabledByDefault: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  m_InScenePlaced: 0
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
 --- !u!114 &8951823202029994106
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -135,6 +165,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a9aefd520d2e69d32b8e10e07b2701d3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Projectile
+  ShowTopMostFoldoutHeaderGroup: 1
   speed: 12
   lifeTime: 4
   projectileType: 0

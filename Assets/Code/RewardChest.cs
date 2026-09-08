@@ -96,6 +96,13 @@ public class RewardChest : MonoBehaviour
 
     private void Open()
     {
+        GameObject opener = playersInRange.Count > 0 ? playersInRange[0] : null;
+        PlayerCurrency currency = opener != null ? opener.GetComponent<PlayerCurrency>() : null;
+        if (currency != null && currency.IsServer)
+        {
+            currency.AddGold(50);
+        }
+
         if (chestAnimator != null)
         {
             chestAnimator.Play("Open");

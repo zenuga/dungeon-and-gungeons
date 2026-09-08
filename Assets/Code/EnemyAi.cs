@@ -22,9 +22,10 @@ public class EnemyAi : NetworkBehaviour
     protected Transform target;
     protected NavMeshAgent navMeshAgent;
     protected float nextAttackTime;
-    protected GameObject currentWeapon;
     protected int currentHealth;
     protected HealthBarUI healthBarUI;
+    protected bool isAttacking;
+    protected Depth depth;
 
     protected virtual float MoveSpeed => enemyData != null ? enemyData.walkSpeed : 2.5f;
     protected virtual float StopDistance => enemyData != null ? enemyData.stopDistance : 1.25f;
@@ -34,14 +35,23 @@ public class EnemyAi : NetworkBehaviour
     protected virtual float AttackCooldown => enemyData != null ? enemyData.attackCooldown : 1f;
     protected virtual EnemyAttackType AttackType => enemyData != null ? enemyData.attackType : EnemyAttackType.Melee;
     protected virtual GameObject ProjectilePrefab => enemyData != null ? enemyData.projectilePrefab : null;
-    protected virtual GameObject WeaponPrefab => enemyData != null ? enemyData.weaponPrefab : null;
-    protected virtual int MaxHealth => enemyData != null ? enemyData.MaxHealth : 100;
+    protected virtual WeaponData WeaponData => enemyData != null ? enemyData.weaponData : null;
+    protected virtual int MaxHealth
+    {
+        get
+        {
+            int baseHealth = enemyData != null ? enemyData.MaxHealth : 100;
+            int currentDepth = depth != null ? Mathf.Max(1, depth.depth) : 1;
+            return baseHealth * currentDepth;
+        }
+    }
     public int CurrentHealth => currentHealth;
     public int MaxHealthValue => MaxHealth;
     public string HealthText => currentHealth + "/" + MaxHealth;
 
     protected virtual void Awake()
     {
+        depth = FindFirstObjectByType<Depth>();
         navMeshAgent = GetComponent<NavMeshAgent>();
         if (navMeshAgent == null)
         {
@@ -63,10 +73,6 @@ public class EnemyAi : NetworkBehaviour
             projectileSpawnPoint = transform;
         }
 
-        if (weaponPrefabExists() && currentWeapon == null)
-        {
-            SpawnWeaponVisual();
-        }
     }
 
     protected virtual void Update()
@@ -88,7 +94,11 @@ public class EnemyAi : NetworkBehaviour
 
         float distanceToTarget = Vector3.Distance(transform.position, target.position);
 
-        if (distanceToTarget > StopDistance)
+        if (isAttacking)
+        {
+            StopMovement();
+        }
+        else if (distanceToTarget > StopDistance)
         {
             MoveTowardTarget();
         }
@@ -100,7 +110,7 @@ public class EnemyAi : NetworkBehaviour
         if (distanceToTarget <= MaxAttackDistance && Time.time >= nextAttackTime)
         {
             nextAttackTime = Time.time + AttackCooldown;
-            PerformAttack(target.position);
+            StartCoroutine(PerformAttackAfterDelay());
         }
     }
 
@@ -129,6 +139,20 @@ public class EnemyAi : NetworkBehaviour
         navMeshAgent.ResetPath();
     }
 
+    protected virtual System.Collections.IEnumerator PerformAttackAfterDelay()
+    {
+        isAttacking = true;
+        StopMovement();
+        yield return new WaitForSeconds(0.5f);
+
+        if (target != null && Vector3.Distance(transform.position, target.position) <= MaxAttackDistance)
+        {
+            PerformAttack(target.position);
+        }
+
+        isAttacking = false;
+    }
+
     protected virtual void PerformAttack(Vector3 playerPosition)
     {
         if (AttackType == EnemyAttackType.Melee)
@@ -154,9 +178,16 @@ public class EnemyAi : NetworkBehaviour
             PlayerHealth playerHealth = hit.GetComponentInParent<PlayerHealth>();
             if (playerHealth != null)
             {
-                playerHealth.TakeDamage(10);
+                playerHealth.TakeDamage(GetAttackDamage());
             }
         }
+    }
+
+    protected virtual int GetAttackDamage()
+    {
+        int baseDamage = WeaponData != null && WeaponData.damage > 0 ? WeaponData.damage : 10;
+        int currentDepth = depth != null ? Mathf.Max(1, depth.depth) : 1;
+        return baseDamage * currentDepth;
     }
 
     protected virtual void ApplyDamageToTarget(GameObject target, int damageAmount)
@@ -190,41 +221,8 @@ public class EnemyAi : NetworkBehaviour
         target.SendMessage("TakeDamage", damageAmount, SendMessageOptions.DontRequireReceiver);
     }
 
-    protected virtual void SpawnWeaponVisual()
-    {
-        if (!weaponPrefabExists())
-        {
-            return;
-        }
-
-        Transform weaponPoint = projectileSpawnPoint != null ? projectileSpawnPoint : transform;
-        currentWeapon = Instantiate(
-            WeaponPrefab,
-            weaponPoint.position,
-            weaponPoint.rotation);
-
-        NetworkObject weaponNetworkObject = currentWeapon.GetComponent<NetworkObject>();
-        if (weaponNetworkObject != null && !weaponNetworkObject.IsSpawned)
-        {
-            weaponNetworkObject.enabled = false;
-        }
-
-        currentWeapon.transform.SetParent(transform, true);
-    }
-
-    protected virtual bool weaponPrefabExists()
-    {
-        return WeaponPrefab != null;
-    }
-
     protected virtual void ShootProjectile(Vector3 playerPosition)
     {
-        if (ProjectilePrefab == null)
-        {
-            Debug.LogWarning(name + " is a ranged enemy but no projectile prefab was assigned.");
-            return;
-        }
-
         Vector3 spawnPosition = projectileSpawnPoint != null ? projectileSpawnPoint.position : transform.position;
         Vector3 direction = playerPosition - spawnPosition;
         direction.y = 0f;
@@ -232,6 +230,28 @@ public class EnemyAi : NetworkBehaviour
         if (direction.sqrMagnitude <= 0.001f)
         {
             direction = transform.forward;
+        }
+
+        RaycastHit[] hits = Physics.RaycastAll(spawnPosition, direction.normalized, MaxAttackDistance, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore);
+        RaycastHit closestHit = default;
+        float closestDistance = Mathf.Infinity;
+        foreach (RaycastHit hit in hits)
+        {
+            if (hit.collider != null && !hit.collider.transform.IsChildOf(transform) && hit.distance < closestDistance)
+            {
+                closestHit = hit;
+                closestDistance = hit.distance;
+            }
+        }
+
+        if (closestDistance < Mathf.Infinity)
+        {
+            ApplyDamageToTarget(closestHit.collider.gameObject, GetAttackDamage());
+        }
+
+        if (ProjectilePrefab == null)
+        {
+            return;
         }
 
         GameObject projectile = Instantiate(ProjectilePrefab, spawnPosition, Quaternion.identity);
@@ -243,7 +263,7 @@ public class EnemyAi : NetworkBehaviour
 
         projectileComponent.SetDirection(direction.normalized);
         projectileComponent.SetOwnerTag(gameObject.tag);
-        projectileComponent.SetDamage(10);
+        projectileComponent.SetDamage(GetAttackDamage());
 
         Vector3 aimDirection = direction.normalized;
         projectile.transform.rotation = Quaternion.LookRotation(aimDirection, Vector3.up);
@@ -283,6 +303,8 @@ public class EnemyAi : NetworkBehaviour
 
     protected virtual void OnDeath()
     {
+        CurrencyReward.GiveNearestPlayer(transform.position, 5, 25);
+
         var waveManager = GetComponentInParent<DungeonWaveManager>();
         if (waveManager != null)
         {

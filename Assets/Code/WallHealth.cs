@@ -8,22 +8,23 @@ public class WallHealth : NetworkBehaviour
 
     private void Awake()
     {
-        if (Health <= 0)
+        depth = FindFirstObjectByType<Depth>();
+        UpdateWallHealth();
+    }
+
+    public void SetHealthForCurrentDepth()
+    {
+        if (depth == null)
         {
-            Health = 10;
+            depth = FindFirstObjectByType<Depth>();
         }
+
+        Health = 10 * (depth != null ? Mathf.Max(1, depth.depth) : 1);
     }
 
     public void UpdateWallHealth()
     {
-        if (depth != null)
-        {
-            Health = 10 * depth.depth;
-        }
-        else if (Health <= 0)
-        {
-            Health = 10;
-        }
+        SetHealthForCurrentDepth();
     }
 
     public void TakeDamage(int amount)
@@ -53,6 +54,11 @@ public class WallHealth : NetworkBehaviour
         Health -= amount;
         if (Health <= 0)
         {
+            if ((!IsSpawned || IsServer) && Random.value <= 0.05f)
+            {
+                CurrencyReward.GiveNearestPlayer(transform.position, 1, 20);
+            }
+
             if (IsSpawned && IsServer)
             {
                 NetworkObject.Despawn(true);

@@ -67,6 +67,10 @@ public class ChunkedMineGeneration : MonoBehaviour
     private GameObject _spawnedPlayer1;
     private GameObject _spawnedPlayer2;
     private int _generationCount = 0;
+    private readonly List<GameObject> _generatedStructures = new List<GameObject>();
+    private Coroutine _chunkUpdateCoroutine;
+    private bool _generationInProgress;
+    private Vector3 _currentMineSpawnPosition;
 
     private class ChunkData
     {
@@ -82,12 +86,33 @@ public class ChunkedMineGeneration : MonoBehaviour
 
     public IEnumerator GenerateMineAndChunks()
     {
+        if (_generationInProgress)
+        {
+            yield break;
+        }
+
+        _generationInProgress = true;
         _generationCount++;
 
         if (level >= 1 && AnimationImage != null)
         {
             AnimationImage.gameObject.SetActive(true);
         }
+
+        if (loadingImage != null)
+        {
+            loadingImage.SetActive(true);
+        }
+
+        if (_chunkUpdateCoroutine != null)
+        {
+            StopCoroutine(_chunkUpdateCoroutine);
+            _chunkUpdateCoroutine = null;
+        }
+
+        ClearGeneratedMine();
+        yield return null;
+
         _gridMap = new byte[gridWidth, gridLength];
 
         // 1. Reserve Areas
@@ -102,7 +127,7 @@ public class ChunkedMineGeneration : MonoBehaviour
             if (dungeonPrefab != null)
             {
                 Vector3 spawnPosition = GetSpawnPosition(dungeonRect, dungeonSpawnOffset);
-                Instantiate(dungeonPrefab, spawnPosition, Quaternion.identity);
+                _generatedStructures.Add(Instantiate(dungeonPrefab, spawnPosition, Quaternion.identity));
             }
         }
 
@@ -112,7 +137,7 @@ public class ChunkedMineGeneration : MonoBehaviour
         if (shopPrefab != null)
         {
             Vector3 spawnPosition = GetSpawnPosition(shopRect, dungeonSpawnOffset);
-            Instantiate(shopPrefab, spawnPosition, Quaternion.identity);
+            _generatedStructures.Add(Instantiate(shopPrefab, spawnPosition, Quaternion.identity));
         }
 
         // 2. Base Floor
@@ -133,21 +158,36 @@ public class ChunkedMineGeneration : MonoBehaviour
 
         // 4. Handle existing players without spawning duplicate characters.
         Vector3 spawnWorldPos = GetSpawnPosition(spawnRect, playerSpawnOffset);
+        _currentMineSpawnPosition = GetPlayer1SpawnPosition(spawnWorldPos);
 
-        if (_generationCount == 1)
-        {
-            TeleportTaggedPlayers(GetPlayer1SpawnPosition(spawnWorldPos));
-        }
-        else
-        {
-            TeleportTaggedPlayers(playerTeleportPosition);
-        }
+        TeleportTaggedPlayers(_currentMineSpawnPosition);
 
         if (loadingImage != null) loadingImage.SetActive(false);
         if (AnimationImage != null) AnimationImage.gameObject.SetActive(false);
 
         // 5. Start Chunk Update Loop
-        StartCoroutine(UpdateChunksRoutine());
+        _chunkUpdateCoroutine = StartCoroutine(UpdateChunksRoutine());
+        _generationInProgress = false;
+    }
+
+    private void ClearGeneratedMine()
+    {
+        foreach (GameObject structure in _generatedStructures)
+        {
+            if (structure != null)
+            {
+                Destroy(structure);
+            }
+        }
+        _generatedStructures.Clear();
+
+        for (int i = transform.childCount - 1; i >= 0; i--)
+        {
+            Destroy(transform.GetChild(i).gameObject);
+        }
+
+        _chunks.Clear();
+        _destroyedBlocks.Clear();
     }
 
     private void EnsurePickupScript(GameObject playerObj)
@@ -180,6 +220,22 @@ public class ChunkedMineGeneration : MonoBehaviour
         if (controller != null) controller.enabled = true;
     }
 
+    public void TeleportPlayerToMineSpawn(GameObject playerObj)
+    {
+        if (playerObj == null)
+        {
+            return;
+        }
+
+        Vector3 spawnPosition = _currentMineSpawnPosition;
+        if (playerObj.CompareTag("Player2"))
+        {
+            spawnPosition = GetPlayer2SpawnPosition(_currentMineSpawnPosition);
+        }
+
+        TeleportPlayer(playerObj, spawnPosition);
+    }
+
     private void TeleportTaggedPlayers(Vector3 targetPosition)
     {
         List<GameObject> players = new List<GameObject>();
@@ -202,9 +258,7 @@ public class ChunkedMineGeneration : MonoBehaviour
 
         if (player2 != null)
         {
-            Vector3 player2Position = _generationCount == 1
-                ? GetPlayer2SpawnPosition(targetPosition)
-                : targetPosition + player2SpawnOffset;
+            Vector3 player2Position = GetPlayer2SpawnPosition(targetPosition);
             TeleportPlayer(player2, player2Position);
         }
 
@@ -381,7 +435,7 @@ public class ChunkedMineGeneration : MonoBehaviour
                 {
                     wallHealth = realBlock.AddComponent<WallHealth>();
                 }
-                wallHealth.Health = 10;
+                wallHealth.SetHealthForCurrentDepth();
 
                 chunkData.IndividualBlocks.Add(realBlock);
             }
@@ -468,7 +522,7 @@ public class ChunkedMineGeneration : MonoBehaviour
             {
                 chunkWallHealth = chunkData.ChunkObject.AddComponent<WallHealth>();
             }
-            chunkWallHealth.Health = 10;
+            chunkWallHealth.SetHealthForCurrentDepth();
         }
 
         chunkData.IsCombined = true;

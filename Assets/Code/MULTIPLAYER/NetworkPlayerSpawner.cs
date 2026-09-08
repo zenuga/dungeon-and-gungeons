@@ -137,11 +137,33 @@ public class NetworkPlayerSpawner : NetworkBehaviour
 
     private Vector3 GetPlayer1SpawnPosition()
     {
-        return player1SpawnPoint != null ? player1SpawnPoint.position : transform.position;
+        if (player1SpawnPoint != null)
+        {
+            return player1SpawnPoint.position;
+        }
+
+        ChunkedMineGeneration mineGeneration = FindFirstObjectByType<ChunkedMineGeneration>();
+        if (mineGeneration != null && mineGeneration.player1SpawnPoint != null)
+        {
+            return mineGeneration.player1SpawnPoint.position;
+        }
+
+        return transform.position;
     }
 
     private Vector3 GetPlayer2SpawnPosition(Vector3 player1Position)
     {
-        return player2SpawnPoint != null ? player2SpawnPoint.position : player1Position + player2Offset;
+        if (player2SpawnPoint != null)
+        {
+            return player2SpawnPoint.position;
+        }
+
+        ChunkedMineGeneration mineGeneration = FindFirstObjectByType<ChunkedMineGeneration>();
+        if (mineGeneration != null && mineGeneration.player2SpawnPoint != null)
+        {
+            return mineGeneration.player2SpawnPoint.position;
+        }
+
+        return player1Position + player2Offset;
     }
 }

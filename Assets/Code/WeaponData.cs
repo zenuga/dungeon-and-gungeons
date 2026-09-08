@@ -23,5 +23,6 @@ public class WeaponData : ScriptableObject
     public GameObject weaponPrefab;
     public int damage;
     public float cooldown;
+    public int currencyAmount = 40;
     public PotionType potionType;
 }

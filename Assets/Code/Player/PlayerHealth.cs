@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using Unity.Netcode;
 
+[RequireComponent(typeof(PlayerCurrency))]
 public class PlayerHealth : NetworkBehaviour
 {
     [Header("Player Setup")]
@@ -11,19 +12,25 @@ public class PlayerHealth : NetworkBehaviour
     [SerializeField] private int maxHealth = 100;
     [SerializeField] private bool destroyOnZero = false;
 
+    [SerializeField]
     private int currentHealth;
     private NetworkVariable<int> networkHealth = new NetworkVariable<int>(
         100,
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server);
+    private Quaternion standingLocalRotation;
+    private bool isKnockedDown;
 
     public int CurrentHealth => currentHealth;
     public int MaxHealthValue => maxHealth;
+    public bool IsAlive => currentHealth > 0;
 
     private void Awake()
     {
+        standingLocalRotation = transform.localRotation;
         currentHealth = maxHealth;
         UpdateHealthBar();
+        UpdatePlayerSystems();
     }
 
     public override void OnNetworkSpawn()
@@ -32,12 +39,15 @@ public class PlayerHealth : NetworkBehaviour
         if (IsServer)
         {
             networkHealth.Value = maxHealth;
+            currentHealth = maxHealth;
         }
         else
         {
             currentHealth = networkHealth.Value;
             UpdateHealthBar();
         }
+
+        UpdatePlayerSystems();
     }
 
     public override void OnNetworkDespawn()
@@ -63,20 +73,6 @@ public class PlayerHealth : NetworkBehaviour
         }
 
         UpdateHealthBar();
-    }
-
-    private void LateUpdate()
-    {
-        if (healthBarRoot == null || Camera.main == null)
-        {
-            return;
-        }
-
-        Vector3 directionToCamera = Camera.main.transform.position - healthBarRoot.position;
-        if (directionToCamera.sqrMagnitude > 0.001f)
-        {
-            healthBarRoot.rotation = Quaternion.LookRotation(directionToCamera, Vector3.up);
-        }
     }
 
     public void TakeDamage(int amount)
@@ -109,6 +105,7 @@ public class PlayerHealth : NetworkBehaviour
             networkHealth.Value = currentHealth;
         }
         UpdateHealthBar();
+        UpdatePlayerSystems();
     }
 
     public void Heal(int amount)
@@ -130,6 +127,7 @@ public class PlayerHealth : NetworkBehaviour
             networkHealth.Value = currentHealth;
         }
         UpdateHealthBar();
+        UpdatePlayerSystems();
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -160,6 +158,7 @@ public class PlayerHealth : NetworkBehaviour
             return;
         }
 
+        healthFill.type = Image.Type.Filled;
         healthFill.fillAmount = GetHealthPercent();
     }
 
@@ -167,5 +166,49 @@ public class PlayerHealth : NetworkBehaviour
     {
         currentHealth = newHealth;
         UpdateHealthBar();
+        UpdatePlayerSystems();
+    }
+
+    private void UpdatePlayerSystems()
+    {
+        bool enableSystems = IsAlive;
+        if (enableSystems && isKnockedDown)
+        {
+            transform.localRotation = standingLocalRotation;
+            isKnockedDown = false;
+        }
+        else if (!enableSystems && !isKnockedDown)
+        {
+            Vector3 knockedDownRotation = standingLocalRotation.eulerAngles;
+            knockedDownRotation.z += 90f;
+            transform.localRotation = Quaternion.Euler(knockedDownRotation);
+            isKnockedDown = true;
+        }
+
+        PlayerController playerController = GetComponentInChildren<PlayerController>(true);
+        if (playerController != null)
+        {
+            playerController.enabled = enableSystems;
+        }
+
+        foreach (PlayerPickupManager pickupManager in GetComponentsInChildren<PlayerPickupManager>(true))
+        {
+            pickupManager.enabled = enableSystems;
+        }
+
+        foreach (WeaponAttack weaponAttack in GetComponentsInChildren<WeaponAttack>(true))
+        {
+            weaponAttack.enabled = enableSystems;
+        }
+
+        foreach (RangedWeapon rangedWeapon in GetComponentsInChildren<RangedWeapon>(true))
+        {
+            rangedWeapon.enabled = enableSystems;
+        }
+
+        foreach (PlayerMouseAim mouseAim in GetComponentsInChildren<PlayerMouseAim>(true))
+        {
+            mouseAim.enabled = enableSystems;
+        }
     }
 }

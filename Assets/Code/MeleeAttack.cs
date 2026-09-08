@@ -33,27 +33,9 @@ public class WeaponAttack : NetworkBehaviour
             return;
         }
 
-        if (Time.time < _nextAttackTime || Keyboard.current == null) return;
+        if (Time.time < _nextAttackTime || Mouse.current == null) return;
 
-        bool ePressed = Keyboard.current.eKey.wasPressedThisFrame;
-        bool oPressed = Keyboard.current.oKey.wasPressedThisFrame;
-
-        if (!ePressed && !oPressed) return;
-
-        Transform ownerTransform = GetOwnerTransform();
-        if (ownerTransform == null) return;
-
-        bool isValidInput = false;
-        if (ePressed && ownerTransform.CompareTag("Player1"))
-        {
-            isValidInput = true;
-        }
-        else if (oPressed && ownerTransform.CompareTag("Player2"))
-        {
-            isValidInput = true;
-        }
-
-        if (isValidInput)
+        if (Mouse.current.leftButton.wasPressedThisFrame)
         {
             ExecuteAttack(transform);
         }

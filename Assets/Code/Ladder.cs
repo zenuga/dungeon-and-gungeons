@@ -9,9 +9,6 @@ public class Ladder : MonoBehaviour
     public ChunkedMineGeneration chunkedMineGeneration;
     public TextMeshProUGUI ladderText;
 
-    [Header("Mine Reset Settings")]
-    [SerializeField] private string mineGenerationObjectName = "MineGeneration";
-
     private void Awake()
     {
         // Find the scripts anywhere active in the scene
@@ -63,9 +60,6 @@ public class Ladder : MonoBehaviour
             if (Keyboard.current != null && 
                (Keyboard.current.fKey.wasPressedThisFrame || Keyboard.current.semicolonKey.wasPressedThisFrame))
             {
-                // Delete all children of MineGeneration
-                ClearMineChildren();
-
                 if (depth != null)
                 {
                     // Increments depth value
@@ -75,7 +69,8 @@ public class Ladder : MonoBehaviour
                 if (chunkedMineGeneration != null)
                 {
                     chunkedMineGeneration.level++;
-                    chunkedMineGeneration.GenerateMineAndChunks();
+                    StartCoroutine(chunkedMineGeneration.GenerateMineAndChunks());
+                    ShopResetRegistry.ResetAll();
                     Debug.LogWarning("thisworks");
                 }
             }
@@ -93,21 +88,4 @@ public class Ladder : MonoBehaviour
         }
     }
 
-    private void ClearMineChildren()
-    {
-        GameObject mineObj = GameObject.Find(mineGenerationObjectName);
-
-        if (mineObj != null)
-        {
-            // Iterate backwards through transform children to safely destroy them
-            for (int i = mineObj.transform.childCount - 1; i >= 0; i--)
-            {
-                Destroy(mineObj.transform.GetChild(i).gameObject);
-            }
-        }
-        else
-        {
-            Debug.LogWarning($"Could not find GameObject named '{mineGenerationObjectName}' to delete children.");
-        }
-    }
 }

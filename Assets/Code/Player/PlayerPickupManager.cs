@@ -194,6 +194,16 @@ public class PlayerPickupManager : NetworkBehaviour
 
     public float DamageMultiplier => hasActivePotionEffect && activePotionType == PotionType.Strength ? 1.5f : 1f;
 
+    public bool PurchaseWeapon(WeaponData data)
+    {
+        if (data == null || data.weaponPrefab == null)
+        {
+            return false;
+        }
+
+        return EquipWeapon(data);
+    }
+
     private void UseBomb()
     {
         if (currentBombs <= 0)
@@ -415,51 +425,13 @@ public class PlayerPickupManager : NetworkBehaviour
             }
             else if (tagType == "melee")
             {
-                if (currentMeleeWeapon != null)
-                {
-                    DropItem(currentMeleeWeapon, "melee", currentMeleeWeaponData);
-                }
-
-                if (item.weaponData != null && item.weaponData.weaponPrefab != null)
-                {
-                    currentMeleeWeapon = Instantiate(item.weaponData.weaponPrefab, handTransform);
-                    currentMeleeWeapon.transform.localPosition = Vector3.zero;
-                    currentMeleeWeapon.transform.localRotation = Quaternion.identity;
-
-                    WeaponAttack meleeAttack = currentMeleeWeapon.GetComponentInChildren<WeaponAttack>();
-                    if (meleeAttack != null)
-                    {
-                        meleeAttack.WeaponData = item.weaponData;
-                    }
-
-                    currentMeleeWeaponData = item.weaponData;
-                    UpdateWeaponUI(item.weaponData);
-                }
+                EquipWeapon(item.weaponData);
                 Destroy(targetGameObject);
                 break;
             }
             else if (tagType == "ranged")
             {
-                if (currentRangedWeapon != null)
-                {
-                    DropItem(currentRangedWeapon, "ranged", currentRangedWeaponData);
-                }
-
-                if (item.weaponData != null && item.weaponData.weaponPrefab != null)
-                {
-                    currentRangedWeapon = Instantiate(item.weaponData.weaponPrefab, handTransform);
-                    currentRangedWeapon.transform.localPosition = Vector3.zero;
-                    currentRangedWeapon.transform.localRotation = Quaternion.identity;
-
-                    RangedWeapon rangedWeapon = currentRangedWeapon.GetComponentInChildren<RangedWeapon>();
-                    if (rangedWeapon != null)
-                    {
-                        rangedWeapon.SetWeaponData(item.weaponData);
-                    }
-
-                    currentRangedWeaponData = item.weaponData;
-                    UpdateWeaponUI(item.weaponData);
-                }
+                EquipWeapon(item.weaponData);
                 Destroy(targetGameObject);
                 break;
             }
@@ -484,6 +456,55 @@ public class PlayerPickupManager : NetworkBehaviour
                 break;
             }
         }
+    }
+
+    private bool EquipWeapon(WeaponData data)
+    {
+        if (data == null || data.weaponPrefab == null)
+        {
+            return false;
+        }
+
+        if (currentMeleeWeapon != null)
+        {
+            DropItem(currentMeleeWeapon, "melee", currentMeleeWeaponData);
+            currentMeleeWeapon = null;
+            currentMeleeWeaponData = null;
+        }
+
+        if (currentRangedWeapon != null)
+        {
+            DropItem(currentRangedWeapon, "ranged", currentRangedWeaponData);
+            currentRangedWeapon = null;
+            currentRangedWeaponData = null;
+        }
+
+        GameObject equippedWeapon = Instantiate(data.weaponPrefab, handTransform);
+        equippedWeapon.transform.localPosition = Vector3.zero;
+        equippedWeapon.transform.localRotation = Quaternion.identity;
+
+        WeaponAttack meleeAttack = equippedWeapon.GetComponentInChildren<WeaponAttack>();
+        RangedWeapon rangedWeapon = equippedWeapon.GetComponentInChildren<RangedWeapon>();
+        if (meleeAttack != null)
+        {
+            meleeAttack.WeaponData = data;
+            currentMeleeWeapon = equippedWeapon;
+            currentMeleeWeaponData = data;
+        }
+        else if (rangedWeapon != null)
+        {
+            rangedWeapon.SetWeaponData(data);
+            currentRangedWeapon = equippedWeapon;
+            currentRangedWeaponData = data;
+        }
+        else
+        {
+            Destroy(equippedWeapon);
+            return false;
+        }
+
+        UpdateWeaponUI(data);
+        return true;
     }
 
     private void DropItem(GameObject itemObj, string itemType, WeaponData weaponData)

@@ -8,6 +8,9 @@ public class DungeonWaveManager : MonoBehaviour
     [Header("Enemy Setup")]
     public List<GameObject> enemyPrefabs = new List<GameObject>();
     public List<int> enemyWeights = new List<int>(); // Element 0 should be your basic enemy
+    public GameObject bossPrefab;
+    public GameObject ladderPrefab;
+    public GameObject objectToDisableOnBossSpawn;
 
     [Header("Wave Settings")]
     public int totalWaves = 3;
@@ -28,6 +31,8 @@ public class DungeonWaveManager : MonoBehaviour
     private bool playerIsInsideTrigger = false;
     private GameObject currentTriggerObject;
     private Dungeonenter dungeonEnter;
+    private GameObject activeBoss;
+    private static int completedDungeonCount;
 
     public bool IsDungeonCompleted => dungeonCompleted;
 
@@ -48,7 +53,26 @@ public class DungeonWaveManager : MonoBehaviour
         }
 
         dungeonStarted = true;
+        completedDungeonCount++;
+        if (completedDungeonCount >= 5 && bossPrefab != null)
+        {
+            currentWave = totalWaves;
+            SpawnBoss();
+            if (objectToDisableOnBossSpawn != null)
+            {
+                objectToDisableOnBossSpawn.SetActive(false);
+            }
+            return;
+        }
         StartNextWave();
+    }
+
+    private void SpawnBoss()
+    {
+        Transform spawnPoint = spawnPoints != null && spawnPoints.Length > 0 ? spawnPoints[0] : transform;
+        GameObject boss = Instantiate(bossPrefab, GetSpawnPositionOnNavMesh(spawnPoint.position), spawnPoint.rotation);
+        activeBoss = boss;
+        RegisterEnemy(boss);
     }
 
     private void Update()
@@ -122,6 +146,20 @@ public class DungeonWaveManager : MonoBehaviour
         }
 
         activeEnemies.Remove(enemy);
+
+        if (enemy == activeBoss)
+        {
+            InstantiateLadder(enemy.transform.position);
+            activeBoss = null;
+        }
+    }
+
+    private void InstantiateLadder(Vector3 position)
+    {
+        if (ladderPrefab != null)
+        {
+            Instantiate(ladderPrefab, position, Quaternion.identity);
+        }
     }
 
     private Vector3 GetSpawnPositionOnNavMesh(Vector3 desiredPosition)

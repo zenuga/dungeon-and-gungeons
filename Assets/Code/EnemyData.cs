@@ -22,8 +22,8 @@ public class EnemyData : ScriptableObject
     public float minAttackDistance = 0.8f;
     public float maxAttackDistance = 2.2f;
     public float attackCooldown = 1f;
+    public WeaponData weaponData;
 
     [Header("Prefabs")]
-    public GameObject weaponPrefab;
     public GameObject projectilePrefab;
 }
