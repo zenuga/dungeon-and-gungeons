@@ -64,3 +64,11 @@ MonoBehaviour:
     SourcePrefabToOverride: {fileID: 0}
     SourceHashToOverride: 0
     OverridingTargetPrefab: {fileID: 0}
+<<<<<<< Updated upstream
+=======
+  - Override: 0
+    Prefab: {fileID: 5144083273759640309, guid: 1e17839334e2f244993328348a149a49, type: 3}
+    SourcePrefabToOverride: {fileID: 0}
+    SourceHashToOverride: 0
+    OverridingTargetPrefab: {fileID: 0}
+>>>>>>> Stashed changes

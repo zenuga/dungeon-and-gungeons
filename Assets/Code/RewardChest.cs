@@ -12,6 +12,8 @@ public class RewardChest : MonoBehaviour
     public Animation chestAnimator;
 
     private readonly List<GameObject> playersInRange = new List<GameObject>();
+    private readonly List<GameObject> spawnedRewards = new List<GameObject>();
+    private readonly List<WeaponData> spawnedRewardData = new List<WeaponData>();
     private List<WeaponData> weaponTemplates = new List<WeaponData>();
     private bool isOpen;
 
@@ -132,6 +134,7 @@ public class RewardChest : MonoBehaviour
         }
 
         WeaponData rewardData = Instantiate(template);
+        spawnedRewardData.Add(rewardData);
         if (rewardData.itemType == RewardItemType.Weapon)
         {
             rewardData.damage = Random.Range(10, 51);
@@ -145,6 +148,7 @@ public class RewardChest : MonoBehaviour
         Vector3 sideOffset = transform.right * ((index - (amount - 1) * 0.5f) * 0.65f);
         Vector3 spawnPosition = transform.position + forwardOffset + sideOffset + Vector3.up * weaponSpawnHeight;
         GameObject rewardObject = Instantiate(rewardData.weaponPrefab, spawnPosition, transform.rotation);
+        spawnedRewards.Add(rewardObject);
 
         CollectibleItem collectible = rewardObject.GetComponent<CollectibleItem>();
         if (collectible == null)
@@ -163,6 +167,28 @@ public class RewardChest : MonoBehaviour
             rewardCollider = rewardObject.AddComponent<BoxCollider>();
         }
         rewardCollider.isTrigger = true;
+    }
+
+    public void ClearSpawnedRewards()
+    {
+        foreach (GameObject reward in spawnedRewards)
+        {
+            if (reward != null)
+            {
+                Destroy(reward);
+            }
+        }
+
+        foreach (WeaponData rewardData in spawnedRewardData)
+        {
+            if (rewardData != null)
+            {
+                Destroy(rewardData);
+            }
+        }
+
+        spawnedRewards.Clear();
+        spawnedRewardData.Clear();
     }
 
     private static string GetCollectibleType(WeaponData rewardData)

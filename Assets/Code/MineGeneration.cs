@@ -11,8 +11,6 @@ public class ChunkedMineGeneration : MonoBehaviour
     public GameObject singleFloorPrefab;
     public GameObject dungeonPrefab;
     public GameObject shopPrefab;
-    public GameObject player1Prefab;
-    public GameObject player2Prefab;
     public Image AnimationImage;
     public int level = 1;
 
@@ -38,18 +36,21 @@ public class ChunkedMineGeneration : MonoBehaviour
     [Header("Grid & Chunk Settings")]
     public int gridWidth = 250;
     public int gridLength = 250;
-    public int chunkSize = 25; // 25x25 cells per chunk
+    public int chunkSize = 10; // 10x10 cells per chunk
     public float spacing = 1.0f;
 
     [Header("Chunk Loading Settings")]
     [Tooltip("Distance (in chunks) where blocks become individual interactable prefabs.")]
-    public int uncombineDistanceInChunks = 1; 
+    public int uncombineDistanceInChunks = 1;
     
     [Tooltip("Distance (in chunks) where blocks are rendered as 1 massive mesh.")]
-    public int viewDistanceInChunks = 3;
+    public int viewDistanceInChunks = 6;
     
     [Tooltip("How often (in seconds) to check player position for chunk updates.")]
     public float chunkUpdateInterval = 0.5f;
+
+    [Tooltip("Maximum wall prefabs created per frame while a chunk becomes individual blocks.")]
+    public int individualBlocksPerFrame = 10;
 
     private const int DungeonCount = 5;
     private static readonly Vector2Int DungeonSize = new Vector2Int(20, 20);
@@ -63,10 +64,6 @@ public class ChunkedMineGeneration : MonoBehaviour
     private Transform _playerTransform;
     private Vector2Int _currentPlayerChunk;
 
-    // Persistent player references across generations
-    private GameObject _spawnedPlayer1;
-    private GameObject _spawnedPlayer2;
-    private int _generationCount = 0;
     private readonly List<GameObject> _generatedStructures = new List<GameObject>();
     private Coroutine _chunkUpdateCoroutine;
     private bool _generationInProgress;
@@ -76,10 +73,17 @@ public class ChunkedMineGeneration : MonoBehaviour
     {
         public GameObject ChunkObject;
         public bool IsCombined;
+        public bool IsSpawningIndividualBlocks;
+        public Coroutine IndividualBlockSpawnRoutine;
         public List<GameObject> IndividualBlocks = new List<GameObject>(); // Tracks active real cubes
     }
 
     private void Start()
+    {
+        StartCoroutine(GenerateMineAndChunks());
+    }
+
+    public void RegenerateMine()
     {
         StartCoroutine(GenerateMineAndChunks());
     }
@@ -92,8 +96,6 @@ public class ChunkedMineGeneration : MonoBehaviour
         }
 
         _generationInProgress = true;
-        _generationCount++;
-
         if (level >= 1 && AnimationImage != null)
         {
             AnimationImage.gameObject.SetActive(true);
@@ -160,14 +162,25 @@ public class ChunkedMineGeneration : MonoBehaviour
         Vector3 spawnWorldPos = GetSpawnPosition(spawnRect, playerSpawnOffset);
         _currentMineSpawnPosition = GetPlayer1SpawnPosition(spawnWorldPos);
 
-        TeleportTaggedPlayers(_currentMineSpawnPosition);
-
-        if (loadingImage != null) loadingImage.SetActive(false);
-        if (AnimationImage != null) AnimationImage.gameObject.SetActive(false);
+        yield return TeleportSpawnedPlayers(_currentMineSpawnPosition);
 
         // 5. Start Chunk Update Loop
         _chunkUpdateCoroutine = StartCoroutine(UpdateChunksRoutine());
         _generationInProgress = false;
+        HideGenerationImages();
+    }
+
+    private void HideGenerationImages()
+    {
+        if (loadingImage != null)
+        {
+            loadingImage.SetActive(false);
+        }
+
+        if (AnimationImage != null)
+        {
+            AnimationImage.gameObject.SetActive(false);
+        }
     }
 
     private void ClearGeneratedMine()
@@ -190,34 +203,23 @@ public class ChunkedMineGeneration : MonoBehaviour
         _destroyedBlocks.Clear();
     }
 
-    private void EnsurePickupScript(GameObject playerObj)
-    {
-        if (playerObj == null) return;
-
-        PlayerPickupManager pickupManager = playerObj.GetComponent<PlayerPickupManager>();
-        if (pickupManager == null)
-        {
-            playerObj.AddComponent<PlayerPickupManager>();
-        }
-    }
-
     private void TeleportPlayer(GameObject playerObj, Vector3 targetPosition)
     {
         if (playerObj == null) return;
 
-        NetworkObject networkObject = playerObj.GetComponent<NetworkObject>();
-        if (networkObject != null && networkObject.IsSpawned && NetworkManager.Singleton != null && !NetworkManager.Singleton.IsServer)
+        CharacterController[] controllers = playerObj.GetComponentsInChildren<CharacterController>(true);
+        foreach (CharacterController controller in controllers)
         {
-            return;
+            controller.enabled = false;
         }
 
-        // Temporarily disable CharacterController during transform modification to prevent position snapping back
-        CharacterController controller = playerObj.GetComponent<CharacterController>();
-        if (controller != null) controller.enabled = false;
-
         playerObj.transform.position = targetPosition;
+        Physics.SyncTransforms();
 
-        if (controller != null) controller.enabled = true;
+        foreach (CharacterController controller in controllers)
+        {
+            controller.enabled = true;
+        }
     }
 
     public void TeleportPlayerToMineSpawn(GameObject playerObj)
@@ -236,12 +238,23 @@ public class ChunkedMineGeneration : MonoBehaviour
         TeleportPlayer(playerObj, spawnPosition);
     }
 
-    private void TeleportTaggedPlayers(Vector3 targetPosition)
+    private IEnumerator TeleportSpawnedPlayers(Vector3 targetPosition)
     {
+        NetworkPlayerSpawner playerSpawner = FindFirstObjectByType<NetworkPlayerSpawner>();
         List<GameObject> players = new List<GameObject>();
-        AddPlayersWithTag("Player", players);
-        AddPlayersWithTag("Player1", players);
-        AddPlayersWithTag("Player2", players);
+
+        for (int attempt = 0; attempt < 120 && players.Count == 0; attempt++)
+        {
+            if (playerSpawner != null)
+            {
+                players = playerSpawner.GetSpawnedPlayerObjects();
+            }
+
+            if (players.Count == 0)
+            {
+                yield return null;
+            }
+        }
 
         GameObject player1 = FindPlayerInList(players, "Player1");
         GameObject player2 = FindPlayerInList(players, "Player2");
@@ -273,44 +286,11 @@ public class ChunkedMineGeneration : MonoBehaviour
         if (players.Count > 0)
         {
             _playerTransform = players[0].transform;
-            _spawnedPlayer1 = FindPlayerWithTag("Player1");
-            _spawnedPlayer2 = FindPlayerWithTag("Player2");
         }
         else
         {
             _playerTransform = null;
             Debug.LogWarning("MineGeneration found no existing player objects with Player, Player1, or Player2 tags.", this);
-        }
-    }
-
-    private static void AddPlayersWithTag(string tag, List<GameObject> players)
-    {
-        try
-        {
-            GameObject[] taggedPlayers = GameObject.FindGameObjectsWithTag(tag);
-            foreach (GameObject player in taggedPlayers)
-            {
-                if (player != null && !players.Contains(player))
-                {
-                    players.Add(player);
-                }
-            }
-        }
-        catch (UnityException)
-        {
-            // Ignore tags that have not been created in the project.
-        }
-    }
-
-    private static GameObject FindPlayerWithTag(string tag)
-    {
-        try
-        {
-            return GameObject.FindGameObjectWithTag(tag);
-        }
-        catch (UnityException)
-        {
-            return null;
         }
     }
 
@@ -380,7 +360,10 @@ public class ChunkedMineGeneration : MonoBehaviour
             {
                 // NEARBY: Should be individual cubes
                 if (!chunkData.ChunkObject.activeSelf) chunkData.ChunkObject.SetActive(true);
-                if (chunkData.IsCombined) SpawnIndividualBlocks(chunkCoord, chunkData);
+                if (chunkData.IsCombined && !chunkData.IsSpawningIndividualBlocks)
+                {
+                    chunkData.IndividualBlockSpawnRoutine = StartCoroutine(SpawnIndividualBlocks(chunkCoord, chunkData));
+                }
             }
             else if (maxDist <= viewDistanceInChunks)
             {
@@ -399,24 +382,18 @@ public class ChunkedMineGeneration : MonoBehaviour
     // =========================================================================
     // STATE 1: UNCOMBINED (Individual Prefabs for interaction)
     // =========================================================================
-    private void SpawnIndividualBlocks(Vector2Int chunkCoord, ChunkData chunkData)
+    private IEnumerator SpawnIndividualBlocks(Vector2Int chunkCoord, ChunkData chunkData)
     {
-        // 1. Destroy the combined mesh components so we don't double-render
-        MeshFilter mf = chunkData.ChunkObject.GetComponent<MeshFilter>();
-        if (mf != null) Destroy(mf);
-
-        MeshRenderer mr = chunkData.ChunkObject.GetComponent<MeshRenderer>();
-        if (mr != null) Destroy(mr);
-
-        MeshCollider mc = chunkData.ChunkObject.GetComponent<MeshCollider>();
-        if (mc != null) Destroy(mc);
+        chunkData.IsSpawningIndividualBlocks = true;
 
         int startX = chunkCoord.x * chunkSize;
         int startZ = chunkCoord.y * chunkSize;
         int endX = Mathf.Min(startX + chunkSize, gridWidth);
         int endZ = Mathf.Min(startZ + chunkSize, gridLength);
+        int blocksSpawnedThisFrame = 0;
+        int spawnLimit = Mathf.Max(1, individualBlocksPerFrame);
 
-        // 2. Spawn real GameObjects respecting original prefab scale and rotation
+        // Keep the combined mesh visible until all individual blocks are ready.
         for (int x = startX; x < endX; x++)
         {
             for (int z = startZ; z < endZ; z++)
@@ -438,10 +415,28 @@ public class ChunkedMineGeneration : MonoBehaviour
                 wallHealth.SetHealthForCurrentDepth();
 
                 chunkData.IndividualBlocks.Add(realBlock);
+                blocksSpawnedThisFrame++;
+
+                if (blocksSpawnedThisFrame >= spawnLimit)
+                {
+                    blocksSpawnedThisFrame = 0;
+                    yield return null;
+                }
             }
         }
 
+        MeshFilter mf = chunkData.ChunkObject.GetComponent<MeshFilter>();
+        if (mf != null) Destroy(mf);
+
+        MeshRenderer mr = chunkData.ChunkObject.GetComponent<MeshRenderer>();
+        if (mr != null) Destroy(mr);
+
+        MeshCollider mc = chunkData.ChunkObject.GetComponent<MeshCollider>();
+        if (mc != null) Destroy(mc);
+
         chunkData.IsCombined = false;
+        chunkData.IsSpawningIndividualBlocks = false;
+        chunkData.IndividualBlockSpawnRoutine = null;
     }
 
     // =========================================================================
@@ -450,6 +445,13 @@ public class ChunkedMineGeneration : MonoBehaviour
     private void BuildChunkMesh(Vector2Int chunkCoord, ChunkData chunkData)
     {
         if (wallPrefab == null) return;
+
+        if (chunkData.IndividualBlockSpawnRoutine != null)
+        {
+            StopCoroutine(chunkData.IndividualBlockSpawnRoutine);
+            chunkData.IndividualBlockSpawnRoutine = null;
+            chunkData.IsSpawningIndividualBlocks = false;
+        }
 
         // 1. Destroy individual blocks if they exist to free RAM
         foreach (GameObject block in chunkData.IndividualBlocks)

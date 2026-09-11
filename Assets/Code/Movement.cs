@@ -105,6 +105,7 @@ public class PlayerController : NetworkBehaviour
 
             if (isLocalPlayer)
             {
+                playerCamera.cullingMask = ~0;
                 playerCamera.tag = "MainCamera";
             }
             else if (playerCamera.CompareTag("MainCamera"))

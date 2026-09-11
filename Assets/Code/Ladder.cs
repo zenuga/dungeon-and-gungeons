@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.UI;
 using UnityEngine.InputSystem;
 using TMPro;
 
@@ -8,6 +7,7 @@ public class Ladder : MonoBehaviour
     public Depth depth;
     public ChunkedMineGeneration chunkedMineGeneration;
     public TextMeshProUGUI ladderText;
+    private bool isTransitioning;
 
     private void Awake()
     {
@@ -60,6 +60,19 @@ public class Ladder : MonoBehaviour
             if (Keyboard.current != null && 
                (Keyboard.current.fKey.wasPressedThisFrame || Keyboard.current.semicolonKey.wasPressedThisFrame))
             {
+                if (isTransitioning)
+                {
+                    return;
+                }
+
+                isTransitioning = true;
+
+                DungeonWaveManager[] waveManagers = FindObjectsByType<DungeonWaveManager>(FindObjectsSortMode.None);
+                foreach (DungeonWaveManager waveManager in waveManagers)
+                {
+                    waveManager.ClearDungeonRewardsAndLadder();
+                }
+
                 if (depth != null)
                 {
                     // Increments depth value
@@ -69,23 +82,17 @@ public class Ladder : MonoBehaviour
                 if (chunkedMineGeneration != null)
                 {
                     chunkedMineGeneration.level++;
-                    StartCoroutine(chunkedMineGeneration.GenerateMineAndChunks());
+                    chunkedMineGeneration.RegenerateMine();
                     ShopResetRegistry.ResetAll();
-                    Debug.LogWarning("thisworks");
                 }
+
+                if (ladderText != null)
+                {
+                    ladderText.gameObject.SetActive(false);
+                }
+
+                Destroy(gameObject);
             }
         }
     }
-
-    private void OnTriggerExit(Collider other)
-    {
-        if (other.CompareTag("Player1") || other.CompareTag("Player2"))
-        {
-            if (ladderText != null)
-            {
-                ladderText.gameObject.SetActive(false);
-            }
-        }
-    }
-
 }

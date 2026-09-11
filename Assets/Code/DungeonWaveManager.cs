@@ -21,6 +21,8 @@ public class DungeonWaveManager : MonoBehaviour
     [Header("Rewards & Exit")]
     public GameObject chestPrefab;
     public Transform chestSpawnPoint; // Drag empty GameObject located in middle of room
+    public Vector3 chestSpawnOffset = Vector3.zero;
+    public Vector3 ladderSpawnOffset = Vector3.zero;
     [FormerlySerializedAs("rewardWeaponTemplates")]
     public List<WeaponData> rewardItems = new List<WeaponData>();
 
@@ -32,6 +34,8 @@ public class DungeonWaveManager : MonoBehaviour
     private GameObject currentTriggerObject;
     private Dungeonenter dungeonEnter;
     private GameObject activeBoss;
+    private GameObject spawnedChest;
+    private GameObject spawnedLadder;
     private static int completedDungeonCount;
 
     public bool IsDungeonCompleted => dungeonCompleted;
@@ -132,6 +136,12 @@ public class DungeonWaveManager : MonoBehaviour
             return;
         }
 
+        EnemyAi enemyAi = enemy.GetComponentInChildren<EnemyAi>(true);
+        if (enemyAi != null)
+        {
+            enemyAi.SetWaveManager(this);
+        }
+
         if (!activeEnemies.Contains(enemy))
         {
             activeEnemies.Add(enemy);
@@ -158,7 +168,28 @@ public class DungeonWaveManager : MonoBehaviour
     {
         if (ladderPrefab != null)
         {
-            Instantiate(ladderPrefab, position, Quaternion.identity);
+            spawnedLadder = Instantiate(ladderPrefab, position + ladderSpawnOffset, Quaternion.identity);
+        }
+    }
+
+    public void ClearDungeonRewardsAndLadder()
+    {
+        if (spawnedChest != null)
+        {
+            RewardChest rewardChest = spawnedChest.GetComponentInChildren<RewardChest>(true);
+            if (rewardChest != null)
+            {
+                rewardChest.ClearSpawnedRewards();
+            }
+
+            Destroy(spawnedChest);
+            spawnedChest = null;
+        }
+
+        if (spawnedLadder != null)
+        {
+            Destroy(spawnedLadder);
+            spawnedLadder = null;
         }
     }
 
@@ -212,14 +243,14 @@ public class DungeonWaveManager : MonoBehaviour
         dungeonCompleted = true;
 
         // 1. Spawn Chest in the middle of the dungeon
-        Vector3 spawnPosition = chestSpawnPoint != null ? chestSpawnPoint.position : transform.position;
+        Vector3 spawnPosition = (chestSpawnPoint != null ? chestSpawnPoint.position : transform.position) + chestSpawnOffset;
         if (chestPrefab != null)
         {
-            GameObject chest = Instantiate(chestPrefab, spawnPosition, Quaternion.identity);
-            RewardChest rewardChest = chest.GetComponentInChildren<RewardChest>(true);
+            spawnedChest = Instantiate(chestPrefab, spawnPosition, Quaternion.identity);
+            RewardChest rewardChest = spawnedChest.GetComponentInChildren<RewardChest>(true);
             if (rewardChest == null)
             {
-                rewardChest = chest.AddComponent<RewardChest>();
+                rewardChest = spawnedChest.AddComponent<RewardChest>();
             }
 
             rewardChest.Configure(rewardItems);

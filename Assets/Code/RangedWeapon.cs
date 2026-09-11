@@ -165,14 +165,9 @@ public class RangedWeapon : NetworkBehaviour
     private void Fire(Transform owner)
     {
         Vector3 fireDirection = GetPlayerFacingDirection(owner);
-        Transform target = FindNearestVisibleEnemy();
-        if (target != null)
-        {
-            fireDirection = (target.position - muzzlePoint.position).normalized;
-            fireDirection.y = 0f;
-        }
+        Vector3 fireOrigin = owner.position + fireDirection * 0.75f;
 
-        GameObject projectileObj = Instantiate(projectilePrefab, muzzlePoint.position, Quaternion.LookRotation(fireDirection, Vector3.up));
+        GameObject projectileObj = Instantiate(projectilePrefab, fireOrigin, Quaternion.LookRotation(fireDirection, Vector3.up));
         Projectile projectile = projectileObj.GetComponent<Projectile>();
         if (projectile == null)
         {
@@ -191,6 +186,14 @@ public class RangedWeapon : NetworkBehaviour
 
     private static Vector3 GetPlayerFacingDirection(Transform owner)
     {
+        PlayerMouseAim mouseAim = owner.GetComponentInChildren<PlayerMouseAim>(true);
+        if (mouseAim != null && mouseAim.AimDirection.sqrMagnitude > 0.001f)
+        {
+            Vector3 aimDirection = mouseAim.AimDirection;
+            aimDirection.y = 0f;
+            return aimDirection.normalized;
+        }
+
         PlayerController playerController = owner.GetComponent<PlayerController>();
         if (playerController != null)
         {

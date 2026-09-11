@@ -26,6 +26,7 @@ public class EnemyAi : NetworkBehaviour
     protected HealthBarUI healthBarUI;
     protected bool isAttacking;
     protected Depth depth;
+    private DungeonWaveManager waveManager;
 
     protected virtual float MoveSpeed => enemyData != null ? enemyData.walkSpeed : 2.5f;
     protected virtual float StopDistance => enemyData != null ? enemyData.stopDistance : 1.25f;
@@ -48,6 +49,11 @@ public class EnemyAi : NetworkBehaviour
     public int CurrentHealth => currentHealth;
     public int MaxHealthValue => MaxHealth;
     public string HealthText => currentHealth + "/" + MaxHealth;
+
+    public void SetWaveManager(DungeonWaveManager manager)
+    {
+        waveManager = manager;
+    }
 
     protected virtual void Awake()
     {
@@ -305,10 +311,10 @@ public class EnemyAi : NetworkBehaviour
     {
         CurrencyReward.GiveNearestPlayer(transform.position, 5, 25);
 
-        var waveManager = GetComponentInParent<DungeonWaveManager>();
-        if (waveManager != null)
+        DungeonWaveManager manager = waveManager != null ? waveManager : GetComponentInParent<DungeonWaveManager>();
+        if (manager != null)
         {
-            waveManager.UnregisterEnemy(gameObject);
+            manager.UnregisterEnemy(gameObject);
         }
 
         Destroy(gameObject);

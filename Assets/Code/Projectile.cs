@@ -44,7 +44,8 @@ public class Projectile : NetworkBehaviour
 
     public void SetDirection(Vector3 newDirection)
     {
-        direction = newDirection.normalized;
+        newDirection.y = 0f;
+        direction = newDirection.sqrMagnitude > 0.001f ? newDirection.normalized : Vector3.forward;
         transform.rotation = Quaternion.LookRotation(direction, Vector3.up);
     }
 

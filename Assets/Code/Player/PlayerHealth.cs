@@ -13,12 +13,13 @@ public class PlayerHealth : NetworkBehaviour
     [SerializeField] private bool destroyOnZero = false;
 
     [SerializeField]
-    private int currentHealth;
+    private int currentHealth = 100;
     private NetworkVariable<int> networkHealth = new NetworkVariable<int>(
         100,
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server);
-    private Quaternion standingLocalRotation;
+    private Transform visualModelTransform;
+    private Quaternion standingVisualLocalRotation;
     private bool isKnockedDown;
 
     public int CurrentHealth => currentHealth;
@@ -27,7 +28,13 @@ public class PlayerHealth : NetworkBehaviour
 
     private void Awake()
     {
-        standingLocalRotation = transform.localRotation;
+        PlayerController playerController = GetComponent<PlayerController>();
+        visualModelTransform = playerController != null ? playerController.VisualModelTransform : null;
+        if (visualModelTransform != null)
+        {
+            standingVisualLocalRotation = visualModelTransform.localRotation;
+        }
+
         currentHealth = maxHealth;
         UpdateHealthBar();
         UpdatePlayerSystems();
@@ -174,14 +181,22 @@ public class PlayerHealth : NetworkBehaviour
         bool enableSystems = IsAlive;
         if (enableSystems && isKnockedDown)
         {
-            transform.localRotation = standingLocalRotation;
+            if (visualModelTransform != null)
+            {
+                visualModelTransform.localRotation = standingVisualLocalRotation;
+            }
+
             isKnockedDown = false;
         }
         else if (!enableSystems && !isKnockedDown)
         {
-            Vector3 knockedDownRotation = standingLocalRotation.eulerAngles;
-            knockedDownRotation.z += 90f;
-            transform.localRotation = Quaternion.Euler(knockedDownRotation);
+            if (visualModelTransform != null)
+            {
+                Vector3 knockedDownRotation = standingVisualLocalRotation.eulerAngles;
+                knockedDownRotation.z += 90f;
+                visualModelTransform.localRotation = Quaternion.Euler(knockedDownRotation);
+            }
+
             isKnockedDown = true;
         }
 

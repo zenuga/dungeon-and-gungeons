@@ -6,6 +6,8 @@ public class PlayerMouseAim : MonoBehaviour
     [SerializeField] private float rotationSpeed = 20f;
     [SerializeField] private GameObject rotationOnlyObject;
 
+    public Vector3 AimDirection { get; private set; } = Vector3.forward;
+
     private void Update()
     {
         if (!NetworkOwnership.CanControl(this) || Camera.main == null || Mouse.current == null)
@@ -29,6 +31,8 @@ public class PlayerMouseAim : MonoBehaviour
         {
             return;
         }
+
+        AimDirection = aimDirection.normalized;
 
         Quaternion aimRotation = Quaternion.LookRotation(aimDirection.normalized, Vector3.up);
         float targetYaw = aimRotation.eulerAngles.y;

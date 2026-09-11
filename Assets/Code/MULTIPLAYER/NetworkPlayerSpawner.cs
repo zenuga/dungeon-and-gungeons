@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class NetworkPlayerSpawner : NetworkBehaviour
 {
+    private const string GameplaySceneName = "SampleScene";
+
     [Header("Player Prefabs")]
     [SerializeField] private NetworkObject player1Prefab;
     [SerializeField] private NetworkObject player2Prefab;
@@ -14,6 +16,32 @@ public class NetworkPlayerSpawner : NetworkBehaviour
     [SerializeField] private Vector3 player2Offset = new Vector3(1.5f, 0f, 0f);
 
     private readonly Dictionary<ulong, NetworkObject> playersByClient = new Dictionary<ulong, NetworkObject>();
+
+    public List<GameObject> GetSpawnedPlayerObjects()
+    {
+        List<GameObject> players = new List<GameObject>();
+
+        foreach (NetworkObject player in playersByClient.Values)
+        {
+            if (player != null && player.gameObject != null && !players.Contains(player.gameObject))
+            {
+                players.Add(player.gameObject);
+            }
+        }
+
+        if (players.Count == 0 && NetworkManager != null && NetworkManager.SpawnManager != null)
+        {
+            foreach (NetworkObject networkObject in NetworkManager.SpawnManager.SpawnedObjectsList)
+            {
+                if (networkObject != null && networkObject.GetComponent<PlayerController>() != null && !players.Contains(networkObject.gameObject))
+                {
+                    players.Add(networkObject.gameObject);
+                }
+            }
+        }
+
+        return players;
+    }
 
     private void Update()
     {
@@ -52,7 +80,7 @@ public class NetworkPlayerSpawner : NetworkBehaviour
 
     private void SpawnPlayerForClient(ulong clientId)
     {
-        if (!IsServer || playersByClient.ContainsKey(clientId))
+        if (!IsServer || UnityEngine.SceneManagement.SceneManager.GetActiveScene().name != GameplaySceneName || playersByClient.ContainsKey(clientId))
         {
             return;
         }
@@ -115,6 +143,7 @@ public class NetworkPlayerSpawner : NetworkBehaviour
 
                 if (isLocalPlayer)
                 {
+                    playerCamera.cullingMask = ~0;
                     playerCamera.tag = "MainCamera";
                 }
                 else if (playerCamera.CompareTag("MainCamera"))

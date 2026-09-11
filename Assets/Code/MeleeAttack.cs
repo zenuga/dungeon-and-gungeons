@@ -15,7 +15,7 @@ public class WeaponAttack : NetworkBehaviour
     [SerializeField] private float attackCooldown = 0.5f;
 
     [Header("Target Tags")]
-    [SerializeField] private List<string> validTags = new List<string> { "Enemy", "wall", "boss", "Enemy", "Wall", "Boss" };
+    [SerializeField] private List<string> validTags = new List<string> { "Enemy", "wall", "boss", "Wall", "Boss" };
 
     private float _nextAttackTime = 0f;
     private HashSet<Collider> _hitThisSwing = new HashSet<Collider>();
@@ -37,7 +37,7 @@ public class WeaponAttack : NetworkBehaviour
 
         if (Mouse.current.leftButton.wasPressedThisFrame)
         {
-            ExecuteAttack(transform);
+            ExecuteAttack();
         }
     }
 
@@ -57,9 +57,8 @@ public class WeaponAttack : NetworkBehaviour
         return null;
     }
 
-    private void ExecuteAttack(Transform attackTransform)
+    private void ExecuteAttack()
     {
-        Debug.Log($"Executing attack with weapon: {weaponData?.name ?? "Unknown Weapon"}");
         _hitThisSwing.Clear();
         Transform ownerTransform = GetOwnerTransform();
         if (ownerTransform == null)
@@ -76,18 +75,27 @@ public class WeaponAttack : NetworkBehaviour
         float cooldown = GetCooldownFromWeapon();
         _nextAttackTime = Time.time + cooldown;
 
-        Vector3 attackOrigin = attackTransform.position + attackTransform.forward * (attackRange * 0.5f);
-        Vector3 attackDirection = attackTransform.forward;
+        PlayerController playerController = ownerTransform.GetComponent<PlayerController>();
+        Vector3 attackDirection = playerController != null ? playerController.FacingDirection : ownerTransform.forward;
+        attackDirection.y = 0f;
+        if (attackDirection.sqrMagnitude <= 0.001f)
+        {
+            attackDirection = ownerTransform.forward;
+            attackDirection.y = 0f;
+        }
+
+        attackDirection.Normalize();
+        Vector3 attackOrigin = ownerTransform.position + attackDirection * (attackRange * 0.5f);
         Collider[] hits = Physics.OverlapSphere(attackOrigin, attackRadius, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore);
 
         for (int i = 0; i < hits.Length; i++)
         {
             Collider col = hits[i];
-            if (col == null || col.transform == attackTransform || col.gameObject == attackTransform.gameObject || _hitThisSwing.Contains(col)) continue;
+            if (col == null || col.transform == ownerTransform || col.gameObject == ownerTransform.gameObject || _hitThisSwing.Contains(col)) continue;
 
             if (!HasValidTargetTag(col.gameObject, ownerTransform)) continue;
 
-            Vector3 directionToTarget = (col.bounds.center - attackTransform.position).normalized;
+            Vector3 directionToTarget = (col.bounds.center - ownerTransform.position).normalized;
             float angleToTarget = Vector3.Angle(attackDirection, directionToTarget);
 
             if (angleToTarget > swingAngle * 0.5f) continue;
@@ -156,7 +164,6 @@ public class WeaponAttack : NetworkBehaviour
         }
 
         ApplyDamageToTarget(target, damageAmount);
-        Debug.Log($"Hit {target.name} on tag '{target.tag}' for {damageAmount} damage!");
     }
 
     private void ApplyDamageToTarget(GameObject target, int damageAmount)

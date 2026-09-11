@@ -1774,7 +1774,7 @@ MonoBehaviour:
   bossPrefab: {fileID: 4766655014969777500, guid: 5618d868a7a1c4e86a6bf3ac5a915354, type: 3}
   ladderPrefab: {fileID: 3677925992404981558, guid: 6a663313d1712aec5a0ab2a6e51f876d, type: 3}
   objectToDisableOnBossSpawn: {fileID: 3734872445681196196}
-  totalWaves: 3
+  totalWaves: 1
   baseEnemiesPerWave: 4
   enemiesAddedPerWave: 3
   spawnPoints:
@@ -1784,6 +1784,8 @@ MonoBehaviour:
   - {fileID: 3117307773198549060}
   chestPrefab: {fileID: 6354120891964402117, guid: e44e89a4d2b37164da40e0761b41f888, type: 3}
   chestSpawnPoint: {fileID: 8186129745059342250}
+  chestSpawnOffset: {x: 0, y: 0.8, z: 0}
+  ladderSpawnOffset: {x: 0, y: 0.2, z: 0}
   rewardItems:
   - {fileID: 11400000, guid: 11a25e377da988b109de119ef4149d6f, type: 2}
   - {fileID: 11400000, guid: 5b823bec0262f5235b2abe497f37fb7a, type: 2}
@@ -3749,7 +3751,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 3691010895
+  GlobalObjectIdHash: 561079724
   InScenePlacedSourceGlobalObjectIdHash: 0
   m_InScenePlacedDisabledByDefault: 0
   DeferredDespawnTick: 0
