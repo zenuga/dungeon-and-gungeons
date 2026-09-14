@@ -1774,7 +1774,7 @@ MonoBehaviour:
   bossPrefab: {fileID: 4766655014969777500, guid: 5618d868a7a1c4e86a6bf3ac5a915354, type: 3}
   ladderPrefab: {fileID: 3677925992404981558, guid: 6a663313d1712aec5a0ab2a6e51f876d, type: 3}
   objectToDisableOnBossSpawn: {fileID: 3734872445681196196}
-  totalWaves: 1
+  totalWaves: 3
   baseEnemiesPerWave: 4
   enemiesAddedPerWave: 3
   spawnPoints:

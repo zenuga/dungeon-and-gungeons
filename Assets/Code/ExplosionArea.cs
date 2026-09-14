@@ -28,7 +28,7 @@ public class ExplosionArea : NetworkBehaviour
                 continue;
             }
 
-            if (hit.CompareTag("Player") || hit.CompareTag("Player1") || hit.CompareTag("Player2") || hit.CompareTag("Enemy") || hit.CompareTag("enemy") || hit.CompareTag("Boss") || hit.CompareTag("boss") || hit.CompareTag("Wall") || hit.CompareTag("wall") || hit.CompareTag("walls"))
+            if (hit.CompareTag("Player") || hit.CompareTag("Player1") || hit.CompareTag("Player2") || hit.CompareTag("Enemy") || hit.CompareTag("wall") || hit.CompareTag("walls"))
             {
                 PlayerHealth playerHealth = hit.GetComponentInParent<PlayerHealth>();
                 if (playerHealth != null)

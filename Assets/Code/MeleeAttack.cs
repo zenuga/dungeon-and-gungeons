@@ -133,7 +133,7 @@ public class WeaponAttack : NetworkBehaviour
         string ownerTag = owner.tag;
 
         bool ownerIsPlayer = ownerTag == "Player" || ownerTag == "Player1" || ownerTag == "Player2";
-        bool ownerIsEnemy = ownerTag == "Enemy" || ownerTag == "enemy" || ownerTag == "Boss" || ownerTag == "boss";
+        bool ownerIsEnemy = ownerTag == "Enemy" || ownerTag == "enemy" || ownerTag == "Boss" || ownerTag == "boss"||  ownerTag == "Crate" || ownerTag == "Wall";
 
         if (ownerIsPlayer)
         {

@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
 using Unity.Netcode;
 
 public class RangedWeapon : NetworkBehaviour
@@ -8,12 +9,16 @@ public class RangedWeapon : NetworkBehaviour
     [SerializeField] private GameObject projectilePrefab;
     [SerializeField] private Transform muzzlePoint;
     [SerializeField] private float fireRate = 0.5f;
-    [SerializeField] private float maxAimDistance = 20f;
-    [SerializeField] private LayerMask obstacleMask;
-    [SerializeField] private string[] EnemyTags = { "Enemy", "Boss"};
-    private WeaponData weaponData;
+    [SerializeField] private GameObject objectToDisableAfterShooting;
 
+    [Header("Reload UI Setup")]
+    [SerializeField] private string reloadTag = "Reload";
+    private Image reloadImage;
+    private GameObject reloadUIObject;
+
+    private WeaponData weaponData;
     private float nextFireTime;
+    private bool isPickedUp;
 
     public void SetWeaponData(WeaponData data)
     {
@@ -22,6 +27,8 @@ public class RangedWeapon : NetworkBehaviour
         {
             fireRate = data.cooldown > 0f ? data.cooldown : fireRate;
         }
+
+        ActivateWeaponUI();
     }
 
     private void Awake()
@@ -30,6 +37,8 @@ public class RangedWeapon : NetworkBehaviour
         {
             muzzlePoint = transform;
         }
+
+        FindReloadUI();
     }
 
     private void Update()
@@ -39,30 +48,42 @@ public class RangedWeapon : NetworkBehaviour
             return;
         }
 
+        Transform owner = GetOwnerTransform();
+        if (owner == null || !IsPlayerOwner(owner))
+        {
+            if (isPickedUp)
+            {
+                DeactivateWeaponUI();
+            }
+            return;
+        }
+
+        // Activate UI if picked up and not yet active
+        if (!isPickedUp)
+        {
+            ActivateWeaponUI();
+        }
+
+        UpdateReloadUI();
+
         if (projectilePrefab == null || Keyboard.current == null || Mouse.current == null)
         {
             return;
         }
 
-        Transform owner = GetOwnerTransform();
-        if (owner == null || !IsPlayerOwner(owner))
-        {
-            return;
-        }
-
-        bool firePressed = Mouse.current.leftButton.wasPressedThisFrame;
+        // Changed to isPressed so holding the button works and the UI loops smoothly
+        bool firePressed = Mouse.current.leftButton.isPressed;
         if (owner.CompareTag("Player1"))
         {
-            firePressed |= Keyboard.current.spaceKey.wasPressedThisFrame;
+            firePressed |= Keyboard.current.spaceKey.isPressed;
         }
         else if (owner.CompareTag("Player2"))
         {
-            firePressed |= Keyboard.current.enterKey.wasPressedThisFrame;
+            firePressed |= Keyboard.current.enterKey.isPressed;
         }
 
         if (!firePressed)
         {
-            AimAtNearestVisibleEnemy(owner);
             return;
         }
 
@@ -73,93 +94,104 @@ public class RangedWeapon : NetworkBehaviour
 
         nextFireTime = Time.time + fireRate;
         Fire(owner);
+
+        if (objectToDisableAfterShooting != null)
+        {
+            objectToDisableAfterShooting.SetActive(false);
+        }
     }
 
-    private void AimAtNearestVisibleEnemy(Transform owner)
+    private void FindReloadUI()
     {
-        Transform bestTarget = FindNearestVisibleEnemy();
-        if (bestTarget == null)
+        if (reloadImage != null) return;
+
+        GameObject reloadObj = GameObject.FindGameObjectWithTag(reloadTag);
+        if (reloadObj != null)
         {
+            reloadUIObject = reloadObj;
+            
+            // Search all child images to find the one meant for filling (avoids grabbing backgrounds)
+            Image[] images = reloadObj.GetComponentsInChildren<Image>(true);
+            foreach (Image img in images)
+            {
+                if (img.type == Image.Type.Filled)
+                {
+                    reloadImage = img;
+                    break;
+                }
+            }
+
+            // Fallback: If no image was set to filled, grab the first one and force it to be filled
+            if (reloadImage == null)
+            {
+                reloadImage = reloadObj.GetComponentInChildren<Image>(true);
+                if (reloadImage != null)
+                {
+                    reloadImage.type = Image.Type.Filled;
+                    reloadImage.fillMethod = Image.FillMethod.Radial360; // Or whatever style you prefer
+                }
+            }
+
+            // Ensure it starts disabled until picked up
+            if (!isPickedUp && reloadUIObject != null)
+            {
+                reloadUIObject.SetActive(false);
+            }
+        }
+    }
+
+    private void ActivateWeaponUI()
+    {
+        isPickedUp = true;
+        if (reloadUIObject == null)
+        {
+            FindReloadUI();
+        }
+
+        if (reloadUIObject != null)
+        {
+            reloadUIObject.SetActive(true);
+        }
+    }
+
+    private void DeactivateWeaponUI()
+    {
+        isPickedUp = false;
+        if (reloadUIObject != null)
+        {
+            reloadUIObject.SetActive(false);
+        }
+    }
+
+    private void UpdateReloadUI()
+    {
+        if (reloadImage == null)
+        {
+            FindReloadUI();
+            if (reloadImage == null) return;
+        }
+
+        if (fireRate <= 0f)
+        {
+            reloadImage.fillAmount = 1f;
+            return;
+        }
+        if (reloadImage.fillAmount == 1f)
+        {
+            objectToDisableAfterShooting?.SetActive(true);
             return;
         }
 
-        Vector3 targetDirection = bestTarget.position - muzzlePoint.position;
-        targetDirection.y = 0f;
-
-        if (targetDirection.sqrMagnitude <= 0.001f)
+        float timeRemaining = nextFireTime - Time.time;
+        if (timeRemaining <= 0f || timeRemaining == 0f)
         {
-            return;
+            reloadImage.fillAmount = 1f;
         }
-
-        Transform highestOwner = GetHighestPlayerParent(owner);
-        highestOwner.rotation = Quaternion.LookRotation(targetDirection.normalized, Vector3.up);
-    }
-
-    private Transform FindNearestVisibleEnemy()
-    {
-        Transform nearest = null;
-        float nearestDistance = Mathf.Infinity;
-
-        foreach (string tag in EnemyTags)
+        else
         {
-            GameObject[] Enemies = GameObject.FindGameObjectsWithTag(tag);
-            foreach (GameObject Enemy in Enemies)
-            {
-                if (Enemy == null)
-                {
-                    continue;
-                }
-
-                if (!HasLineOfSight(Enemy.transform.position))
-                {
-                    continue;
-                }
-
-                float dist = Vector3.Distance(muzzlePoint.position, Enemy.transform.position);
-                if (dist < nearestDistance)
-                {
-                    nearestDistance = dist;
-                    nearest = Enemy.transform;
-                }
-            }
+            float fillRatio = 1f - (timeRemaining / fireRate);
+            reloadImage.fillAmount = Mathf.Clamp01(fillRatio);
         }
-
-        return nearest;
-    }
-
-    private bool HasLineOfSight(Vector3 targetPosition)
-    {
-        Vector3 origin = muzzlePoint.position;
-        Vector3 direction = targetPosition - origin;
-
-        if (direction.sqrMagnitude <= 0.001f)
-        {
-            return true;
-        }
-
-        float distance = direction.magnitude;
-        if (distance > maxAimDistance)
-        {
-            return false;
-        }
-
-        RaycastHit hit;
-        if (Physics.Raycast(origin, direction.normalized, out hit, distance, obstacleMask.value, QueryTriggerInteraction.Ignore))
-        {
-            if (hit.collider == null)
-            {
-                return true;
-            }
-
-            if (hit.collider.transform.position == targetPosition)
-            {
-                return true;
-            }
-
-            return false;
-        }
-
-        return true;
     }
 
     private void Fire(Transform owner)
@@ -214,24 +246,6 @@ public class RangedWeapon : NetworkBehaviour
     {
         Transform current = transform;
         Transform highestPlayer = null;
-        while (current != null)
-        {
-            if (current.CompareTag("Player1") || current.CompareTag("Player2"))
-            {
-                highestPlayer = current;
-            }
-
-            current = current.parent;
-        }
-
-        return highestPlayer;
-    }
-
-    private static Transform GetHighestPlayerParent(Transform owner)
-    {
-        Transform current = owner;
-        Transform highestPlayer = owner;
-
         while (current != null)
         {
             if (current.CompareTag("Player1") || current.CompareTag("Player2"))

@@ -16,6 +16,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: character Alexandra Variant
       objectReference: {fileID: 0}
+    - target: {fileID: 5839397389604201623, guid: 59e46c2372967ed378d0f352e998bb04, type: 3}
+      propertyPath: m_TagString
+      value: boss
+      objectReference: {fileID: 0}
     - target: {fileID: 6503871108230676013, guid: 59e46c2372967ed378d0f352e998bb04, type: 3}
       propertyPath: m_LocalScale.x
       value: 2.813437

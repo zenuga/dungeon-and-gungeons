@@ -4,7 +4,8 @@ using Unity.Netcode;
 public class WallHealth : NetworkBehaviour
 {
     private Depth depth;
-    public int Health = 10;
+    [SerializeField] private int maxHealth = 10;
+    [SerializeField] public int Health = 10;
 
     private void Awake()
     {

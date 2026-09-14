@@ -14,7 +14,9 @@ TagManager:
   - Bombs
   - walls
   - Bomb
-  - Boss
+  - Projectile
+  - Reload
+  - boss
   layers:
   - Default
   - TransparentFX

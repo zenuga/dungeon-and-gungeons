@@ -33,10 +33,15 @@ public class Projectile : NetworkBehaviour
         }
         body.isKinematic = true;
 
-        Collider[] colliders = GetComponentsInChildren<Collider>(true);
-        foreach (Collider collider in colliders)
+        // Only force triggers on Normal projectiles. 
+        // Explosive projectiles can now retain their hard colliders (isTrigger = false).
+        if (projectileType != ProjectileType.Explosive && !explode)
         {
-            collider.isTrigger = true;
+            Collider[] colliders = GetComponentsInChildren<Collider>(true);
+            foreach (Collider collider in colliders)
+            {
+                collider.isTrigger = true;
+            }
         }
 
         ignorePlayerUntil = Time.time + 0.5f;
@@ -81,31 +86,55 @@ public class Projectile : NetworkBehaviour
         }
     }
 
+    // Handles normal Trigger hitboxes
     private void OnTriggerEnter(Collider other)
     {
-        if (other == null)
+        if (other == null) return;
+        ProcessContact(other.gameObject, other.transform);
+    }
+
+    // Handles hard Colliders (isTrigger = false)
+    private void OnCollisionEnter(Collision collision)
+    {
+        if (collision == null || collision.gameObject == null) return;
+        ProcessContact(collision.gameObject, collision.transform);
+    }
+
+    // Unified logic to handle both Triggers and Collisions
+    private void ProcessContact(GameObject hitObject, Transform hitTransform)
+    {
+        if (Time.time < ignorePlayerUntil && IsOnPlayerLayer(hitTransform))
         {
             return;
         }
 
-        if (Time.time < ignorePlayerUntil && IsOnPlayerLayer(other.transform))
+        // --- 1. EXPLOSIVE PROJECTILES ---
+        // Explode immediately on ANY contact (No piercing)
+        if (projectileType == ProjectileType.Explosive || explode)
         {
+            TriggerImpact();
             return;
         }
 
-        EnemyAi enemy = other.GetComponentInParent<EnemyAi>();
-        PlayerHealth player = other.GetComponentInParent<PlayerHealth>();
-        WallHealth wall = other.GetComponentInParent<WallHealth>();
+        // --- 2. NORMAL PROJECTILES ---
+        // Existing piercing logic for standard projectiles
+        EnemyAi enemy = hitObject.GetComponentInParent<EnemyAi>();
+        PlayerHealth player = hitObject.GetComponentInParent<PlayerHealth>();
+        WallHealth wall = hitObject.GetComponentInParent<WallHealth>();
+        Crate crate = hitObject.GetComponentInParent<Crate>();
 
-        if (wall != null)
+        if (wall != null || crate != null)
         {
-            wall.TakeDamage(Mathf.Max(1, Mathf.RoundToInt(damage * 0.1f)));
+            if (wall != null) 
+            {
+                wall.TakeDamage(Mathf.Max(1, Mathf.RoundToInt(damage * 0.1f)));
+            }
             return;
         }
 
-        if (IsWall(other.gameObject))
+        if (IsWall(hitObject))
         {
-            other.gameObject.SendMessage(
+            hitObject.SendMessage(
                 "TakeDamage",
                 Mathf.Max(1, Mathf.RoundToInt(damage * 0.1f)),
                 SendMessageOptions.DontRequireReceiver);
