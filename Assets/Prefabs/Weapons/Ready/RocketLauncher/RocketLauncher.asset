@@ -17,6 +17,6 @@ MonoBehaviour:
   weaponImage: {fileID: 21300000, guid: b64571cb98810e9c6b0ec95f24cff01c, type: 3}
   weaponPrefab: {fileID: 5696619762456506199, guid: 544bcfcb9814c98c29c3010dabe5d67c, type: 3}
   damage: 60
-  cooldown: 2
+  cooldown: 1.25
   currencyAmount: 300
   potionType: 0

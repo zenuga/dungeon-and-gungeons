@@ -33,50 +33,22 @@ public class ChunkedMineGeneration : MonoBehaviour
     [Tooltip("Optional explicit spawn point for Player 2. If empty, Player 2 uses the legacy offset fallback.")]
     public Transform player2SpawnPoint;
 
-    [Header("Grid & Chunk Settings")]
+    [Header("Grid Settings")]
     public int gridWidth = 250;
     public int gridLength = 250;
-    public int chunkSize = 10; // 10x10 cells per chunk
     public float spacing = 1.0f;
-
-    [Header("Chunk Loading Settings")]
-    [Tooltip("Distance (in chunks) where blocks become individual interactable prefabs.")]
-    public int uncombineDistanceInChunks = 1;
-    
-    [Tooltip("Distance (in chunks) where blocks are rendered as 1 massive mesh.")]
-    public int viewDistanceInChunks = 6;
-    
-    [Tooltip("How often (in seconds) to check player position for chunk updates.")]
-    public float chunkUpdateInterval = 0.5f;
-
-    [Tooltip("Maximum wall prefabs created per frame while a chunk becomes individual blocks.")]
-    public int individualBlocksPerFrame = 10;
 
     private const int DungeonCount = 5;
     private static readonly Vector2Int DungeonSize = new Vector2Int(20, 20);
     private static readonly Vector2Int ShopSize = new Vector2Int(10, 5);
 
     private byte[,] _gridMap;
-
-    private Dictionary<Vector2Int, ChunkData> _chunks = new Dictionary<Vector2Int, ChunkData>();
     private HashSet<Vector2Int> _destroyedBlocks = new HashSet<Vector2Int>();
-    
-    private Transform _playerTransform;
-    private Vector2Int _currentPlayerChunk;
 
+    private Transform _playerTransform;
     private readonly List<GameObject> _generatedStructures = new List<GameObject>();
-    private Coroutine _chunkUpdateCoroutine;
     private bool _generationInProgress;
     private Vector3 _currentMineSpawnPosition;
-
-    private class ChunkData
-    {
-        public GameObject ChunkObject;
-        public bool IsCombined;
-        public bool IsSpawningIndividualBlocks;
-        public Coroutine IndividualBlockSpawnRoutine;
-        public List<GameObject> IndividualBlocks = new List<GameObject>(); // Tracks active real cubes
-    }
 
     private void Start()
     {
@@ -104,12 +76,6 @@ public class ChunkedMineGeneration : MonoBehaviour
         if (loadingImage != null)
         {
             loadingImage.SetActive(true);
-        }
-
-        if (_chunkUpdateCoroutine != null)
-        {
-            StopCoroutine(_chunkUpdateCoroutine);
-            _chunkUpdateCoroutine = null;
         }
 
         ClearGeneratedMine();
@@ -145,16 +111,30 @@ public class ChunkedMineGeneration : MonoBehaviour
         // 2. Base Floor
         SpawnSingleScaledFloor();
 
-        // 3. Initialize Chunks
-        int chunksX = Mathf.CeilToInt((float)gridWidth / chunkSize);
-        int chunksZ = Mathf.CeilToInt((float)gridLength / chunkSize);
-
-        for (int chunkX = 0; chunkX < chunksX; chunkX++)
+        // 3. Spawn Walls Directly
+        if (wallPrefab != null)
         {
-            for (int chunkZ = 0; chunkZ < chunksZ; chunkZ++)
+            for (int x = 0; x < gridWidth; x++)
             {
-                CreateAndBuildChunk(chunkX, chunkZ);
-                yield return null; 
+                for (int z = 0; z < gridLength; z++)
+                {
+                    if (_gridMap[x, z] != 0) continue;
+                    if (_destroyedBlocks.Contains(new Vector2Int(x, z))) continue;
+
+                    Vector3 pos = transform.position + new Vector3(x * spacing, wallYOffset, z * spacing);
+                    GameObject wall = Instantiate(wallPrefab, pos, wallPrefab.transform.rotation, transform);
+                    wall.name = $"wall_{x}_{z}";
+                    wall.tag = "wall";
+
+                    WallHealth wallHealth = wall.GetComponent<WallHealth>();
+                    if (wallHealth == null)
+                    {
+                        wallHealth = wall.AddComponent<WallHealth>();
+                    }
+                    wallHealth.SetHealthForCurrentDepth();
+                }
+
+                yield return null; // Pause each row to prevent frame freezing on large grids
             }
         }
 
@@ -164,8 +144,6 @@ public class ChunkedMineGeneration : MonoBehaviour
 
         yield return TeleportSpawnedPlayers(_currentMineSpawnPosition);
 
-        // 5. Start Chunk Update Loop
-        _chunkUpdateCoroutine = StartCoroutine(UpdateChunksRoutine());
         _generationInProgress = false;
         HideGenerationImages();
     }
@@ -199,7 +177,6 @@ public class ChunkedMineGeneration : MonoBehaviour
             Destroy(transform.GetChild(i).gameObject);
         }
 
-        _chunks.Clear();
         _destroyedBlocks.Clear();
     }
 
@@ -307,240 +284,11 @@ public class ChunkedMineGeneration : MonoBehaviour
         return null;
     }
 
-    private void CreateAndBuildChunk(int chunkX, int chunkZ)
-    {
-        Vector2Int chunkCoord = new Vector2Int(chunkX, chunkZ);
-        GameObject chunkObj = new GameObject($"Chunk_{chunkX}_{chunkZ}");
-        chunkObj.transform.parent = this.transform;
-
-        ChunkData data = new ChunkData
-        {
-            ChunkObject = chunkObj,
-            IsCombined = false
-        };
-
-        _chunks.Add(chunkCoord, data);
-        
-        // Start out as a combined mesh, but hidden
-        BuildChunkMesh(chunkCoord, data);
-        chunkObj.SetActive(false); 
-    }
-
-    private IEnumerator UpdateChunksRoutine()
-    {
-        while (true)
-        {
-            if (_playerTransform != null) UpdateChunkVisibilities();
-            yield return new WaitForSeconds(chunkUpdateInterval);
-        }
-    }
-
-    private void UpdateChunkVisibilities()
-    {
-        int playerChunkX = Mathf.FloorToInt((_playerTransform.position.x - transform.position.x) / (chunkSize * spacing));
-        int playerChunkZ = Mathf.FloorToInt((_playerTransform.position.z - transform.position.z) / (chunkSize * spacing));
-        _currentPlayerChunk = new Vector2Int(playerChunkX, playerChunkZ);
-
-        foreach (var kvp in _chunks)
-        {
-            Vector2Int chunkCoord = kvp.Key;
-            ChunkData chunkData = kvp.Value;
-
-            if (chunkData == null || chunkData.ChunkObject == null)
-            {
-                continue;
-            }
-
-            // Calculate chunk distance from player
-            int distX = Mathf.Abs(chunkCoord.x - _currentPlayerChunk.x);
-            int distZ = Mathf.Abs(chunkCoord.y - _currentPlayerChunk.y);
-            int maxDist = Mathf.Max(distX, distZ);
-
-            if (maxDist <= uncombineDistanceInChunks)
-            {
-                // NEARBY: Should be individual cubes
-                if (!chunkData.ChunkObject.activeSelf) chunkData.ChunkObject.SetActive(true);
-                if (chunkData.IsCombined && !chunkData.IsSpawningIndividualBlocks)
-                {
-                    chunkData.IndividualBlockSpawnRoutine = StartCoroutine(SpawnIndividualBlocks(chunkCoord, chunkData));
-                }
-            }
-            else if (maxDist <= viewDistanceInChunks)
-            {
-                // FAR: Should be one massive mesh
-                if (!chunkData.ChunkObject.activeSelf) chunkData.ChunkObject.SetActive(true);
-                if (!chunkData.IsCombined) BuildChunkMesh(chunkCoord, chunkData);
-            }
-            else
-            {
-                // TOO FAR: Should be disabled
-                if (chunkData.ChunkObject.activeSelf) chunkData.ChunkObject.SetActive(false);
-            }
-        }
-    }
-
-    // =========================================================================
-    // STATE 1: UNCOMBINED (Individual Prefabs for interaction)
-    // =========================================================================
-    private IEnumerator SpawnIndividualBlocks(Vector2Int chunkCoord, ChunkData chunkData)
-    {
-        chunkData.IsSpawningIndividualBlocks = true;
-
-        int startX = chunkCoord.x * chunkSize;
-        int startZ = chunkCoord.y * chunkSize;
-        int endX = Mathf.Min(startX + chunkSize, gridWidth);
-        int endZ = Mathf.Min(startZ + chunkSize, gridLength);
-        int blocksSpawnedThisFrame = 0;
-        int spawnLimit = Mathf.Max(1, individualBlocksPerFrame);
-
-        // Keep the combined mesh visible until all individual blocks are ready.
-        for (int x = startX; x < endX; x++)
-        {
-            for (int z = startZ; z < endZ; z++)
-            {
-                if (_gridMap[x, z] != 0) continue; 
-                if (_destroyedBlocks.Contains(new Vector2Int(x, z))) continue; 
-
-                Vector3 pos = transform.position + new Vector3(x * spacing, wallYOffset, z * spacing);
-                GameObject realBlock = Instantiate(wallPrefab, pos, wallPrefab.transform.rotation, chunkData.ChunkObject.transform);
-
-                realBlock.name = $"wall_{x}_{z}";
-                realBlock.tag = "wall";
-
-                WallHealth wallHealth = realBlock.GetComponent<WallHealth>();
-                if (wallHealth == null)
-                {
-                    wallHealth = realBlock.AddComponent<WallHealth>();
-                }
-                wallHealth.SetHealthForCurrentDepth();
-
-                chunkData.IndividualBlocks.Add(realBlock);
-                blocksSpawnedThisFrame++;
-
-                if (blocksSpawnedThisFrame >= spawnLimit)
-                {
-                    blocksSpawnedThisFrame = 0;
-                    yield return null;
-                }
-            }
-        }
-
-        MeshFilter mf = chunkData.ChunkObject.GetComponent<MeshFilter>();
-        if (mf != null) Destroy(mf);
-
-        MeshRenderer mr = chunkData.ChunkObject.GetComponent<MeshRenderer>();
-        if (mr != null) Destroy(mr);
-
-        MeshCollider mc = chunkData.ChunkObject.GetComponent<MeshCollider>();
-        if (mc != null) Destroy(mc);
-
-        chunkData.IsCombined = false;
-        chunkData.IsSpawningIndividualBlocks = false;
-        chunkData.IndividualBlockSpawnRoutine = null;
-    }
-
-    // =========================================================================
-    // STATE 2: COMBINED (1 Optimized Mesh for distance)
-    // =========================================================================
-    private void BuildChunkMesh(Vector2Int chunkCoord, ChunkData chunkData)
-    {
-        if (wallPrefab == null) return;
-
-        if (chunkData.IndividualBlockSpawnRoutine != null)
-        {
-            StopCoroutine(chunkData.IndividualBlockSpawnRoutine);
-            chunkData.IndividualBlockSpawnRoutine = null;
-            chunkData.IsSpawningIndividualBlocks = false;
-        }
-
-        // 1. Destroy individual blocks if they exist to free RAM
-        foreach (GameObject block in chunkData.IndividualBlocks)
-        {
-            if (block != null) Destroy(block);
-        }
-        chunkData.IndividualBlocks.Clear();
-
-        int startX = chunkCoord.x * chunkSize;
-        int startZ = chunkCoord.y * chunkSize;
-        int endX = Mathf.Min(startX + chunkSize, gridWidth);
-        int endZ = Mathf.Min(startZ + chunkSize, gridLength);
-
-        List<CombineInstance> combineList = new List<CombineInstance>();
-        MeshFilter prefabMeshFilter = wallPrefab.GetComponent<MeshFilter>();
-        
-        if (prefabMeshFilter == null || prefabMeshFilter.sharedMesh == null)
-        {
-            Debug.LogError("wallPrefab is missing a MeshFilter or Mesh!");
-            return;
-        }
-
-        Mesh sourceMesh = prefabMeshFilter.sharedMesh;
-
-        // Verify Read/Write permissions on the mesh
-        if (!sourceMesh.isReadable)
-        {
-            Debug.LogError($"Mesh '{sourceMesh.name}' on '{wallPrefab.name}' is not Read/Write enabled! Select the asset in Unity and check 'Read/Write Enabled' in its Model Inspector.", wallPrefab);
-            return;
-        }
-
-        Vector3 prefabScale = wallPrefab.transform.localScale;
-        Quaternion prefabRotation = wallPrefab.transform.rotation;
-
-        // 2. Build the combined mesh using the prefab's local scale and rotation
-        for (int x = startX; x < endX; x++)
-        {
-            for (int z = startZ; z < endZ; z++)
-            {
-                if (_gridMap[x, z] != 0) continue;
-                if (_destroyedBlocks.Contains(new Vector2Int(x, z))) continue;
-
-                Vector3 pos = transform.position + new Vector3(x * spacing, wallYOffset, z * spacing);
-                Matrix4x4 matrix = Matrix4x4.TRS(pos, prefabRotation, prefabScale);
-                combineList.Add(new CombineInstance { mesh = sourceMesh, transform = matrix });
-            }
-        }
-
-        if (combineList.Count > 0)
-        {
-            MeshFilter mf = chunkData.ChunkObject.GetComponent<MeshFilter>();
-            if (mf == null) mf = chunkData.ChunkObject.AddComponent<MeshFilter>();
-
-            Mesh combinedMesh = new Mesh();
-            combinedMesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
-            combinedMesh.CombineMeshes(combineList.ToArray(), true, true);
-            mf.mesh = combinedMesh;
-
-            MeshRenderer mr = chunkData.ChunkObject.GetComponent<MeshRenderer>();
-            if (mr == null) mr = chunkData.ChunkObject.AddComponent<MeshRenderer>();
-            mr.material = wallPrefab.GetComponent<MeshRenderer>().sharedMaterial;
-
-            MeshCollider mc = chunkData.ChunkObject.GetComponent<MeshCollider>();
-            if (mc == null) mc = chunkData.ChunkObject.AddComponent<MeshCollider>();
-            mc.sharedMesh = combinedMesh;
-
-            chunkData.ChunkObject.tag = "wall";
-            WallHealth chunkWallHealth = chunkData.ChunkObject.GetComponent<WallHealth>();
-            if (chunkWallHealth == null)
-            {
-                chunkWallHealth = chunkData.ChunkObject.AddComponent<WallHealth>();
-            }
-            chunkWallHealth.SetHealthForCurrentDepth();
-        }
-
-        chunkData.IsCombined = true;
-    }
-
-    // =========================================================================
-    // MINING LOGIC
-    // =========================================================================
     public void RecordDestroyedBlock(int gridX, int gridZ)
     {
         _destroyedBlocks.Add(new Vector2Int(gridX, gridZ));
     }
 
-    // =========================================================================
-    // UTILITIES
-    // =========================================================================
     private RectInt ReservePlayerSpawnArea()
     {
         int startX = (gridWidth / 2) - (spawnClearanceSize.x / 2);
