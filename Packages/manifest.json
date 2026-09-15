@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "com.nukadelic.prefabbaker": "file:/home/unitity/Downloads/Unity-Lightmap-Prefab-Baker-master",
     "com.unity.2d.sprite": "1.0.0",
     "com.unity.ai.navigation": "2.0.14",
     "com.unity.collab-proxy": "2.13.6",

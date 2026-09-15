@@ -35,13 +35,14 @@ public class ExplosionArea : NetworkBehaviour
         {
             return;
         }
-        // 1. Completely ignore the owner of the explosion
-        if (!string.IsNullOrEmpty(ownerTag) && (other.CompareTag(ownerTag) || other.transform.root.CompareTag(ownerTag)))
+
+        // Ignore map boundary walls tagged "walls"
+        if (other.CompareTag("walls") || other.transform.root.CompareTag("walls"))
         {
             return;
         }
 
-        // 2. Determine the primary parent object to prevent hitting multiple child colliders on the same entity
+        // Determine the primary target entity to prevent hitting multiple child colliders
         GameObject targetRoot = GetPrimaryTargetObject(other);
         if (hitTargets.Contains(targetRoot))
         {
@@ -50,7 +51,6 @@ public class ExplosionArea : NetworkBehaviour
 
         hitTargets.Add(targetRoot);
 
-        // 3. Apply damage to health components or via SendMessage
         ApplyDamage(other);
     }
 
@@ -70,15 +70,22 @@ public class ExplosionArea : NetworkBehaviour
 
     private void ApplyDamage(Collider hit)
     {
-        // Fixed: Target hit collider for PlayerHealth instead of 'this'
+        // 1. Player Damage (25% to original shooter, 20% to other player)
         PlayerHealth player = hit.GetComponentInParent<PlayerHealth>();
         if (player != null)
         {
-            int playerDamage = Mathf.RoundToInt(damage * 0.5f);
+            bool isOriginalShooter = !string.IsNullOrEmpty(ownerTag) &&
+                                     (hit.CompareTag(ownerTag) ||
+                                      hit.transform.root.CompareTag(ownerTag) ||
+                                      player.CompareTag(ownerTag));
+
+            float percentMultiplier = isOriginalShooter ? 0.25f : 0.20f;
+            int playerDamage = Mathf.RoundToInt(damage * percentMultiplier);
             player.TakeDamage(playerDamage);
             return;
         }
 
+        // 2. Enemy Damage (100% normal damage)
         EnemyAi enemyAi = hit.GetComponentInParent<EnemyAi>();
         if (enemyAi != null)
         {
@@ -86,6 +93,7 @@ public class ExplosionArea : NetworkBehaviour
             return;
         }
 
+        // 3. Wall Damage (100% normal damage)
         WallHealth wallHealth = hit.GetComponentInParent<WallHealth>();
         if (wallHealth != null)
         {
@@ -93,7 +101,7 @@ public class ExplosionArea : NetworkBehaviour
             return;
         }
 
-        // Fallback for bosses, destructible walls using SendMessage
+        // 4. Fallback for destructibles using tag checks ("wall", "enemy", "boss")
         if (IsDamageableTag(hit.gameObject) || IsDamageableTag(hit.transform.root.gameObject))
         {
             hit.gameObject.SendMessage("TakeDamage", damage, SendMessageOptions.DontRequireReceiver);

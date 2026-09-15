@@ -149,5 +149,6 @@ MonoBehaviour:
   explosionPrefab: {fileID: 2678142003446603457, guid: 09989adedacfc66b0a9a26ee4990cb49, type: 3}
   baseColor: {r: 0, g: 0, b: 0, a: 1}
   flashColor: {r: 1, g: 0, b: 0, a: 1}
-  initialFlashSpeed: 4
-  finalFlashSpeed: 24
+  initialFlashSpeed: 1
+  finalFlashSpeed: 20
+  flashEmission: 1

@@ -445,7 +445,7 @@ GameObject:
   - component: {fileID: 3223498520584284558}
   m_Layer: 6
   m_Name: handpinky.L
-  m_TagString: Untagged
+  m_TagString: Player1
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1637,7 +1637,7 @@ GameObject:
   - component: {fileID: 3324956275885786399}
   m_Layer: 6
   m_Name: schouder.L
-  m_TagString: Untagged
+  m_TagString: Player1
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -2087,7 +2087,7 @@ GameObject:
   - component: {fileID: 1169946381249273071}
   m_Layer: 6
   m_Name: handthumb.L
-  m_TagString: Untagged
+  m_TagString: Player1
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -2228,7 +2228,7 @@ GameObject:
   - component: {fileID: 5770023176099692118}
   m_Layer: 6
   m_Name: lowerarm.L
-  m_TagString: Untagged
+  m_TagString: Player1
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -2448,7 +2448,7 @@ GameObject:
   - component: {fileID: 191808242882592213}
   m_Layer: 6
   m_Name: upperarm.L
-  m_TagString: Untagged
+  m_TagString: Player1
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -2935,7 +2935,7 @@ GameObject:
   - component: {fileID: 4899437951350960120}
   m_Layer: 6
   m_Name: Bone
-  m_TagString: Untagged
+  m_TagString: Player1
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -3420,7 +3420,7 @@ GameObject:
   - component: {fileID: 6085760497731037075}
   m_Layer: 6
   m_Name: handringfinger.L
-  m_TagString: Untagged
+  m_TagString: Player1
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -3452,7 +3452,7 @@ GameObject:
   - component: {fileID: 7252282330838863346}
   m_Layer: 6
   m_Name: handmiddlefinger.L
-  m_TagString: Untagged
+  m_TagString: Player1
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -4015,7 +4015,7 @@ GameObject:
   - component: {fileID: 4687668143561099114}
   m_Layer: 6
   m_Name: handindexfinger.L
-  m_TagString: Untagged
+  m_TagString: Player1
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -4110,7 +4110,7 @@ GameObject:
   - component: {fileID: 6417625881444203634}
   m_Layer: 6
   m_Name: hand.L
-  m_TagString: Untagged
+  m_TagString: Player1
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -4492,7 +4492,6 @@ MonoBehaviour:
   activePotionEffectCountdown: {fileID: 1114808010732828964}
   maxPotions: 10
   maxBombs: 15
-  bombRange: 3
 --- !u!114 &8995526368518515291
 MonoBehaviour:
   m_ObjectHideFlags: 0

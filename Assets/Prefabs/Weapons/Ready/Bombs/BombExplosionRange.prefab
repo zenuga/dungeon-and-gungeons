@@ -127,7 +127,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4001334607066b40587d06f7bcd7ba05, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BombExplosionTrigger
-  lifetime: 0.5
+  lifetime: 0.2
 --- !u!54 &585363052161608695
 Rigidbody:
   m_ObjectHideFlags: 0

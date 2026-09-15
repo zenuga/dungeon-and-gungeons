@@ -17,9 +17,13 @@ public class CurrencyShop : MonoBehaviour
         [HideInInspector] public WeaponData item;
     }
 
+    [Header("Shop Setup")]
     [SerializeField] private GameObject shopUI;
+    [SerializeField] private Vector3 spawnOffset = new Vector3(0f, 1f, 1.5f);
     [SerializeField] private List<WeaponData> itemPool = new List<WeaponData>();
     [SerializeField] private ShopSlot[] slots = new ShopSlot[3];
+
+    [Header("Reroll Setup")]
     [SerializeField] private Button rerollButton;
     [SerializeField] private TMP_Text rerollCostText;
     [SerializeField] private int baseRerollCost = 40;
@@ -91,31 +95,47 @@ public class CurrencyShop : MonoBehaviour
 
     public void BuySlot(int index)
     {
-        if (index < 0 || index >= slots.Length || slots[index].item == null || activeCurrency == null ||
-            NetworkManager.Singleton == null || !NetworkManager.Singleton.IsListening)
+        if (index < 0 || index >= slots.Length || slots[index].item == null || activeCurrency == null)
         {
             return;
         }
 
-        WeaponData item = slots[index].item;
+        ShopSlot slot = slots[index];
+        WeaponData item = slot.item;
+
+        if (item.weaponPrefab == null)
+        {
+            return;
+        }
+
+        // Try spending gold
         if (!activeCurrency.TrySpend(Mathf.Max(0, item.currencyAmount)))
         {
             return;
         }
 
-        PlayerPickupManager pickupManager = activeCurrency.GetComponent<PlayerPickupManager>();
-        if (pickupManager == null || !pickupManager.PurchaseWeapon(item))
-        {
-            activeCurrency.AddGold(item.currencyAmount);
-            return;
-        }
+        // Spawn weapon at shop position + spawnOffset
+        Vector3 spawnPosition = transform.position + spawnOffset;
+        GameObject spawnedWeapon = Instantiate(item.weaponPrefab, spawnPosition, Quaternion.identity);
 
-        slots[index].buyButton.interactable = false;
+        // Ensure the spawned weapon has its CollectibleItem data set
+        CollectibleItem collectible = spawnedWeapon.GetComponent<CollectibleItem>();
+        if (collectible == null)
+        {
+            collectible = spawnedWeapon.AddComponent<CollectibleItem>();
+        }
+        collectible.weaponData = item;
+
+        // Turn off the buy button for this purchased slot
+        if (slot.buyButton != null)
+        {
+            slot.buyButton.gameObject.SetActive(false);
+        }
     }
 
     public void Reroll()
     {
-        if (activeCurrency == null || NetworkManager.Singleton == null || !NetworkManager.Singleton.IsServer)
+        if (activeCurrency == null)
         {
             return;
         }
@@ -157,6 +177,9 @@ public class CurrencyShop : MonoBehaviour
                 int slotIndex = i;
                 slot.buyButton.onClick.RemoveAllListeners();
                 slot.buyButton.onClick.AddListener(() => BuySlot(slotIndex));
+                
+                // Re-enable and show buy button on reroll/refresh
+                slot.buyButton.gameObject.SetActive(true);
                 slot.buyButton.interactable = true;
             }
         }
