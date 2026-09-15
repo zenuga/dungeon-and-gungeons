@@ -27,13 +27,13 @@ public class PlayerPickupManager : NetworkBehaviour
     [SerializeField] private GameObject activePotionEffectImage;
     [SerializeField] private TextMeshProUGUI activePotionEffectCountdown;
 
-    [Header("Inventory Limits")]
+    [Header("Inventory Setup")]
     [SerializeField] private int maxPotions = 5;
     [SerializeField] private int maxBombs = 15;
-    [SerializeField] private float bombRange = 3f;
 
     private int currentPotions = 0;
     private int currentBombs = 0;
+    private WeaponData currentBombData;
     private PotionType currentPotionType;
     private WeaponData currentPotionData;
     private float potionEffectTimeRemaining;
@@ -60,7 +60,6 @@ public class PlayerPickupManager : NetworkBehaviour
 
         if (pickupRangeSphere != null)
         {
-            // Ensure a Rigidbody exists on the detector so trigger collisions fire reliably on new character models
             Rigidbody rangeRb = pickupRangeSphere.GetComponent<Rigidbody>();
             if (rangeRb == null)
             {
@@ -122,13 +121,9 @@ public class PlayerPickupManager : NetworkBehaviour
         }
     }
 
-    /// <summary>
-    /// Searches the scene hierarchy for the Pickup UI container and individual UI elements by name.
-    /// Supports names formatted with Player1/Player2 or P1_/P2_ prefixes.
-    /// </summary>
     public void AutoFindUIReferences()
     {
-        string fullName = playerType.ToString(); // "Player1" or "Player2"
+        string fullName = playerType.ToString();
         string prefix = (playerType == PlayerType.Player1) ? "P1_" : "P2_";
 
         if (pickupUI == null)
@@ -206,7 +201,7 @@ public class PlayerPickupManager : NetworkBehaviour
 
     private void UseBomb()
     {
-        if (currentBombs <= 0)
+        if (currentBombs <= 0 || currentBombData == null || currentBombData.weaponPrefab == null)
         {
             return;
         }
@@ -214,34 +209,11 @@ public class PlayerPickupManager : NetworkBehaviour
         currentBombs--;
         UpdateBombUI();
 
-        Vector3 explosionPosition = transform.position;
-        Collider[] hits = Physics.OverlapSphere(explosionPosition, bombRange, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore);
-        HashSet<PlayerHealth> affectedPlayers = new HashSet<PlayerHealth>();
-        HashSet<EnemyAi> affectedEnemies = new HashSet<EnemyAi>();
+        Instantiate(currentBombData.weaponPrefab, transform.position, Quaternion.identity);
 
-        foreach (Collider hit in hits)
+        if (currentBombs <= 0)
         {
-            if (hit == null)
-            {
-                continue;
-            }
-
-            PlayerHealth targetPlayer = hit.GetComponentInParent<PlayerHealth>();
-            if (targetPlayer != null && affectedPlayers.Add(targetPlayer))
-            {
-                targetPlayer.TakeDamage(Mathf.RoundToInt(targetPlayer.MaxHealthValue * 0.2f));
-                continue;
-            }
-
-            EnemyAi targetEnemy = hit.GetComponentInParent<EnemyAi>();
-            if (targetEnemy != null && affectedEnemies.Add(targetEnemy))
-            {
-                bool isBoss = targetEnemy.CompareTag("Boss") || targetEnemy.CompareTag("boss");
-                if (!isBoss)
-                {
-                    targetEnemy.TakeDamage(Mathf.RoundToInt(targetEnemy.CurrentHealth * 0.5f));
-                }
-            }
+            currentBombData = null;
         }
     }
 
@@ -382,7 +354,6 @@ public class PlayerPickupManager : NetworkBehaviour
 
         foreach (var col in collidersInRange)
         {
-            // Use GetComponentInParent to locate CollectibleItem if the trigger is on a child object
             CollectibleItem item = col.GetComponentInParent<CollectibleItem>();
             if (item == null) continue;
 
@@ -413,11 +384,12 @@ public class PlayerPickupManager : NetworkBehaviour
             else if (tagType == "bombs")
             {
                 if (currentBombs >= maxBombs) continue;
+                currentBombData = item.weaponData;
                 currentBombs += item.quantity;
                 currentBombs = Mathf.Min(currentBombs, maxBombs);
-                if (item.weaponData != null && bombImage != null)
+                if (currentBombData != null && bombImage != null)
                 {
-                    bombImage.sprite = item.weaponData.weaponImage;
+                    bombImage.sprite = currentBombData.weaponImage;
                 }
                 UpdateBombUI();
                 Destroy(targetGameObject);

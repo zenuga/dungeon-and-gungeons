@@ -10,7 +10,7 @@ public class WallHealth : NetworkBehaviour
     private void Awake()
     {
         depth = FindFirstObjectByType<Depth>();
-        UpdateWallHealth();
+        UpdatewallHealth();
     }
 
     public void SetHealthForCurrentDepth()
@@ -23,7 +23,7 @@ public class WallHealth : NetworkBehaviour
         Health = 10 * (depth != null ? Mathf.Max(1, depth.depth) : 1);
     }
 
-    public void UpdateWallHealth()
+    public void UpdatewallHealth()
     {
         SetHealthForCurrentDepth();
     }

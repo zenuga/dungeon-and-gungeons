@@ -1,5 +1,36 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &5356979442061067432
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6723685508364781322}
+  m_Layer: 7
+  m_Name: GameObject
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6723685508364781322
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5356979442061067432}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 2.038}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4919520486834107885}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &177981461552947023
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -145,6 +176,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: e9ea1763eab3fb6419b60e6bb9550041, type: 3}
       insertIndex: -1
       addedObject: {fileID: 7454781768809479778}
+    - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: e9ea1763eab3fb6419b60e6bb9550041, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6723685508364781322}
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: e9ea1763eab3fb6419b60e6bb9550041, type: 3}
       insertIndex: -1
@@ -226,7 +260,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::RangedWeapon
   ShowTopMostFoldoutHeaderGroup: 1
   projectilePrefab: {fileID: 434474766220700247, guid: 1d7a593205c56fc5d95e672465776384, type: 3}
-  muzzlePoint: {fileID: 7454781768809479778}
+  muzzlePoint: {fileID: 6723685508364781322}
   fireRate: 0.5
   objectToDisableAfterShooting: {fileID: 3346017795094596046}
   reloadTag: Reload

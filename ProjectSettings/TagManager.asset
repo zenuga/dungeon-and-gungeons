@@ -10,8 +10,6 @@ TagManager:
   - Melee
   - Ranged
   - Enemy
-  - Wall
-  - Bombs
   - walls
   - Bomb
   - Projectile

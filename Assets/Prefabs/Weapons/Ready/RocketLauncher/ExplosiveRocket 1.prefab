@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 472769369582874930}
   - component: {fileID: 5417302782018936805}
   - component: {fileID: 1265020929639800880}
-  - component: {fileID: -5745112717302409695}
+  - component: {fileID: 1413436550934190183}
   m_Layer: 0
   m_Name: ExplosiveRocket 1
   m_TagString: Projectile
@@ -134,17 +134,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Projectile
   ShowTopMostFoldoutHeaderGroup: 1
   speed: 12
-  lifeTime: 2
+  lifeTime: 10
   projectileType: 1
   explode: 0
-  explosionRadius: 2.5
+  explosionRadius: 1
   damage: 10
   explosionPrefab: {fileID: 6120189548334792497, guid: e847fa79c4bf65eb49fe6b0765612e86, type: 3}
   damageMask:
     serializedVersion: 2
     m_Bits: 4294967295
---- !u!135 &-5745112717302409695
-SphereCollider:
+--- !u!136 &1413436550934190183
+CapsuleCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -161,6 +161,8 @@ SphereCollider:
   m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 3
-  m_Radius: 0.42364782
+  serializedVersion: 2
+  m_Radius: 0.2
+  m_Height: 0.9
+  m_Direction: 2
   m_Center: {x: 0, y: 0, z: 0.28792244}

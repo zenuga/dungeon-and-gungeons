@@ -33,15 +33,10 @@ public class Projectile : NetworkBehaviour
         }
         body.isKinematic = true;
 
-        // Only force triggers on Normal projectiles. 
-        // Explosive projectiles can now retain their hard colliders (isTrigger = false).
-        if (projectileType != ProjectileType.Explosive && !explode)
+        Collider[] colliders = GetComponentsInChildren<Collider>(true);
+        foreach (Collider collider in colliders)
         {
-            Collider[] colliders = GetComponentsInChildren<Collider>(true);
-            foreach (Collider collider in colliders)
-            {
-                collider.isTrigger = true;
-            }
+            collider.isTrigger = true;
         }
 
         ignorePlayerUntil = Time.time + 0.5f;
@@ -86,38 +81,45 @@ public class Projectile : NetworkBehaviour
         }
     }
 
-    // Handles normal Trigger hitboxes
     private void OnTriggerEnter(Collider other)
     {
         if (other == null) return;
         ProcessContact(other.gameObject, other.transform);
     }
 
-    // Handles hard Colliders (isTrigger = false)
     private void OnCollisionEnter(Collision collision)
     {
         if (collision == null || collision.gameObject == null) return;
         ProcessContact(collision.gameObject, collision.transform);
     }
 
-    // Unified logic to handle both Triggers and Collisions
     private void ProcessContact(GameObject hitObject, Transform hitTransform)
     {
-        if (Time.time < ignorePlayerUntil && IsOnPlayerLayer(hitTransform))
+        // 1. Ignore the owner completely
+        if (!string.IsNullOrEmpty(ownerTag) && (hitObject.CompareTag(ownerTag) || hitTransform.root.CompareTag(ownerTag)))
         {
             return;
         }
 
-        // --- 1. EXPLOSIVE PROJECTILES ---
-        // Explode immediately on ANY contact (No piercing)
+        // 2. Fortified 0.5s Grace Period: Ignore ALL player parts to prevent early detonation
+        if (Time.time < ignorePlayerUntil)
+        {
+            if (IsOnPlayerLayer(hitTransform) || 
+                hitObject.CompareTag("Player") || hitObject.CompareTag("Player1") || hitObject.CompareTag("Player2") ||
+                hitTransform.GetComponentInParent<PlayerHealth>() != null)
+            {
+                return;
+            }
+        }
+
+        // --- EXPLOSIVE PROJECTILES ---
         if (projectileType == ProjectileType.Explosive || explode)
         {
             TriggerImpact();
-            return;
+            return; 
         }
 
-        // --- 2. NORMAL PROJECTILES ---
-        // Existing piercing logic for standard projectiles
+        // --- NORMAL PROJECTILES ---
         EnemyAi enemy = hitObject.GetComponentInParent<EnemyAi>();
         PlayerHealth player = hitObject.GetComponentInParent<PlayerHealth>();
         WallHealth wall = hitObject.GetComponentInParent<WallHealth>();
@@ -146,7 +148,7 @@ public class Projectile : NetworkBehaviour
             if (IsEnemyProjectile())
             {
                 enemy.TakeDamage(damage);
-                Destroy(gameObject);
+                Destroy(gameObject); 
             }
             return;
         }
@@ -156,7 +158,7 @@ public class Projectile : NetworkBehaviour
             if (!IsEnemyProjectile())
             {
                 player.TakeDamage(damage);
-                Destroy(gameObject);
+                Destroy(gameObject); 
             }
         }
     }
@@ -199,7 +201,6 @@ public class Projectile : NetworkBehaviour
             {
                 return true;
             }
-
             current = current.parent;
         }
 
@@ -257,15 +258,9 @@ public class Projectile : NetworkBehaviour
 
     private void ApplyDamage(GameObject target)
     {
-        if (target == null)
-        {
-            return;
-        }
+        if (target == null) return;
 
-        if (!string.IsNullOrEmpty(ownerTag) && target.CompareTag(ownerTag))
-        {
-            return;
-        }
+        if (!string.IsNullOrEmpty(ownerTag) && target.CompareTag(ownerTag)) return;
 
         PlayerHealth playerHealth = target.GetComponentInParent<PlayerHealth>();
         if (playerHealth != null)

@@ -404,8 +404,8 @@ public class ChunkedMineGeneration : MonoBehaviour
                 Vector3 pos = transform.position + new Vector3(x * spacing, wallYOffset, z * spacing);
                 GameObject realBlock = Instantiate(wallPrefab, pos, wallPrefab.transform.rotation, chunkData.ChunkObject.transform);
 
-                realBlock.name = $"Wall_{x}_{z}";
-                realBlock.tag = "Wall";
+                realBlock.name = $"wall_{x}_{z}";
+                realBlock.tag = "wall";
 
                 WallHealth wallHealth = realBlock.GetComponent<WallHealth>();
                 if (wallHealth == null)
@@ -518,7 +518,7 @@ public class ChunkedMineGeneration : MonoBehaviour
             if (mc == null) mc = chunkData.ChunkObject.AddComponent<MeshCollider>();
             mc.sharedMesh = combinedMesh;
 
-            chunkData.ChunkObject.tag = "Wall";
+            chunkData.ChunkObject.tag = "wall";
             WallHealth chunkWallHealth = chunkData.ChunkObject.GetComponent<WallHealth>();
             if (chunkWallHealth == null)
             {

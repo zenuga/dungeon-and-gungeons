@@ -33,6 +33,7 @@ public class RangedWeapon : NetworkBehaviour
 
     private void Awake()
     {
+        // Fallback in case muzzlePoint is left unassigned in the inspector
         if (muzzlePoint == null)
         {
             muzzlePoint = transform;
@@ -58,7 +59,6 @@ public class RangedWeapon : NetworkBehaviour
             return;
         }
 
-        // Activate UI if picked up and not yet active
         if (!isPickedUp)
         {
             ActivateWeaponUI();
@@ -71,7 +71,6 @@ public class RangedWeapon : NetworkBehaviour
             return;
         }
 
-        // Changed to isPressed so holding the button works and the UI loops smoothly
         bool firePressed = Mouse.current.leftButton.isPressed;
         if (owner.CompareTag("Player1"))
         {
@@ -110,7 +109,6 @@ public class RangedWeapon : NetworkBehaviour
         {
             reloadUIObject = reloadObj;
             
-            // Search all child images to find the one meant for filling (avoids grabbing backgrounds)
             Image[] images = reloadObj.GetComponentsInChildren<Image>(true);
             foreach (Image img in images)
             {
@@ -121,21 +119,14 @@ public class RangedWeapon : NetworkBehaviour
                 }
             }
 
-            // Fallback: If no image was set to filled, grab the first one and force it to be filled
             if (reloadImage == null)
             {
                 reloadImage = reloadObj.GetComponentInChildren<Image>(true);
                 if (reloadImage != null)
                 {
                     reloadImage.type = Image.Type.Filled;
-                    reloadImage.fillMethod = Image.FillMethod.Radial360; // Or whatever style you prefer
+                    reloadImage.fillMethod = Image.FillMethod.Radial360; 
                 }
-            }
-
-            // Ensure it starts disabled until picked up
-            if (!isPickedUp && reloadUIObject != null)
-            {
-                reloadUIObject.SetActive(false);
             }
         }
     }
@@ -176,14 +167,9 @@ public class RangedWeapon : NetworkBehaviour
             reloadImage.fillAmount = 1f;
             return;
         }
-        if (reloadImage.fillAmount == 1f)
-        {
-            objectToDisableAfterShooting?.SetActive(true);
-            return;
-        }
 
         float timeRemaining = nextFireTime - Time.time;
-        if (timeRemaining <= 0f || timeRemaining == 0f)
+        if (timeRemaining <= 0f)
         {
             reloadImage.fillAmount = 1f;
         }
@@ -197,10 +183,14 @@ public class RangedWeapon : NetworkBehaviour
     private void Fire(Transform owner)
     {
         Vector3 fireDirection = GetPlayerFacingDirection(owner);
-        Vector3 fireOrigin = owner.position + fireDirection * 0.75f;
+        
+        // Ensure the projectile spawns exactly at the assigned muzzle point
+        Vector3 fireOrigin = muzzlePoint.position;
 
+        // Instantiate using the muzzle's location, but the player's calculated aiming direction
         GameObject projectileObj = Instantiate(projectilePrefab, fireOrigin, Quaternion.LookRotation(fireDirection, Vector3.up));
         Projectile projectile = projectileObj.GetComponent<Projectile>();
+        
         if (projectile == null)
         {
             projectile = projectileObj.AddComponent<Projectile>();
@@ -208,6 +198,7 @@ public class RangedWeapon : NetworkBehaviour
 
         projectile.SetDirection(fireDirection.normalized);
         projectile.SetOwnerTag(owner.tag);
+        
         if (weaponData != null)
         {
             PlayerPickupManager pickupManager = owner.GetComponentInParent<PlayerPickupManager>();
