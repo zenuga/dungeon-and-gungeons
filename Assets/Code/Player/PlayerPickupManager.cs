@@ -26,6 +26,10 @@ public class PlayerPickupManager : NetworkBehaviour
     [SerializeField] private TextMeshProUGUI bombText;
     [SerializeField] private GameObject activePotionEffectImage;
     [SerializeField] private TextMeshProUGUI activePotionEffectCountdown;
+    
+    [Header("Reload UI")]
+    [SerializeField] private GameObject reloadUIObject;
+    [SerializeField] private Image reloadImage;
 
     [Header("Inventory Setup")]
     [SerializeField] private int maxPotions = 5;
@@ -47,6 +51,7 @@ public class PlayerPickupManager : NetworkBehaviour
     
     private GameObject currentRangedWeapon;
     private WeaponData currentRangedWeaponData;
+    private RangedWeapon currentRangedWeaponScript;
     
     private GameObject currentMiscItem;
 
@@ -87,6 +92,8 @@ public class PlayerPickupManager : NetworkBehaviour
         }
 
         UpdatePotionEffect();
+        UpdateReloadUI();
+        
         if (Keyboard.current == null) return;
 
         bool actionPressed = false;
@@ -171,6 +178,7 @@ public class PlayerPickupManager : NetworkBehaviour
         if (potionText == null)        potionText        = FindUIComponent<TextMeshProUGUI>("PotionText");
         if (bombImage == null)         bombImage         = FindUIComponent<Image>("BombImage");
         if (bombText == null)          bombText          = FindUIComponent<TextMeshProUGUI>("BombText");
+        
         if (activePotionEffectCountdown == null)
         {
             activePotionEffectCountdown = FindUIComponent<TextMeshProUGUI>("PotionEffectCountdown", "EffectCountdown");
@@ -184,6 +192,33 @@ public class PlayerPickupManager : NetworkBehaviour
         if (activePotionEffectCountdown == null && activePotionEffectImage != null)
         {
             activePotionEffectCountdown = activePotionEffectImage.GetComponentInChildren<TextMeshProUGUI>(true);
+        }
+
+        // Setup Reload UI Lookups
+        if (reloadUIObject == null)
+        {
+            reloadUIObject = FindUIObject("ReloadUI", "Reload");
+        }
+
+        if (reloadImage == null)
+        {
+            if (reloadUIObject != null)
+            {
+                reloadImage = reloadUIObject.GetComponent<Image>();
+                if (reloadImage == null) reloadImage = reloadUIObject.GetComponentInChildren<Image>(true);
+            }
+
+            if (reloadImage == null)
+            {
+                reloadImage = FindUIComponent<Image>("ReloadImage", "Reload");
+            }
+        }
+
+        // Ensure the Reload image is set up correctly to display radial fills
+        if (reloadImage != null)
+        {
+            reloadImage.type = Image.Type.Filled;
+            reloadImage.fillMethod = Image.FillMethod.Radial360;
         }
     }
 
@@ -287,6 +322,41 @@ public class PlayerPickupManager : NetworkBehaviour
         if (activePotionEffectCountdown != null)
         {
             activePotionEffectCountdown.text = hasActivePotionEffect ? Mathf.CeilToInt(potionEffectTimeRemaining).ToString() : string.Empty;
+        }
+    }
+    
+    private void UpdateReloadUI()
+    {
+        if (currentRangedWeaponScript == null)
+        {
+            if (reloadUIObject != null) reloadUIObject.SetActive(false);
+            else if (reloadImage != null) reloadImage.gameObject.SetActive(false);
+            return;
+        }
+
+        if (reloadUIObject != null) reloadUIObject.SetActive(true);
+        else if (reloadImage != null) reloadImage.gameObject.SetActive(true);
+
+        if (reloadImage == null) return;
+
+        float fireRate = currentRangedWeaponScript.CurrentFireRate;
+        float nextFireTime = currentRangedWeaponScript.NextFireTime;
+
+        if (fireRate <= 0f)
+        {
+            reloadImage.fillAmount = 1f;
+            return;
+        }
+
+        float timeRemaining = nextFireTime - Time.time;
+        if (timeRemaining <= 0f)
+        {
+            reloadImage.fillAmount = 1f;
+        }
+        else
+        {
+            float fillRatio = 1f - (timeRemaining / fireRate);
+            reloadImage.fillAmount = Mathf.Clamp01(fillRatio);
         }
     }
 
@@ -449,6 +519,7 @@ public class PlayerPickupManager : NetworkBehaviour
             DropItem(currentRangedWeapon, "ranged", currentRangedWeaponData);
             currentRangedWeapon = null;
             currentRangedWeaponData = null;
+            currentRangedWeaponScript = null; // Clear the script reference
         }
 
         GameObject equippedWeapon = Instantiate(data.weaponPrefab, handTransform);
@@ -468,6 +539,7 @@ public class PlayerPickupManager : NetworkBehaviour
             rangedWeapon.SetWeaponData(data);
             currentRangedWeapon = equippedWeapon;
             currentRangedWeaponData = data;
+            currentRangedWeaponScript = rangedWeapon; // Track the script reference for UI
         }
         else
         {

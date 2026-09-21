@@ -1,7 +1,12 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.UI;
 using Unity.Netcode;
+
+// Interface fallback if your game uses an IDamageable interface
+public interface IDamageable
+{
+    void TakeDamage(int damage);
+}
 
 public class RangedWeapon : NetworkBehaviour
 {
@@ -11,14 +16,12 @@ public class RangedWeapon : NetworkBehaviour
     [SerializeField] private float fireRate = 0.5f;
     [SerializeField] private GameObject objectToDisableAfterShooting;
 
-    [Header("Reload UI Setup")]
-    [SerializeField] private string reloadTag = "Reload";
-    private Image reloadImage;
-    private GameObject reloadUIObject;
-
     private WeaponData weaponData;
     private float nextFireTime;
-    private bool isPickedUp;
+
+    // Exposed for PlayerPickupManager to read for the Reload UI
+    public float CurrentFireRate => fireRate;
+    public float NextFireTime => nextFireTime;
 
     public void SetWeaponData(WeaponData data)
     {
@@ -27,8 +30,6 @@ public class RangedWeapon : NetworkBehaviour
         {
             fireRate = data.cooldown > 0f ? data.cooldown : fireRate;
         }
-
-        ActivateWeaponUI();
     }
 
     private void Awake()
@@ -38,8 +39,6 @@ public class RangedWeapon : NetworkBehaviour
         {
             muzzlePoint = transform;
         }
-
-        FindReloadUI();
     }
 
     private void Update()
@@ -52,21 +51,16 @@ public class RangedWeapon : NetworkBehaviour
         Transform owner = GetOwnerTransform();
         if (owner == null || !IsPlayerOwner(owner))
         {
-            if (isPickedUp)
-            {
-                DeactivateWeaponUI();
-            }
             return;
         }
 
-        if (!isPickedUp)
+        if (Keyboard.current == null || Mouse.current == null)
         {
-            ActivateWeaponUI();
+            return;
         }
 
-        UpdateReloadUI();
-
-        if (projectilePrefab == null || Keyboard.current == null || Mouse.current == null)
+        // If not hitscan, standard projectile safety check
+        if (weaponData != null && !weaponData.isHitscan && projectilePrefab == null)
         {
             return;
         }
@@ -100,95 +94,72 @@ public class RangedWeapon : NetworkBehaviour
         }
     }
 
-    private void FindReloadUI()
-    {
-        if (reloadImage != null) return;
-
-        GameObject reloadObj = GameObject.FindGameObjectWithTag(reloadTag);
-        if (reloadObj != null)
-        {
-            reloadUIObject = reloadObj;
-            
-            Image[] images = reloadObj.GetComponentsInChildren<Image>(true);
-            foreach (Image img in images)
-            {
-                if (img.type == Image.Type.Filled)
-                {
-                    reloadImage = img;
-                    break;
-                }
-            }
-
-            if (reloadImage == null)
-            {
-                reloadImage = reloadObj.GetComponentInChildren<Image>(true);
-                if (reloadImage != null)
-                {
-                    reloadImage.type = Image.Type.Filled;
-                    reloadImage.fillMethod = Image.FillMethod.Radial360; 
-                }
-            }
-        }
-    }
-
-    private void ActivateWeaponUI()
-    {
-        isPickedUp = true;
-        if (reloadUIObject == null)
-        {
-            FindReloadUI();
-        }
-
-        if (reloadUIObject != null)
-        {
-            reloadUIObject.SetActive(true);
-        }
-    }
-
-    private void DeactivateWeaponUI()
-    {
-        isPickedUp = false;
-        if (reloadUIObject != null)
-        {
-            reloadUIObject.SetActive(false);
-        }
-    }
-
-    private void UpdateReloadUI()
-    {
-        if (reloadImage == null)
-        {
-            FindReloadUI();
-            if (reloadImage == null) return;
-        }
-
-        if (fireRate <= 0f)
-        {
-            reloadImage.fillAmount = 1f;
-            return;
-        }
-
-        float timeRemaining = nextFireTime - Time.time;
-        if (timeRemaining <= 0f)
-        {
-            reloadImage.fillAmount = 1f;
-        }
-        else
-        {
-            float fillRatio = 1f - (timeRemaining / fireRate);
-            reloadImage.fillAmount = Mathf.Clamp01(fillRatio);
-        }
-    }
-
     private void Fire(Transform owner)
     {
         Vector3 fireDirection = GetPlayerFacingDirection(owner);
-        
-        // Ensure the projectile spawns exactly at the assigned muzzle point
         Vector3 fireOrigin = muzzlePoint.position;
 
-        // Instantiate using the muzzle's location, but the player's calculated aiming direction
-        GameObject projectileObj = Instantiate(projectilePrefab, fireOrigin, Quaternion.LookRotation(fireDirection, Vector3.up));
+        // Calculate player damage multiplier
+        PlayerPickupManager pickupManager = owner.GetComponentInParent<PlayerPickupManager>();
+        float damageMultiplier = pickupManager != null ? pickupManager.DamageMultiplier : 1f;
+        int calculatedDamage = weaponData != null ? Mathf.RoundToInt(Mathf.Max(1, weaponData.damage) * damageMultiplier) : 1;
+
+        if (weaponData != null && weaponData.isHitscan)
+        {
+            PerformHitscan(fireOrigin, fireDirection, owner, calculatedDamage);
+        }
+        else
+        {
+            PerformProjectile(fireOrigin, fireDirection, owner, calculatedDamage);
+        }
+    }
+
+    private void PerformHitscan(Vector3 origin, Vector3 direction, Transform owner, int damage)
+    {
+        float range = weaponData != null ? weaponData.hitscanRange : 100f;
+        LayerMask mask = weaponData != null ? weaponData.hitscanLayers : ~0;
+
+        if (Physics.Raycast(origin, direction, out RaycastHit hit, range, mask))
+        {
+            // Spawn impact particle system at the hit location pointing away from the hit surface
+            if (weaponData != null && weaponData.impactParticlePrefab != null)
+            {
+                GameObject impactEffect = Instantiate(
+                    weaponData.impactParticlePrefab,
+                    hit.point,
+                    Quaternion.LookRotation(hit.normal)
+                );
+
+                // Destroy particle system after 0.5 seconds
+                Destroy(impactEffect, 0.5f); // <--- CHANGED: Reduced particle lifespan to 0.5s
+            }
+
+            // <--- ADDED: Apply full damage without reduction to hit target
+            // Ignore hitting the owner or the owner's children
+            if (owner != null && (hit.transform == owner || hit.transform.IsChildOf(owner)))
+            {
+                return;
+            }
+
+            // Try applying damage via IDamageable interface first
+            IDamageable damageable = hit.collider.GetComponentInParent<IDamageable>();
+            if (damageable != null)
+            {
+                damageable.TakeDamage(damage); // Full damage with 0 range falloff
+            }
+            else
+            {
+                // Fallback: Broadcast TakeDamage message to target component hierarchy
+                hit.collider.gameObject.SendMessageUpwards("TakeDamage", damage, SendMessageOptions.DontRequireReceiver);
+            }
+        }
+    }
+
+    private void PerformProjectile(Vector3 origin, Vector3 direction, Transform owner, int damage)
+    {
+        if (projectilePrefab == null) return;
+
+        GameObject projectileObj = Instantiate(projectilePrefab, origin, Quaternion.LookRotation(direction, Vector3.up));
         Projectile projectile = projectileObj.GetComponent<Projectile>();
         
         if (projectile == null)
@@ -196,15 +167,9 @@ public class RangedWeapon : NetworkBehaviour
             projectile = projectileObj.AddComponent<Projectile>();
         }
 
-        projectile.SetDirection(fireDirection.normalized);
+        projectile.SetDirection(direction.normalized);
         projectile.SetOwnerTag(owner.tag);
-        
-        if (weaponData != null)
-        {
-            PlayerPickupManager pickupManager = owner.GetComponentInParent<PlayerPickupManager>();
-            float damageMultiplier = pickupManager != null ? pickupManager.DamageMultiplier : 1f;
-            projectile.SetDamage(Mathf.RoundToInt(Mathf.Max(1, weaponData.damage) * damageMultiplier));
-        }
+        projectile.SetDamage(damage);
     }
 
     private static Vector3 GetPlayerFacingDirection(Transform owner)
