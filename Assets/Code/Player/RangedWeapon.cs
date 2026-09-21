@@ -2,7 +2,6 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using Unity.Netcode;
 
-// Interface fallback if your game uses an IDamageable interface
 public interface IDamageable
 {
     void TakeDamage(int damage);
@@ -17,11 +16,44 @@ public class RangedWeapon : NetworkBehaviour
     [SerializeField] private GameObject objectToDisableAfterShooting;
 
     private WeaponData weaponData;
+    
+    // CHANGED: Replaced explicit cooldown timestamps with dynamic state fields.
+    private float currentShootTime;
+    private float reloadEndTime;
+    private bool isReloading;
     private float nextFireTime;
 
-    // Exposed for PlayerPickupManager to read for the Reload UI
-    public float CurrentFireRate => fireRate;
-    public float NextFireTime => nextFireTime;
+    public bool IsReloading => isReloading;
+    
+    // CHANGED: Expose accurate countdown ratios for the UI.
+    public float ReloadRatio 
+    {
+        get 
+        {
+            if (!isReloading) return 0f;
+            float totalReload = (weaponData != null && weaponData.isHitscan) 
+                ? (weaponData.hitscanReloadTime > 0 ? weaponData.hitscanReloadTime : 2f) 
+                : fireRate;
+                
+            if (totalReload <= 0f) return 0f;
+            
+            // Calculates remaining time normalized between 1 (just started) and 0 (finished)
+            return Mathf.Clamp01((reloadEndTime - Time.time) / totalReload);
+        }
+    }
+
+    public float AmmoRatio
+    {
+        get
+        {
+            if (weaponData != null && weaponData.isHitscan)
+            {
+                float maxShoot = weaponData.hitscanShootDuration > 0 ? weaponData.hitscanShootDuration : 3f;
+                return Mathf.Clamp01(currentShootTime / maxShoot);
+            }
+            return 1f; // Projectiles are always returned as fully "ready" before they shoot and trigger reload.
+        }
+    }
 
     public void SetWeaponData(WeaponData data)
     {
@@ -29,12 +61,16 @@ public class RangedWeapon : NetworkBehaviour
         if (data != null)
         {
             fireRate = data.cooldown > 0f ? data.cooldown : fireRate;
+            
+            if (data.isHitscan)
+            {
+                currentShootTime = data.hitscanShootDuration > 0 ? data.hitscanShootDuration : 3f;
+            }
         }
     }
 
     private void Awake()
     {
-        // Fallback in case muzzlePoint is left unassigned in the inspector
         if (muzzlePoint == null)
         {
             muzzlePoint = transform;
@@ -43,54 +79,67 @@ public class RangedWeapon : NetworkBehaviour
 
     private void Update()
     {
-        if (!NetworkOwnership.CanControl(this))
-        {
-            return;
-        }
+        if (!NetworkOwnership.CanControl(this)) return;
 
         Transform owner = GetOwnerTransform();
-        if (owner == null || !IsPlayerOwner(owner))
-        {
-            return;
-        }
+        if (owner == null || !IsPlayerOwner(owner)) return;
 
-        if (Keyboard.current == null || Mouse.current == null)
-        {
-            return;
-        }
+        if (Keyboard.current == null || Mouse.current == null) return;
 
-        // If not hitscan, standard projectile safety check
-        if (weaponData != null && !weaponData.isHitscan && projectilePrefab == null)
-        {
-            return;
-        }
+        if (weaponData != null && !weaponData.isHitscan && projectilePrefab == null) return;
 
         bool firePressed = Mouse.current.leftButton.isPressed;
-        if (owner.CompareTag("Player1"))
-        {
-            firePressed |= Keyboard.current.spaceKey.isPressed;
-        }
-        else if (owner.CompareTag("Player2"))
-        {
-            firePressed |= Keyboard.current.enterKey.isPressed;
-        }
+        if (owner.CompareTag("Player1")) firePressed |= Keyboard.current.spaceKey.isPressed;
+        else if (owner.CompareTag("Player2")) firePressed |= Keyboard.current.enterKey.isPressed;
 
-        if (!firePressed)
+        // CHANGED: Reload State Block to block firing while returning clip ammo 
+        if (isReloading)
         {
+            if (Time.time >= reloadEndTime)
+            {
+                isReloading = false;
+                if (weaponData != null && weaponData.isHitscan)
+                {
+                    currentShootTime = weaponData.hitscanShootDuration > 0 ? weaponData.hitscanShootDuration : 3f;
+                }
+            }
             return;
         }
 
-        if (Time.time < nextFireTime)
+        if (!firePressed) return;
+
+        // CHANGED: Firing execution split into independent Hitscan clips vs Projectile cooldowns
+        if (weaponData != null && weaponData.isHitscan)
         {
-            return;
+            currentShootTime -= Time.deltaTime; // Drains the hitscan clip length
+
+            if (Time.time >= nextFireTime)
+            {
+                nextFireTime = Time.time + fireRate;
+                Fire(owner);
+                if (objectToDisableAfterShooting != null) objectToDisableAfterShooting.SetActive(false);
+            }
+
+            if (currentShootTime <= 0f)
+            {
+                isReloading = true;
+                reloadEndTime = Time.time + (weaponData.hitscanReloadTime > 0 ? weaponData.hitscanReloadTime : 2f);
+                currentShootTime = 0f;
+            }
         }
-
-        nextFireTime = Time.time + fireRate;
-        Fire(owner);
-
-        if (objectToDisableAfterShooting != null)
+        else
         {
-            objectToDisableAfterShooting.SetActive(false);
+            if (Time.time >= nextFireTime)
+            {
+                nextFireTime = Time.time + fireRate;
+                
+                // For a projectile, the cooldown interval acts as the singular shot reload period
+                isReloading = true;
+                reloadEndTime = nextFireTime;
+                
+                Fire(owner);
+                if (objectToDisableAfterShooting != null) objectToDisableAfterShooting.SetActive(false);
+            }
         }
     }
 
@@ -99,7 +148,6 @@ public class RangedWeapon : NetworkBehaviour
         Vector3 fireDirection = GetPlayerFacingDirection(owner);
         Vector3 fireOrigin = muzzlePoint.position;
 
-        // Calculate player damage multiplier
         PlayerPickupManager pickupManager = owner.GetComponentInParent<PlayerPickupManager>();
         float damageMultiplier = pickupManager != null ? pickupManager.DamageMultiplier : 1f;
         int calculatedDamage = weaponData != null ? Mathf.RoundToInt(Mathf.Max(1, weaponData.damage) * damageMultiplier) : 1;
@@ -121,7 +169,6 @@ public class RangedWeapon : NetworkBehaviour
 
         if (Physics.Raycast(origin, direction, out RaycastHit hit, range, mask))
         {
-            // Spawn impact particle system at the hit location pointing away from the hit surface
             if (weaponData != null && weaponData.impactParticlePrefab != null)
             {
                 GameObject impactEffect = Instantiate(
@@ -129,27 +176,21 @@ public class RangedWeapon : NetworkBehaviour
                     hit.point,
                     Quaternion.LookRotation(hit.normal)
                 );
-
-                // Destroy particle system after 0.5 seconds
-                Destroy(impactEffect, 0.5f); // <--- CHANGED: Reduced particle lifespan to 0.5s
+                Destroy(impactEffect, 0.5f);
             }
 
-            // <--- ADDED: Apply full damage without reduction to hit target
-            // Ignore hitting the owner or the owner's children
             if (owner != null && (hit.transform == owner || hit.transform.IsChildOf(owner)))
             {
                 return;
             }
 
-            // Try applying damage via IDamageable interface first
             IDamageable damageable = hit.collider.GetComponentInParent<IDamageable>();
             if (damageable != null)
             {
-                damageable.TakeDamage(damage); // Full damage with 0 range falloff
+                damageable.TakeDamage(damage);
             }
             else
             {
-                // Fallback: Broadcast TakeDamage message to target component hierarchy
                 hit.collider.gameObject.SendMessageUpwards("TakeDamage", damage, SendMessageOptions.DontRequireReceiver);
             }
         }

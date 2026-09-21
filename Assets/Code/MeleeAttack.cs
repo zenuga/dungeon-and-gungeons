@@ -20,6 +20,19 @@ public class WeaponAttack : NetworkBehaviour
     private float _nextAttackTime = 0f;
     private HashSet<Collider> _hitThisSwing = new HashSet<Collider>();
 
+    // CHANGED: Added properties for PlayerPickupManager to query melee cooldown status
+    public bool IsOnCooldown => Time.time < _nextAttackTime;
+    
+    public float CooldownRatio
+    {
+        get
+        {
+            float totalCooldown = GetCooldownFromWeapon();
+            if (totalCooldown <= 0f || !IsOnCooldown) return 0f;
+            return Mathf.Clamp01((_nextAttackTime - Time.time) / totalCooldown);
+        }
+    }
+
     public WeaponData WeaponData
     {
         get => weaponData;

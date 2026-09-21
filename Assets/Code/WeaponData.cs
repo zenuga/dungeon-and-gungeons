@@ -29,6 +29,10 @@ public class WeaponData : ScriptableObject
     [Header("Hitscan Settings")]
     public bool isHitscan = false;
     public float hitscanRange = 100f;
-    public LayerMask hitscanLayers = ~0; // Hits all layers by default
+    public LayerMask hitscanLayers = ~0; 
     public GameObject impactParticlePrefab;
+    
+    // CHANGED: Added shoot duration and reload time for hitscan clip mechanics
+    public float hitscanShootDuration = 3f; 
+    public float hitscanReloadTime = 2f; 
 }
