@@ -25,4 +25,14 @@ public class WeaponData : ScriptableObject
     public float cooldown;
     public int currencyAmount = 40;
     public PotionType potionType;
+
+    [Header("Hitscan Settings")]
+    public bool isHitscan = false;
+    public float hitscanRange = 100f;
+    public LayerMask hitscanLayers = ~0; 
+    public GameObject impactParticlePrefab;
+    
+    // CHANGED: Added shoot duration and reload time for hitscan clip mechanics
+    public float hitscanShootDuration = 3f; 
+    public float hitscanReloadTime = 2f; 
 }

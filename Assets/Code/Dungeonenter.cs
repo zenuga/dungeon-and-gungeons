@@ -23,7 +23,7 @@ public class Dungeonenter : MonoBehaviour
     private void OnTriggerEnter(Collider other)
     {
         // 1. Activate wall children attached to this GameObject
-        if ((dungeonWaveManager != null && dungeonWaveManager.IsDungeonCompleted) || other.CompareTag("Projectile"))
+        if ((dungeonWaveManager != null && dungeonWaveManager.IsDungeonCompleted) || (other.CompareTag("Projectile") || other.CompareTag("Ranged") || other.CompareTag("Melee")))
         {
             DisableWalls();
         }
