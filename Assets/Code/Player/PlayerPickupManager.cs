@@ -48,6 +48,8 @@ public class PlayerPickupManager : NetworkBehaviour
     
     private GameObject currentMeleeWeapon;
     private WeaponData currentMeleeWeaponData;
+    // CHANGED: Added tracking for the active melee script
+    private WeaponAttack currentMeleeWeaponScript;
     
     private GameObject currentRangedWeapon;
     private WeaponData currentRangedWeaponData;
@@ -194,31 +196,56 @@ public class PlayerPickupManager : NetworkBehaviour
             activePotionEffectCountdown = activePotionEffectImage.GetComponentInChildren<TextMeshProUGUI>(true);
         }
 
-        // Setup Reload UI Lookups
         if (reloadUIObject == null)
         {
-            reloadUIObject = FindUIObject("ReloadUI", "Reload");
+            if (pickupUI != null)
+            {
+                foreach (Transform t in pickupUI.GetComponentsInChildren<Transform>(true))
+                {
+                    if (t.CompareTag("Reload") || t.name.Equals("ReloadUI", System.StringComparison.OrdinalIgnoreCase) || t.name.Equals("Reload", System.StringComparison.OrdinalIgnoreCase))
+                    {
+                        reloadUIObject = t.gameObject;
+                        break;
+                    }
+                }
+            }
+
+            if (reloadUIObject == null)
+            {
+                GameObject taggedObj = GameObject.FindGameObjectWithTag("Reload");
+                if (taggedObj != null) reloadUIObject = taggedObj;
+                else reloadUIObject = FindUIObject("ReloadUI", "Reload");
+            }
+        }
+
+        if (reloadImage == null && reloadUIObject != null)
+        {
+            Image[] images = reloadUIObject.GetComponentsInChildren<Image>(true);
+            foreach (Image img in images)
+            {
+                if (img.type == Image.Type.Filled)
+                {
+                    reloadImage = img;
+                    break;
+                }
+            }
+
+            if (reloadImage == null && images.Length > 0)
+            {
+                reloadImage = images[0];
+            }
         }
 
         if (reloadImage == null)
         {
-            if (reloadUIObject != null)
-            {
-                reloadImage = reloadUIObject.GetComponent<Image>();
-                if (reloadImage == null) reloadImage = reloadUIObject.GetComponentInChildren<Image>(true);
-            }
-
-            if (reloadImage == null)
-            {
-                reloadImage = FindUIComponent<Image>("ReloadImage", "Reload");
-            }
+            reloadImage = FindUIComponent<Image>("ReloadImage", "Reload");
         }
 
-        // Ensure the Reload image is set up correctly to display radial fills
+        // CHANGED: Configured fill method to Horizontal instead of Radial360
         if (reloadImage != null)
         {
             reloadImage.type = Image.Type.Filled;
-            reloadImage.fillMethod = Image.FillMethod.Radial360;
+            reloadImage.fillMethod = Image.FillMethod.Horizontal;
         }
     }
 
@@ -324,39 +351,57 @@ public class PlayerPickupManager : NetworkBehaviour
             activePotionEffectCountdown.text = hasActivePotionEffect ? Mathf.CeilToInt(potionEffectTimeRemaining).ToString() : string.Empty;
         }
     }
-    
+
+    // CHANGED: Added melee weapon cooldown evaluation to the Reload UI update pipeline
     private void UpdateReloadUI()
     {
-        if (currentRangedWeaponScript == null)
+        if (currentRangedWeaponScript == null && currentMeleeWeaponScript == null)
         {
-            if (reloadUIObject != null) reloadUIObject.SetActive(false);
-            else if (reloadImage != null) reloadImage.gameObject.SetActive(false);
+            if (reloadUIObject != null && reloadUIObject.activeSelf) reloadUIObject.SetActive(false);
             return;
         }
 
-        if (reloadUIObject != null) reloadUIObject.SetActive(true);
-        else if (reloadImage != null) reloadImage.gameObject.SetActive(true);
-
-        if (reloadImage == null) return;
-
-        float fireRate = currentRangedWeaponScript.CurrentFireRate;
-        float nextFireTime = currentRangedWeaponScript.NextFireTime;
-
-        if (fireRate <= 0f)
+        if (reloadUIObject != null && !reloadUIObject.activeSelf)
         {
-            reloadImage.fillAmount = 1f;
-            return;
+            reloadUIObject.SetActive(true);
         }
 
-        float timeRemaining = nextFireTime - Time.time;
-        if (timeRemaining <= 0f)
+        if (reloadImage == null)
         {
-            reloadImage.fillAmount = 1f;
+            AutoFindUIReferences();
+            if (reloadImage == null) return;
         }
-        else
+
+        if (!reloadImage.gameObject.activeSelf)
         {
-            float fillRatio = 1f - (timeRemaining / fireRate);
-            reloadImage.fillAmount = Mathf.Clamp01(fillRatio);
+            reloadImage.gameObject.SetActive(true);
+        }
+
+        if (currentRangedWeaponScript != null)
+        {
+            if (currentRangedWeaponScript.IsReloading)
+            {
+                reloadImage.color = Color.red;
+                reloadImage.fillAmount = currentRangedWeaponScript.ReloadRatio;
+            }
+            else
+            {
+                reloadImage.color = Color.blue;
+                reloadImage.fillAmount = currentRangedWeaponScript.AmmoRatio;
+            }
+        }
+        else if (currentMeleeWeaponScript != null)
+        {
+            if (currentMeleeWeaponScript.IsOnCooldown)
+            {
+                reloadImage.color = Color.red;
+                reloadImage.fillAmount = currentMeleeWeaponScript.CooldownRatio;
+            }
+            else
+            {
+                reloadImage.color = Color.blue;
+                reloadImage.fillAmount = 1f;
+            }
         }
     }
 
@@ -422,13 +467,20 @@ public class PlayerPickupManager : NetworkBehaviour
         collidersInRange.RemoveAll(item => item == null);
         if (collidersInRange.Count == 0) return;
 
-        foreach (var col in collidersInRange)
+        for (int i = collidersInRange.Count - 1; i >= 0; i--)
         {
+            Collider col = collidersInRange[i];
+            if (col == null) continue;
+
             CollectibleItem item = col.GetComponentInParent<CollectibleItem>();
             if (item == null) continue;
 
             GameObject targetGameObject = item.gameObject;
             string tagType = item.itemType.ToLower();
+
+            Collider[] targetColliders = targetGameObject.GetComponentsInChildren<Collider>();
+            foreach (var c in targetColliders) c.enabled = false;
+            Destroy(item);
 
             if (tagType == "potion")
             {
@@ -438,7 +490,12 @@ public class PlayerPickupManager : NetworkBehaviour
                     currentPotions = 0;
                 }
 
-                if (currentPotions >= maxPotions) continue;
+                if (currentPotions >= maxPotions)
+                {
+                    foreach (var c in targetColliders) c.enabled = true;
+                    continue;
+                }
+
                 currentPotionType = item.potionType;
                 currentPotionData = item.weaponData;
                 currentPotions += item.quantity;
@@ -453,7 +510,12 @@ public class PlayerPickupManager : NetworkBehaviour
             }
             else if (tagType == "bombs")
             {
-                if (currentBombs >= maxBombs) continue;
+                if (currentBombs >= maxBombs)
+                {
+                    foreach (var c in targetColliders) c.enabled = true;
+                    continue;
+                }
+
                 currentBombData = item.weaponData;
                 currentBombs += item.quantity;
                 currentBombs = Mathf.Min(currentBombs, maxBombs);
@@ -465,13 +527,7 @@ public class PlayerPickupManager : NetworkBehaviour
                 Destroy(targetGameObject);
                 break;
             }
-            else if (tagType == "melee")
-            {
-                EquipWeapon(item.weaponData);
-                Destroy(targetGameObject);
-                break;
-            }
-            else if (tagType == "ranged")
+            else if (tagType == "melee" || tagType == "ranged")
             {
                 EquipWeapon(item.weaponData);
                 Destroy(targetGameObject);
@@ -493,6 +549,9 @@ public class PlayerPickupManager : NetworkBehaviour
                     Destroy(rbHeld);
                 }
 
+                CollectibleItem[] collectibles = currentMiscItem.GetComponentsInChildren<CollectibleItem>(true);
+                foreach (var c in collectibles) Destroy(c);
+
                 UpdateMiscUI(targetGameObject.name);
                 Destroy(targetGameObject);
                 break;
@@ -507,11 +566,13 @@ public class PlayerPickupManager : NetworkBehaviour
             return false;
         }
 
+        // CHANGED: Fully unequip and reset both melee and ranged weapon script references
         if (currentMeleeWeapon != null)
         {
             DropItem(currentMeleeWeapon, "melee", currentMeleeWeaponData);
             currentMeleeWeapon = null;
             currentMeleeWeaponData = null;
+            currentMeleeWeaponScript = null;
         }
 
         if (currentRangedWeapon != null)
@@ -519,12 +580,27 @@ public class PlayerPickupManager : NetworkBehaviour
             DropItem(currentRangedWeapon, "ranged", currentRangedWeaponData);
             currentRangedWeapon = null;
             currentRangedWeaponData = null;
-            currentRangedWeaponScript = null; // Clear the script reference
+            currentRangedWeaponScript = null;
         }
 
         GameObject equippedWeapon = Instantiate(data.weaponPrefab, handTransform);
         equippedWeapon.transform.localPosition = Vector3.zero;
         equippedWeapon.transform.localRotation = Quaternion.identity;
+
+        CollectibleItem[] collectibles = equippedWeapon.GetComponentsInChildren<CollectibleItem>(true);
+        foreach (var col in collectibles)
+        {
+            Destroy(col);
+        }
+
+        Collider[] colliders = equippedWeapon.GetComponentsInChildren<Collider>(true);
+        foreach (var c in colliders)
+        {
+            if (c.isTrigger)
+            {
+                Destroy(c);
+            }
+        }
 
         WeaponAttack meleeAttack = equippedWeapon.GetComponentInChildren<WeaponAttack>();
         RangedWeapon rangedWeapon = equippedWeapon.GetComponentInChildren<RangedWeapon>();
@@ -533,13 +609,14 @@ public class PlayerPickupManager : NetworkBehaviour
             meleeAttack.WeaponData = data;
             currentMeleeWeapon = equippedWeapon;
             currentMeleeWeaponData = data;
+            currentMeleeWeaponScript = meleeAttack; // CHANGED: Saved melee script reference
         }
         else if (rangedWeapon != null)
         {
             rangedWeapon.SetWeaponData(data);
             currentRangedWeapon = equippedWeapon;
             currentRangedWeaponData = data;
-            currentRangedWeaponScript = rangedWeapon; // Track the script reference for UI
+            currentRangedWeaponScript = rangedWeapon;
         }
         else
         {
@@ -565,7 +642,7 @@ public class PlayerPickupManager : NetworkBehaviour
         
         BoxCollider boxCol = itemObj.GetComponent<BoxCollider>();
         if (boxCol == null) boxCol = itemObj.AddComponent<BoxCollider>();
-        boxCol.isTrigger = false;
+        boxCol.isTrigger = true;
         boxCol.excludeLayers = LayerMask.GetMask("Player");
         
         Rigidbody rb = itemObj.GetComponent<Rigidbody>();
