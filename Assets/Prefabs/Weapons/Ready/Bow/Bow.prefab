@@ -147,11 +147,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RangedWeapon
   ShowTopMostFoldoutHeaderGroup: 1
-  projectilePrefab: {fileID: 3496048274240114491, guid: c983b00dfe6625349b95bc550bd65a6a, type: 3}
+  projectilePrefab: {fileID: 2053575100479928261, guid: 437c5a999d2817596ba0470424cd7f70, type: 3}
   muzzlePoint: {fileID: 246885474510530972}
   fireRate: 0.5
-  objectToDisableAfterShooting: {fileID: 785822607160769322}
-  reloadTag: Reload
+  objectToDisableAfterShooting: {fileID: 2053575100479928261, guid: 437c5a999d2817596ba0470424cd7f70, type: 3}
 --- !u!1001 &4181403554171346145
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -216,10 +215,5 @@ PrefabInstance:
 --- !u!4 &120504086251020688 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4299611302705888625, guid: 79f5d5828f5b13988adf3ace3770a03c, type: 3}
-  m_PrefabInstance: {fileID: 4181403554171346145}
-  m_PrefabAsset: {fileID: 0}
---- !u!1 &785822607160769322 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 3521983269320632267, guid: 79f5d5828f5b13988adf3ace3770a03c, type: 3}
   m_PrefabInstance: {fileID: 4181403554171346145}
   m_PrefabAsset: {fileID: 0}

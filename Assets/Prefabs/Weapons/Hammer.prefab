@@ -92,6 +92,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6ac33dd4d9ef9ff58bc87075025f2bc0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WeaponAttack
+  ShowTopMostFoldoutHeaderGroup: 1
   weaponData: {fileID: 0}
   attackRange: 2.2
   attackRadius: 1.2
@@ -113,6 +114,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 913e69cb19e4e2a79b1bdb3f66604281, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CollectibleItem
-  itemType: bombs
+  itemType: melee
+  potionType: 0
   quantity: 1
   weaponData: {fileID: 0}

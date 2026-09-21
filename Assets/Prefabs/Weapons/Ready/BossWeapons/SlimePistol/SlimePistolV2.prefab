@@ -10,15 +10,15 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 5083906792619df4480672f1a52d91f7, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -2.9994934
+      value: 0.6444771
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 5083906792619df4480672f1a52d91f7, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -0.00000007574823
+      value: 0.0000000051741154
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 5083906792619df4480672f1a52d91f7, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 2.9893425
+      value: 1.8910275
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 5083906792619df4480672f1a52d91f7, type: 3}
       propertyPath: m_LocalRotation.w
@@ -98,7 +98,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 913e69cb19e4e2a79b1bdb3f66604281, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CollectibleItem
-  itemType: 
+  itemType: ranged
   potionType: 0
   quantity: 1
   weaponData: {fileID: 0}
@@ -114,14 +114,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 3219416659
-  InScenePlacedSourceGlobalObjectIdHash: 0
+  GlobalObjectIdHash: 861890757
+  InScenePlacedSourceGlobalObjectIdHash: 3219416659
   m_InScenePlacedDisabledByDefault: 0
   DeferredDespawnTick: 0
   Ownership: 1
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
-  m_InScenePlaced: 0
+  m_InScenePlaced: 1
   ActiveSceneSynchronization: 0
   SceneMigrationSynchronization: 0
   SpawnWithObservers: 1
