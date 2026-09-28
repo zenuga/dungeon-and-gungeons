@@ -430,7 +430,7 @@ Camera:
     m_Bits: 4294967295
   m_RenderingPath: -1
   m_TargetTexture: {fileID: 0}
-  m_TargetDisplay: 0
+  m_TargetDisplay: 1
   m_TargetEye: 3
   m_HDR: 1
   m_AllowMSAA: 1
@@ -1349,7 +1349,7 @@ RectTransform:
   m_GameObject: {fileID: 3899564745204227596}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 0.32026377, y: 0.32026377, z: 0.32026377}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1347562455547664139}
@@ -1358,7 +1358,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 811.42084, y: 60.99623}
+  m_AnchoredPosition: {x: -31, y: 11}
   m_SizeDelta: {x: 700.4182, y: 221.9926}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &4314877054538957855
@@ -2061,7 +2061,7 @@ GameObject:
   - component: {fileID: 5968676780744518739}
   m_Layer: 6
   m_Name: Player2Canvas
-  m_TagString: Untagged
+  m_TagString: playerUI
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -2111,7 +2111,7 @@ Canvas:
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
   m_SortingOrder: 0
-  m_TargetDisplay: 0
+  m_TargetDisplay: 1
 --- !u!114 &6426788389177615417
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3004,7 +3004,7 @@ GameObject:
   - component: {fileID: 2128124002144198869}
   m_Layer: 6
   m_Name: Armature
-  m_TagString: Untagged
+  m_TagString: Player2
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -3115,7 +3115,7 @@ Transform:
   m_GameObject: {fileID: 8671723301485573298}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 568.1707, y: 0.32211787, z: 110.66754}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -3153,7 +3153,7 @@ CharacterController:
   m_StepOffset: 0.3
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
-  m_Center: {x: 0, y: 0, z: 0}
+  m_Center: {x: 0, y: 0.8, z: -0.2}
 --- !u!114 &9000000000000000001
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3913,8 +3913,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -99.6443, y: -50.4413}
-  m_SizeDelta: {x: 199.2885, y: 100.8827}
+  m_AnchoredPosition: {x: -153.1633, y: -48.5798}
+  m_SizeDelta: {x: 306.3265, y: 97.1598}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1630446357820001768
 CanvasRenderer:

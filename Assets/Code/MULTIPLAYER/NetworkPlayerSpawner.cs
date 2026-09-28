@@ -106,18 +106,18 @@ public class NetworkPlayerSpawner : NetworkBehaviour
             return;
         }
 
-        NetworkObject prefab = playersByClient.Count == 0 ? player1Prefab : player2Prefab;
+        bool isHostPlayer = clientId == NetworkManager.ServerClientId;
+        NetworkObject prefab = isHostPlayer ? player1Prefab : player2Prefab;
         if (prefab == null)
         {
             Debug.LogError("NetworkPlayerSpawner is missing a NetworkObject player prefab.", this);
             return;
         }
 
-        Vector3 spawnPosition = GetPlayer1SpawnPosition();
-        if (playersByClient.Count == 1)
-        {
-            spawnPosition = GetPlayer2SpawnPosition(spawnPosition);
-        }
+        Vector3 player1Position = GetPlayer1SpawnPosition();
+        Vector3 spawnPosition = isHostPlayer
+            ? player1Position
+            : GetPlayer2SpawnPosition(player1Position);
 
         NetworkObject player = Instantiate(prefab, spawnPosition, Quaternion.identity);
         player.SpawnAsPlayerObject(clientId, true);
@@ -144,26 +144,8 @@ public class NetworkPlayerSpawner : NetworkBehaviour
                 continue;
             }
 
-            bool isLocalPlayer = player.IsOwner;
-            foreach (Camera playerCamera in player.GetComponentsInChildren<Camera>(true))
-            {
-                playerCamera.enabled = isLocalPlayer;
-
-                if (isLocalPlayer)
-                {
-                    playerCamera.cullingMask = ~0;
-                    playerCamera.tag = "MainCamera";
-                }
-                else if (playerCamera.CompareTag("MainCamera"))
-                {
-                    playerCamera.tag = "Untagged";
-                }
-            }
-
-            foreach (AudioListener audioListener in player.GetComponentsInChildren<AudioListener>(true))
-            {
-                audioListener.enabled = isLocalPlayer;
-            }
+            PlayerController controller = player.GetComponent<PlayerController>();
+            controller.SetLocalPresentation(player.IsOwner);
         }
     }
 

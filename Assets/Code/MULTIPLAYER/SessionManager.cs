@@ -44,6 +44,7 @@ public class SessionManager : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
         SceneManager.sceneLoaded += OnSceneLoaded;
+        SubscribeToNetworkManager();
 
         await InitializeUnityServices();
     }
@@ -58,6 +59,11 @@ public class SessionManager : MonoBehaviour
         shuttingDown = true;
         SceneManager.sceneLoaded -= OnSceneLoaded;
 
+        if (NetworkManager.Singleton != null)
+        {
+            NetworkManager.Singleton.OnClientConnectedCallback -= OnNetcodeClientConnected;
+        }
+
         if (currentSession != null)
         {
             currentSession.PlayerJoined -= OnPlayerJoined;
@@ -65,6 +71,24 @@ public class SessionManager : MonoBehaviour
         }
 
         Instance = null;
+    }
+
+    private void SubscribeToNetworkManager()
+    {
+        if (NetworkManager.Singleton != null)
+        {
+            NetworkManager.Singleton.OnClientConnectedCallback -= OnNetcodeClientConnected;
+            NetworkManager.Singleton.OnClientConnectedCallback += OnNetcodeClientConnected;
+        }
+    }
+
+    private void OnNetcodeClientConnected(ulong clientId)
+    {
+        if (currentSession != null && NetworkManager.Singleton != null && NetworkManager.Singleton.IsHost &&
+            currentSession.PlayerCount >= minimumPlayersToStart)
+        {
+            WaitForPlayersAndStartGame();
+        }
     }
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode loadSceneMode)
@@ -149,6 +173,7 @@ public class SessionManager : MonoBehaviour
 
         try
         {
+            SubscribeToNetworkManager();
             SetStatus("Creating game...");
 
             var options = new SessionOptions
@@ -183,6 +208,13 @@ public class SessionManager : MonoBehaviour
             currentSession.PlayerLeaving += OnPlayerLeft;
 
             UpdatePlayerStatus();
+
+            // The second player can arrive while CreateSessionAsync is still awaiting.
+            // Check the current count after subscribing so that join event cannot be missed.
+            if (currentSession.PlayerCount >= minimumPlayersToStart)
+            {
+                WaitForPlayersAndStartGame();
+            }
 
             Debug.Log("Waiting for players...");
 
@@ -239,14 +271,19 @@ public class SessionManager : MonoBehaviour
 
         try
         {
-            float deadline = Time.realtimeSinceStartup + 10f;
+            DateTime deadline = DateTime.UtcNow.AddSeconds(30);
             while (!shuttingDown &&
                    Application.isPlaying &&
                    !gameStarting &&
-                   NetworkManager.Singleton.IsListening &&
-                   NetworkManager.Singleton.ConnectedClientsIds.Count < minimumPlayersToStart &&
-                   Time.realtimeSinceStartup < deadline)
+                   DateTime.UtcNow < deadline)
             {
+                NetworkManager manager = NetworkManager.Singleton;
+                if (manager != null && manager.IsListening &&
+                    manager.ConnectedClientsIds.Count >= minimumPlayersToStart)
+                {
+                    break;
+                }
+
                 await Task.Delay(100);
             }
 
@@ -255,10 +292,12 @@ public class SessionManager : MonoBehaviour
                 return;
             }
 
-            if (NetworkManager.Singleton.ConnectedClientsIds.Count < minimumPlayersToStart)
+            NetworkManager connectedManager = NetworkManager.Singleton;
+            if (connectedManager == null || !connectedManager.IsListening ||
+                connectedManager.ConnectedClientsIds.Count < minimumPlayersToStart)
             {
                 Debug.LogWarning("Timed out waiting for all players to connect to Netcode.");
-                SetStatus("Waiting for network connection...");
+                SetStatus("Could not connect both players. Try joining again.");
                 return;
             }
 

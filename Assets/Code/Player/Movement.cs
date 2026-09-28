@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using Unity.Netcode;
 using Unity.Netcode.Components;
+using UnityEngine.UI;
 
 [RequireComponent(typeof(CharacterController))]
 public class PlayerController : NetworkBehaviour
@@ -26,6 +27,8 @@ public class PlayerController : NetworkBehaviour
     private Vector3 _velocity;
     private float speedMultiplier = 1f;
     private GameObject playerUI;
+    private Canvas[] playerCanvases;
+    private int localPresentationState = -1;
 
     public Vector3 FacingDirection => visualModel != null ? visualModel.transform.forward : transform.forward;
     public Transform VisualModelTransform => visualModel != null ? visualModel.transform : transform;
@@ -251,13 +254,27 @@ public class PlayerController : NetworkBehaviour
             visualModel = gameObject;
         }
 
-        // CHANGED: Fixed playerUI search to recursively check child transforms for the playerUI tag
+        playerCanvases = GetComponentsInChildren<Canvas>(true);
+
+        // Prefer the tagged HUD, then fall back to this player's screen-space canvas.
         foreach (Transform child in GetComponentsInChildren<Transform>(true))
         {
             if (child.CompareTag("playerUI") || child.CompareTag("PlayerUI"))
             {
                 playerUI = child.gameObject;
                 break;
+            }
+        }
+
+        if (playerUI == null)
+        {
+            foreach (Canvas playerCanvas in playerCanvases)
+            {
+                if (playerCanvas != null && playerCanvas.renderMode == RenderMode.ScreenSpaceOverlay)
+                {
+                    playerUI = playerCanvas.gameObject;
+                    break;
+                }
             }
         }
 
@@ -301,23 +318,36 @@ public class PlayerController : NetworkBehaviour
                 Physics.IgnoreCollision(_characterController, player._characterController, true);
             }
         }
+
+        SetLocalPresentation(!IsSpawned || IsOwner);
     }
 
     public override void OnNetworkSpawn()
     {
-        SetLocalCamera(IsOwner);
+        SetLocalPresentation(IsOwner);
     }
 
     public override void OnGainedOwnership()
     {
-        SetLocalCamera(true);
+        SetLocalPresentation(true);
     }
 
-    private void SetLocalCamera(bool isLocalPlayer)
+    public void SetLocalPresentation(bool isLocalPlayer)
     {
+        int requestedState = isLocalPlayer ? 1 : 0;
+        if (localPresentationState == requestedState)
+        {
+            return;
+        }
+
+        localPresentationState = requestedState;
         foreach (Camera playerCamera in GetComponentsInChildren<Camera>(true))
         {
             playerCamera.enabled = isLocalPlayer;
+            if (isLocalPlayer)
+            {
+                playerCamera.targetDisplay = 0;
+            }
 
             if (isLocalPlayer)
             {
@@ -333,6 +363,34 @@ public class PlayerController : NetworkBehaviour
         foreach (AudioListener audioListener in GetComponentsInChildren<AudioListener>(true))
         {
             audioListener.enabled = isLocalPlayer;
+        }
+
+        foreach (Canvas playerCanvas in playerCanvases)
+        {
+            if (playerCanvas != null && playerCanvas.renderMode == RenderMode.ScreenSpaceOverlay)
+            {
+                playerCanvas.enabled = isLocalPlayer;
+                if (isLocalPlayer)
+                {
+                    playerCanvas.targetDisplay = 0;
+                }
+
+                GraphicRaycaster raycaster = playerCanvas.GetComponent<GraphicRaycaster>();
+                if (raycaster != null)
+                {
+                    raycaster.enabled = isLocalPlayer;
+                }
+            }
+        }
+
+        if (playerUI != null)
+        {
+            playerUI.SetActive(isLocalPlayer);
+        }
+
+        if (isLocalPlayer && GetComponentsInChildren<Camera>(true).Length == 0)
+        {
+            Debug.LogError($"Local player '{name}' has no child Camera. Add a Camera to this player prefab.", this);
         }
     }
 
