@@ -7,6 +7,11 @@ public class TutorialScreen : MonoBehaviour
     [SerializeField] private GameObject playerUI;
     private int currentPage = 0;
 
+    private void Awake()
+    {
+        ResolvePlayerUI();
+    }
+
     public void helpButton()
     {
         tutorialScreen.SetActive(true);
@@ -18,7 +23,7 @@ public class TutorialScreen : MonoBehaviour
 
     public void PressingNextsecondtime()
     {
-        playerUI = GameObject.FindWithTag("playerUI");
+        ResolvePlayerUI();
     }
     public void nextButton()
     {
@@ -28,7 +33,11 @@ public class TutorialScreen : MonoBehaviour
             tutorialPages[currentPage].SetActive(false);
             tutorialScreen.SetActive(false);
             currentPage = 0;
-            playerUI.SetActive(true);
+            ResolvePlayerUI();
+            if (playerUI != null)
+            {
+                playerUI.SetActive(true);
+            }
         }
         else if (currentPage < tutorialPages.Length - 1)
         {
@@ -45,6 +54,34 @@ public class TutorialScreen : MonoBehaviour
             tutorialPages[currentPage].SetActive(false);
             currentPage--;
             tutorialPages[currentPage].SetActive(true);
+        }
+    }
+
+    private void ResolvePlayerUI()
+    {
+        if (playerUI != null)
+        {
+            return;
+        }
+
+        PlayerController[] players = FindObjectsByType<PlayerController>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        foreach (PlayerController player in players)
+        {
+            if (player != null && (!player.IsSpawned || player.IsOwner) && player.PlayerHud != null)
+            {
+                playerUI = player.PlayerHud;
+                return;
+            }
+        }
+
+        Canvas[] canvases = FindObjectsByType<Canvas>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        foreach (Canvas canvas in canvases)
+        {
+            if (canvas != null && canvas.gameObject.tag == "playerUI")
+            {
+                playerUI = canvas.gameObject;
+                return;
+            }
         }
     }
 }

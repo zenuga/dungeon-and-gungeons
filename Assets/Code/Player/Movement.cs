@@ -33,6 +33,7 @@ public class PlayerController : NetworkBehaviour
 
     public Vector3 FacingDirection => visualModel != null ? visualModel.transform.forward : transform.forward;
     public Transform VisualModelTransform => visualModel != null ? visualModel.transform : transform;
+    public GameObject PlayerHud => playerUI;
 
     public void SetSpeedMultiplier(float multiplier)
     {
@@ -278,7 +279,7 @@ public class PlayerController : NetworkBehaviour
         // Prefer the tagged HUD, then fall back to this player's screen-space canvas.
         foreach (Transform child in GetComponentsInChildren<Transform>(true))
         {
-            if (child.CompareTag("playerUI") || child.CompareTag("PlayerUI"))
+            if (child.CompareTag("playerUI"))
             {
                 playerUI = child.gameObject;
                 break;

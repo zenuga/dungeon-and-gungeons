@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
@@ -122,6 +123,28 @@ public class NetworkPlayerSpawner : NetworkBehaviour
         NetworkObject player = Instantiate(prefab, spawnPosition, Quaternion.identity);
         player.SpawnAsPlayerObject(clientId, true);
         playersByClient.Add(clientId, player);
+        StartCoroutine(ApplySpawnPositionAfterSpawn(player, spawnPosition));
+    }
+
+    private IEnumerator ApplySpawnPositionAfterSpawn(NetworkObject player, Vector3 spawnPosition)
+    {
+        // Let NGO deliver the player object first, then set the owner's transform.
+        yield return null;
+
+        if (player == null || !player.IsSpawned)
+        {
+            yield break;
+        }
+
+        PlayerController playerController = player.GetComponent<PlayerController>();
+        if (playerController != null)
+        {
+            playerController.RequestNetworkTeleport(spawnPosition);
+        }
+        else if (IsServer)
+        {
+            player.transform.position = spawnPosition;
+        }
     }
 
     private void RegisterPlayerPrefab(NetworkObject prefab)
