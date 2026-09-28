@@ -677,6 +677,7 @@ MonoBehaviour:
   playerType: 0
   playerLayerName: Player
   visualModel: {fileID: 6134233185513468091}
+  playerCamera: {fileID: 4702064518420858112}
   moveSpeed: 5
   gravity: -9.81
   settings: {fileID: 0}

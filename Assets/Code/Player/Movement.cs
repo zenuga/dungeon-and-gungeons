@@ -17,6 +17,7 @@ public class PlayerController : NetworkBehaviour
     [SerializeField] private PlayerType playerType = PlayerType.Player1;
     [SerializeField] private string playerLayerName = "Player";
     [SerializeField] private GameObject visualModel;
+    [SerializeField] private Camera playerCamera;
 
     [Header("Movement Settings")]
     [SerializeField] private float moveSpeed = 5.0f;
@@ -97,6 +98,7 @@ public class PlayerController : NetworkBehaviour
 
     private void TeleportLocally(Vector3 targetPosition)
     {
+        _velocity = Vector3.zero;
         if (_characterController == null)
         {
             transform.position = targetPosition;
@@ -106,6 +108,18 @@ public class PlayerController : NetworkBehaviour
         _characterController.enabled = false;
         transform.position = targetPosition;
         Physics.SyncTransforms();
+
+        // Owner-authoritative NetworkTransform needs an explicit teleport so the
+        // spawn position is sent immediately instead of being corrected later.
+        if (IsSpawned && IsOwner)
+        {
+            NetworkTransform networkTransform = GetComponent<NetworkTransform>();
+            if (networkTransform != null)
+            {
+                networkTransform.Teleport(targetPosition, transform.rotation, transform.localScale);
+            }
+        }
+
         _characterController.enabled = true;
     }
 
@@ -254,6 +268,11 @@ public class PlayerController : NetworkBehaviour
             visualModel = gameObject;
         }
 
+        if (playerCamera == null)
+        {
+            playerCamera = GetComponentInChildren<Camera>(true);
+        }
+
         playerCanvases = GetComponentsInChildren<Canvas>(true);
 
         // Prefer the tagged HUD, then fall back to this player's screen-space canvas.
@@ -334,6 +353,29 @@ public class PlayerController : NetworkBehaviour
 
     public void SetLocalPresentation(bool isLocalPlayer)
     {
+        Camera[] cameras = GetComponentsInChildren<Camera>(true);
+        foreach (Camera cameraInRig in cameras)
+        {
+            cameraInRig.enabled = isLocalPlayer;
+            if (isLocalPlayer)
+            {
+                cameraInRig.targetDisplay = 0;
+                cameraInRig.cullingMask = ~0;
+                cameraInRig.tag = "Untagged";
+            }
+            else if (cameraInRig.CompareTag("MainCamera"))
+            {
+                cameraInRig.tag = "Untagged";
+            }
+        }
+
+        if (playerCamera != null && isLocalPlayer)
+        {
+            playerCamera.enabled = true;
+            playerCamera.targetDisplay = 0;
+            playerCamera.tag = "MainCamera";
+        }
+
         int requestedState = isLocalPlayer ? 1 : 0;
         if (localPresentationState == requestedState)
         {
@@ -341,25 +383,6 @@ public class PlayerController : NetworkBehaviour
         }
 
         localPresentationState = requestedState;
-        foreach (Camera playerCamera in GetComponentsInChildren<Camera>(true))
-        {
-            playerCamera.enabled = isLocalPlayer;
-            if (isLocalPlayer)
-            {
-                playerCamera.targetDisplay = 0;
-            }
-
-            if (isLocalPlayer)
-            {
-                playerCamera.cullingMask = ~0;
-                playerCamera.tag = "MainCamera";
-            }
-            else if (playerCamera.CompareTag("MainCamera"))
-            {
-                playerCamera.tag = "Untagged";
-            }
-        }
-
         foreach (AudioListener audioListener in GetComponentsInChildren<AudioListener>(true))
         {
             audioListener.enabled = isLocalPlayer;
@@ -388,7 +411,7 @@ public class PlayerController : NetworkBehaviour
             playerUI.SetActive(isLocalPlayer);
         }
 
-        if (isLocalPlayer && GetComponentsInChildren<Camera>(true).Length == 0)
+        if (isLocalPlayer && playerCamera == null && cameras.Length == 0)
         {
             Debug.LogError($"Local player '{name}' has no child Camera. Add a Camera to this player prefab.", this);
         }
