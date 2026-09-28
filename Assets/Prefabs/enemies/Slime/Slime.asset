@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ffb886eae21f9d925914b4c4958b713b, type: 3}
+  m_Name: Slime
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyData
+  maxHealth: 30
+  walkSpeed: 3
+  stopDistance: 0.5
+  rotationSpeed: 720
+  attackType: 0
+  minAttackDistance: 0
+  maxAttackDistance: 1
+  attackCooldown: 1
+  weaponData: {fileID: 11400000, guid: eee0f9e723473bac6abd7c1dbfa15cdc, type: 2}
+  projectilePrefab: {fileID: 0}

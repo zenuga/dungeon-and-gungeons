@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class NetworkPlayerSpawner : NetworkBehaviour
 {
+    public static NetworkPlayerSpawner Instance { get; private set; }
+
     private const string GameplaySceneName = "SampleScene";
 
     [Header("Player Prefabs")]
@@ -50,6 +52,7 @@ public class NetworkPlayerSpawner : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
+        Instance = this;
         if (!IsServer)
         {
             return;
@@ -69,6 +72,11 @@ public class NetworkPlayerSpawner : NetworkBehaviour
 
     public override void OnNetworkDespawn()
     {
+        if (Instance == this)
+        {
+            Instance = null;
+        }
+
         if (NetworkManager == null)
         {
             return;
@@ -162,6 +170,197 @@ public class NetworkPlayerSpawner : NetworkBehaviour
     private void RemovePlayerForClient(ulong clientId)
     {
         playersByClient.Remove(clientId);
+    }
+
+    public void RequestWorldDamage(Vector3 targetPosition, int damage)
+    {
+        if (!IsSpawned || damage <= 0)
+        {
+            return;
+        }
+
+        if (IsServer)
+        {
+            ApplyWorldDamage(targetPosition, damage);
+        }
+        else
+        {
+            RequestWorldDamageServerRpc(targetPosition, damage);
+        }
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void RequestWorldDamageServerRpc(Vector3 targetPosition, int damage, ServerRpcParams rpcParams = default)
+    {
+        if (!NetworkManager.ConnectedClients.TryGetValue(rpcParams.Receive.SenderClientId, out NetworkClient client) ||
+            client.PlayerObject == null ||
+            Vector3.Distance(client.PlayerObject.transform.position, targetPosition) > 120f)
+        {
+            return;
+        }
+
+        ApplyWorldDamage(targetPosition, Mathf.Clamp(damage, 1, 500));
+    }
+
+    private void ApplyWorldDamage(Vector3 targetPosition, int damage)
+    {
+        Collider[] colliders = Physics.OverlapSphere(targetPosition, 1.5f, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Collide);
+        WallHealth wall = null;
+        Crate crate = null;
+        float closestDistance = float.MaxValue;
+
+        foreach (Collider collider in colliders)
+        {
+            if (collider == null)
+            {
+                continue;
+            }
+
+            WallHealth candidateWall = collider.GetComponentInParent<WallHealth>();
+            Crate candidateCrate = collider.GetComponentInParent<Crate>();
+            if (candidateWall == null && candidateCrate == null)
+            {
+                continue;
+            }
+
+            float distance = Vector3.Distance(targetPosition, collider.ClosestPoint(targetPosition));
+            if (distance >= closestDistance)
+            {
+                continue;
+            }
+
+            closestDistance = distance;
+            wall = candidateWall;
+            crate = candidateWall == null ? candidateCrate : null;
+        }
+
+        if (wall != null)
+        {
+            wall.ApplyWorldDamage(damage);
+        }
+        else if (crate != null)
+        {
+            crate.ApplyWorldDamage(damage);
+        }
+        else
+        {
+            return;
+        }
+
+        BroadcastWorldDamage(targetPosition, damage);
+    }
+
+    public void BroadcastWorldDamage(Vector3 targetPosition, int damage)
+    {
+        if (!IsSpawned || !IsServer || damage <= 0)
+        {
+            return;
+        }
+
+        List<ulong> recipients = new List<ulong>();
+        foreach (ulong clientId in NetworkManager.ConnectedClientsIds)
+        {
+            if (clientId != NetworkManager.ServerClientId)
+            {
+                recipients.Add(clientId);
+            }
+        }
+
+        if (recipients.Count > 0)
+        {
+            ApplyWorldDamageClientRpc(targetPosition, damage, new ClientRpcParams
+            {
+                Send = new ClientRpcSendParams { TargetClientIds = recipients.ToArray() }
+            });
+        }
+    }
+
+    public void BroadcastDungeonCompletion(Vector3 dungeonPosition)
+    {
+        if (!IsSpawned || !IsServer)
+        {
+            return;
+        }
+
+        List<ulong> recipients = new List<ulong>();
+        foreach (ulong clientId in NetworkManager.ConnectedClientsIds)
+        {
+            if (clientId != NetworkManager.ServerClientId)
+            {
+                recipients.Add(clientId);
+            }
+        }
+
+        if (recipients.Count > 0)
+        {
+            ApplyDungeonCompletionClientRpc(dungeonPosition, new ClientRpcParams
+            {
+                Send = new ClientRpcSendParams { TargetClientIds = recipients.ToArray() }
+            });
+        }
+    }
+
+    [ClientRpc]
+    private void ApplyDungeonCompletionClientRpc(Vector3 dungeonPosition, ClientRpcParams rpcParams = default)
+    {
+        DungeonWaveManager[] dungeons = FindObjectsByType<DungeonWaveManager>(FindObjectsSortMode.None);
+        DungeonWaveManager closestDungeon = null;
+        float closestDistance = 2f;
+
+        foreach (DungeonWaveManager dungeon in dungeons)
+        {
+            float distance = Vector3.Distance(dungeon.transform.position, dungeonPosition);
+            if (distance < closestDistance)
+            {
+                closestDistance = distance;
+                closestDungeon = dungeon;
+            }
+        }
+
+        closestDungeon?.ApplyNetworkCompletion();
+    }
+
+    [ClientRpc]
+    private void ApplyWorldDamageClientRpc(Vector3 targetPosition, int damage, ClientRpcParams rpcParams = default)
+    {
+        Collider[] colliders = Physics.OverlapSphere(targetPosition, 1.5f, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Collide);
+        WallHealth wall = null;
+        Crate crate = null;
+        float closestDistance = float.MaxValue;
+
+        foreach (Collider collider in colliders)
+        {
+            if (collider == null)
+            {
+                continue;
+            }
+
+            WallHealth candidateWall = collider.GetComponentInParent<WallHealth>();
+            Crate candidateCrate = collider.GetComponentInParent<Crate>();
+            if (candidateWall == null && candidateCrate == null)
+            {
+                continue;
+            }
+
+            float distance = Vector3.Distance(targetPosition, collider.ClosestPoint(targetPosition));
+            if (distance >= closestDistance)
+            {
+                continue;
+            }
+
+            closestDistance = distance;
+            wall = candidateWall;
+            crate = candidateWall == null ? candidateCrate : null;
+        }
+
+        if (wall != null)
+        {
+            wall.ApplyWorldDamage(damage);
+        }
+        else if (crate != null)
+        {
+            crate.ApplyWorldDamage(damage);
+        }
     }
 
     private Vector3 GetPlayer1SpawnPosition()

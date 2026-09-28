@@ -1,5 +1,6 @@
 using UnityEngine;
 using Unity.Netcode;
+using Unity.Netcode.Components;
 
 public enum ProjectileType
 {
@@ -26,6 +27,11 @@ public class Projectile : NetworkBehaviour
 
     private void Awake()
     {
+        if (GetComponent<NetworkObject>() != null && GetComponent<NetworkTransform>() == null)
+        {
+            gameObject.AddComponent<NetworkTransform>();
+        }
+
         Rigidbody body = GetComponent<Rigidbody>();
         if (body == null)
         {
@@ -72,6 +78,11 @@ public class Projectile : NetworkBehaviour
 
     private void Update()
     {
+        if (IsSpawned && !IsServer)
+        {
+            return;
+        }
+
         transform.position += direction * speed * Time.deltaTime;
         timer -= Time.deltaTime;
 
@@ -95,6 +106,11 @@ public class Projectile : NetworkBehaviour
 
     private void ProcessContact(GameObject hitObject, Transform hitTransform)
     {
+        if (IsSpawned && !IsServer)
+        {
+            return;
+        }
+
         // 1. Ignore the owner completely
         if (!string.IsNullOrEmpty(ownerTag) && (hitObject.CompareTag(ownerTag) || hitTransform.root.CompareTag(ownerTag)))
         {
@@ -148,7 +164,7 @@ public class Projectile : NetworkBehaviour
             if (IsEnemyProjectile())
             {
                 enemy.TakeDamage(damage);
-                Destroy(gameObject); 
+                NetworkSpawnUtility.DespawnOrDestroy(gameObject);
             }
             return;
         }
@@ -158,7 +174,7 @@ public class Projectile : NetworkBehaviour
             if (!IsEnemyProjectile())
             {
                 player.TakeDamage(damage);
-                Destroy(gameObject); 
+                NetworkSpawnUtility.DespawnOrDestroy(gameObject);
             }
         }
     }
@@ -215,7 +231,7 @@ public class Projectile : NetworkBehaviour
             return;
         }
 
-        Destroy(gameObject);
+        NetworkSpawnUtility.DespawnOrDestroy(gameObject);
     }
 
     private void SpawnExplosion()
@@ -230,6 +246,7 @@ public class Projectile : NetworkBehaviour
             }
 
             explosionArea.Setup(damage, explosionRadius, ownerTag);
+            NetworkSpawnUtility.SpawnIfNetworked(explosionObject);
         }
         else
         {
@@ -253,7 +270,7 @@ public class Projectile : NetworkBehaviour
             }
         }
 
-        Destroy(gameObject);
+        NetworkSpawnUtility.DespawnOrDestroy(gameObject);
     }
 
     private void ApplyDamage(GameObject target)

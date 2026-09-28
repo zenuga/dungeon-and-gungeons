@@ -4,7 +4,6 @@ using Unity.Netcode;
 public class WallHealth : NetworkBehaviour
 {
     private Depth depth;
-    [SerializeField] private int maxHealth = 10;
     [SerializeField] public int Health = 10;
 
     private void Awake()
@@ -35,6 +34,19 @@ public class WallHealth : NetworkBehaviour
             return;
         }
 
+        if (NetworkSpawnUtility.IsNetworkSessionActive)
+        {
+            if (!IsServer)
+            {
+                NetworkPlayerSpawner.Instance?.RequestWorldDamage(transform.position, amount);
+                return;
+            }
+
+            ApplyDamage(amount);
+            NetworkPlayerSpawner.Instance?.BroadcastWorldDamage(transform.position, amount);
+            return;
+        }
+
         if (IsSpawned && !IsServer)
         {
             TakeDamageServerRpc(amount);
@@ -42,6 +54,14 @@ public class WallHealth : NetworkBehaviour
         }
 
         ApplyDamage(amount);
+    }
+
+    public void ApplyWorldDamage(int amount)
+    {
+        if (amount > 0)
+        {
+            ApplyDamage(amount);
+        }
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -64,7 +84,7 @@ public class WallHealth : NetworkBehaviour
             {
                 NetworkObject.Despawn(true);
             }
-            else
+            else if (!IsSpawned)
             {
                 Destroy(gameObject);
             }

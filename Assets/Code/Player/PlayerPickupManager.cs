@@ -480,7 +480,6 @@ public class PlayerPickupManager : NetworkBehaviour
 
             Collider[] targetColliders = targetGameObject.GetComponentsInChildren<Collider>();
             foreach (var c in targetColliders) c.enabled = false;
-            Destroy(item);
 
             if (tagType == "potion")
             {
@@ -505,7 +504,7 @@ public class PlayerPickupManager : NetworkBehaviour
                     potionImage.sprite = currentPotionData.weaponImage;
                 }
                 UpdatePotionUI();
-                Destroy(targetGameObject);
+                ConsumeCollectedItem(item, targetGameObject);
                 break;
             }
             else if (tagType == "bombs")
@@ -524,13 +523,19 @@ public class PlayerPickupManager : NetworkBehaviour
                     bombImage.sprite = currentBombData.weaponImage;
                 }
                 UpdateBombUI();
-                Destroy(targetGameObject);
+                ConsumeCollectedItem(item, targetGameObject);
                 break;
             }
             else if (tagType == "melee" || tagType == "ranged")
             {
-                EquipWeapon(item.weaponData);
-                Destroy(targetGameObject);
+                if (EquipWeapon(item.weaponData))
+                {
+                    ConsumeCollectedItem(item, targetGameObject);
+                }
+                else
+                {
+                    foreach (var c in targetColliders) c.enabled = true;
+                }
                 break;
             }
             else if (tagType == "misc")
@@ -553,9 +558,36 @@ public class PlayerPickupManager : NetworkBehaviour
                 foreach (var c in collectibles) Destroy(c);
 
                 UpdateMiscUI(targetGameObject.name);
-                Destroy(targetGameObject);
+                ConsumeCollectedItem(item, targetGameObject);
                 break;
             }
+        }
+    }
+
+    private void ConsumeCollectedItem(CollectibleItem item, GameObject itemObject)
+    {
+        NetworkObject networkObject = itemObject != null
+            ? itemObject.GetComponentInParent<NetworkObject>()
+            : null;
+
+        if (NetworkSpawnUtility.IsNetworkSessionActive && networkObject != null && networkObject.IsSpawned)
+        {
+            if (playerController != null)
+            {
+                playerController.RequestCollectible(networkObject);
+            }
+
+            return;
+        }
+
+        if (item != null)
+        {
+            Destroy(item);
+        }
+
+        if (itemObject != null)
+        {
+            Destroy(itemObject);
         }
     }
 

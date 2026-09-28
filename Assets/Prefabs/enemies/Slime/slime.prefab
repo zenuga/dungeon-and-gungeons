@@ -369,6 +369,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 06b0560906f6521478e9a0f7bbebbf6f, type: 3}
       insertIndex: -1
       addedObject: {fileID: 6402691678001393215}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 06b0560906f6521478e9a0f7bbebbf6f, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8014966767978055238}
   m_SourcePrefab: {fileID: 100100000, guid: 06b0560906f6521478e9a0f7bbebbf6f, type: 3}
 --- !u!1 &4622308703736651978 stripped
 GameObject:
@@ -387,14 +390,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 967956789
+  GlobalObjectIdHash: 1599429329
   InScenePlacedSourceGlobalObjectIdHash: 1599429329
   m_InScenePlacedDisabledByDefault: 0
   DeferredDespawnTick: 0
   Ownership: 1
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
-  m_InScenePlaced: 1
+  m_InScenePlaced: 0
   ActiveSceneSynchronization: 0
   SceneMigrationSynchronization: 0
   SpawnWithObservers: 1
@@ -415,12 +418,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyAi
   ShowTopMostFoldoutHeaderGroup: 1
-  enemyData: {fileID: 0}
+  enemyData: {fileID: 11400000, guid: 6d17913ae452cd7138ffdddebbceca47, type: 2}
   projectileSpawnPoint: {fileID: 0}
   targetTags:
   - Player1
   - Player2
-  enemyHealthBarbackgroundImagePrefab: {fileID: 0}
+  enemyHealthBarbackgroundImagePrefab: {fileID: 5199855128196532413}
 --- !u!136 &7728112318369356097
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -466,6 +469,23 @@ NavMeshAgent:
   m_BaseOffset: 0.1
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 4
+--- !u!114 &8014966767978055238
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4622308703736651978}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 35e95dc5ff2b64380880dd7ac5922847, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.AI.Navigation::Unity.AI.Navigation.NavMeshModifierVolume
+  m_SerializedVersion: 0
+  m_Size: {x: 1.6993389, y: 3, z: 1.4570608}
+  m_Center: {x: -0.027143478, y: 1, z: 0.02144003}
+  m_Area: 0
+  m_AffectedAgents: ffffffff
 --- !u!4 &5435402652925770352 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 06b0560906f6521478e9a0f7bbebbf6f, type: 3}

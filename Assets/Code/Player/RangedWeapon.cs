@@ -200,6 +200,13 @@ public class RangedWeapon : NetworkBehaviour
     {
         if (projectilePrefab == null) return;
 
+        PlayerController playerController = owner.GetComponent<PlayerController>();
+        if (playerController != null)
+        {
+            playerController.RequestPlayerProjectile(projectilePrefab, origin, direction, damage);
+            return;
+        }
+
         GameObject projectileObj = Instantiate(projectilePrefab, origin, Quaternion.LookRotation(direction, Vector3.up));
         Projectile projectile = projectileObj.GetComponent<Projectile>();
         

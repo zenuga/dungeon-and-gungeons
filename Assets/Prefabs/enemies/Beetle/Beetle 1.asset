@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ffb886eae21f9d925914b4c4958b713b, type: 3}
+  m_Name: Beetle 1
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyData
+  maxHealth: 10
+  walkSpeed: 4
+  stopDistance: 0.5
+  rotationSpeed: 720
+  attackType: 0
+  minAttackDistance: 0
+  maxAttackDistance: 0.75
+  attackCooldown: 1.5
+  weaponData: {fileID: 11400000, guid: 16e972efd5e16b298a4b7bf3bbe41ad9, type: 2}
+  projectilePrefab: {fileID: 0}

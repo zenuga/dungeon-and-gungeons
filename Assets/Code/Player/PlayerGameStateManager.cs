@@ -71,6 +71,14 @@ public class PlayerGameStateManager : MonoBehaviour
 
     private void OnClientDisconnected(ulong clientId)
     {
+        // The server receives this callback when a remote player leaves too.
+        // Keep the host in the current game; only a disconnected client should
+        // return to the start screen here.
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
+        {
+            return;
+        }
+
         if (!resetStarted && !string.IsNullOrEmpty(startSceneName) && SceneManager.GetActiveScene().name != startSceneName)
         {
             SceneManager.LoadScene(startSceneName);

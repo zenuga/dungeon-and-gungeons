@@ -8,8 +8,8 @@ public class PlayerController : NetworkBehaviour
 {
     public enum PlayerType
     {
-        Player1, // Uses WASD
-        Player2  // Uses IJKL
+        Player1, 
+        Player2  
     }
 
     [Header("Player Setup")]
@@ -20,10 +20,12 @@ public class PlayerController : NetworkBehaviour
     [Header("Movement Settings")]
     [SerializeField] private float moveSpeed = 5.0f;
     [SerializeField] private float gravity = -9.81f;
+    [SerializeField] private GameObject settings;
 
     private CharacterController _characterController;
     private Vector3 _velocity;
     private float speedMultiplier = 1f;
+    private GameObject playerUI;
 
     public Vector3 FacingDirection => visualModel != null ? visualModel.transform.forward : transform.forward;
     public Transform VisualModelTransform => visualModel != null ? visualModel.transform : transform;
@@ -31,6 +33,207 @@ public class PlayerController : NetworkBehaviour
     public void SetSpeedMultiplier(float multiplier)
     {
         speedMultiplier = Mathf.Max(0f, multiplier);
+    }
+
+    /// <summary>
+    /// Teleports this player on the owning client so owner-authoritative
+    /// NetworkTransform can replicate the new position to the other players.
+    /// </summary>
+    public void RequestNetworkTeleport(Vector3 targetPosition)
+    {
+        if (!IsSpawned)
+        {
+            TeleportLocally(targetPosition);
+            return;
+        }
+
+        if (IsServer)
+        {
+            if (IsOwner)
+            {
+                TeleportLocally(targetPosition);
+            }
+            else
+            {
+                SendTeleportToOwner(targetPosition);
+            }
+        }
+        else if (IsOwner)
+        {
+            TeleportServerRpc(targetPosition);
+        }
+    }
+
+    [ServerRpc]
+    private void TeleportServerRpc(Vector3 targetPosition)
+    {
+        SendTeleportToOwner(targetPosition);
+    }
+
+    private void SendTeleportToOwner(Vector3 targetPosition)
+    {
+        ClientRpcParams rpcParams = new ClientRpcParams
+        {
+            Send = new ClientRpcSendParams
+            {
+                TargetClientIds = new[] { OwnerClientId }
+            }
+        };
+
+        TeleportOwnerClientRpc(targetPosition, rpcParams);
+    }
+
+    [ClientRpc]
+    private void TeleportOwnerClientRpc(Vector3 targetPosition, ClientRpcParams rpcParams = default)
+    {
+        if (IsOwner)
+        {
+            TeleportLocally(targetPosition);
+        }
+    }
+
+    private void TeleportLocally(Vector3 targetPosition)
+    {
+        if (_characterController == null)
+        {
+            transform.position = targetPosition;
+            return;
+        }
+
+        _characterController.enabled = false;
+        transform.position = targetPosition;
+        Physics.SyncTransforms();
+        _characterController.enabled = true;
+    }
+
+    public void RequestPlayerProjectile(GameObject projectilePrefab, Vector3 position, Vector3 direction, int damage)
+    {
+        if (projectilePrefab == null || direction.sqrMagnitude <= 0.001f)
+        {
+            return;
+        }
+
+        if (!NetworkSpawnUtility.IsNetworkSessionActive)
+        {
+            SpawnPlayerProjectile(projectilePrefab, position, direction, damage);
+            return;
+        }
+
+        if (!IsOwner)
+        {
+            return;
+        }
+
+        NetworkObject prefabNetworkObject = projectilePrefab.GetComponent<NetworkObject>();
+        if (prefabNetworkObject == null || prefabNetworkObject.PrefabIdHash == 0)
+        {
+            Debug.LogError($"Projectile prefab '{projectilePrefab.name}' needs a registered NetworkObject.", projectilePrefab);
+            return;
+        }
+
+        if (IsServer)
+        {
+            SpawnPlayerProjectile(prefabNetworkObject.PrefabIdHash, position, direction, damage);
+        }
+        else
+        {
+            SpawnPlayerProjectileServerRpc(prefabNetworkObject.PrefabIdHash, position, direction, damage);
+        }
+    }
+
+    [ServerRpc]
+    private void SpawnPlayerProjectileServerRpc(uint prefabHash, Vector3 position, Vector3 direction, int damage)
+    {
+        SpawnPlayerProjectile(prefabHash, position, direction, damage);
+    }
+
+    private void SpawnPlayerProjectile(uint prefabHash, Vector3 position, Vector3 direction, int damage)
+    {
+        foreach (NetworkPrefab registeredPrefab in NetworkManager.NetworkConfig.Prefabs.Prefabs)
+        {
+            GameObject prefab = registeredPrefab.Prefab;
+            NetworkObject prefabNetworkObject = prefab != null ? prefab.GetComponent<NetworkObject>() : null;
+            if (prefabNetworkObject == null || prefabNetworkObject.PrefabIdHash != prefabHash)
+            {
+                continue;
+            }
+
+            // Only accept registered projectile prefabs through this request.
+            if (prefab.GetComponent<Projectile>() == null)
+            {
+                Debug.LogWarning($"Rejected projectile request for non-projectile prefab '{prefab.name}'.", this);
+                return;
+            }
+
+            GameObject projectileObject = Instantiate(
+                prefab,
+                position,
+                Quaternion.LookRotation(direction.normalized, Vector3.up));
+            Projectile projectile = projectileObject.GetComponent<Projectile>();
+            projectile.SetDirection(direction);
+            projectile.SetOwnerTag(gameObject.tag);
+            projectile.SetDamage(Mathf.Clamp(damage, 1, 500));
+            NetworkSpawnUtility.SpawnIfNetworked(projectileObject);
+            return;
+        }
+
+        Debug.LogWarning($"Projectile prefab hash {prefabHash} is not registered on the server.", this);
+    }
+
+    private void SpawnPlayerProjectile(GameObject prefab, Vector3 position, Vector3 direction, int damage)
+    {
+        GameObject projectileObject = Instantiate(
+            prefab,
+            position,
+            Quaternion.LookRotation(direction.normalized, Vector3.up));
+        Projectile projectile = projectileObject.GetComponent<Projectile>();
+        if (projectile == null)
+        {
+            projectile = projectileObject.AddComponent<Projectile>();
+        }
+
+        projectile.SetDirection(direction);
+        projectile.SetOwnerTag(gameObject.tag);
+        projectile.SetDamage(damage);
+    }
+
+    public void RequestCollectible(NetworkObject collectibleObject)
+    {
+        if (collectibleObject == null || !IsSpawned || !IsOwner || !collectibleObject.IsSpawned)
+        {
+            return;
+        }
+
+        NetworkObjectReference collectibleReference = collectibleObject;
+        if (IsServer)
+        {
+            CollectCollectibleOnServer(collectibleReference);
+        }
+        else
+        {
+            CollectCollectibleServerRpc(collectibleReference);
+        }
+    }
+
+    [ServerRpc]
+    private void CollectCollectibleServerRpc(NetworkObjectReference collectibleReference)
+    {
+        CollectCollectibleOnServer(collectibleReference);
+    }
+
+    private void CollectCollectibleOnServer(NetworkObjectReference collectibleReference)
+    {
+        if (!collectibleReference.TryGet(out NetworkObject collectibleObject) ||
+            collectibleObject == null ||
+            !collectibleObject.IsSpawned ||
+            Vector3.Distance(transform.position, collectibleObject.transform.position) > 4f ||
+            (collectibleObject.GetComponent<CollectibleItem>() == null &&
+             collectibleObject.GetComponentInChildren<CollectibleItem>(true) == null))
+        {
+            return;
+        }
+
+        collectibleObject.Despawn(true);
     }
 
     private void Awake()
@@ -47,6 +250,19 @@ public class PlayerController : NetworkBehaviour
         {
             visualModel = gameObject;
         }
+
+        // CHANGED: Fixed playerUI search to recursively check child transforms for the playerUI tag
+        foreach (Transform child in GetComponentsInChildren<Transform>(true))
+        {
+            if (child.CompareTag("playerUI") || child.CompareTag("PlayerUI"))
+            {
+                playerUI = child.gameObject;
+                break;
+            }
+        }
+
+        // CHANGED: Removed invalid .GetComponent<GameObject>() since FindGameObjectWithTag already returns a GameObject
+        settings = GameObject.FindGameObjectWithTag("settings");
 
         // Set layer so physics/collisions use the "Player" layer settings
         int layerIndex = LayerMask.NameToLayer(playerLayerName);
@@ -127,7 +343,21 @@ public class PlayerController : NetworkBehaviour
             return;
         }
 
-        // Keep player grounded properly
+        // Escape key toggles settings and player UI
+        if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame) 
+        {
+            if (settings != null && settings.activeSelf)
+            {
+                settings.SetActive(false);
+                if (playerUI != null) playerUI.SetActive(true);
+            }
+            else if (settings != null && !settings.activeSelf)
+            {
+                settings.SetActive(true);
+                if (playerUI != null) playerUI.SetActive(false);
+            }
+        }
+
         if (_characterController.isGrounded && _velocity.y < 0)
         {
             _velocity.y = -2f;
@@ -145,7 +375,6 @@ public class PlayerController : NetworkBehaviour
             // Apply movement on X and Z axes (3D space)
             Vector3 moveDirection = new Vector3(inputVector.x, 0f, inputVector.y);
             _characterController.Move(moveDirection * moveSpeed * speedMultiplier * Time.deltaTime);
-
         }
 
         // Apply continuous gravity (No Jump functionality)

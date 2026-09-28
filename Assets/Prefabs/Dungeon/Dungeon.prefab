@@ -1602,6 +1602,7 @@ Transform:
   - {fileID: 1915728321643719934}
   - {fileID: 5934404370184709820}
   - {fileID: 3482923045904045054}
+  - {fileID: 5302064853697335374}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &2450378614454590008
@@ -1617,9 +1618,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DungeonWaveManager
   enemyPrefabs:
-  - {fileID: 5839397389604201623, guid: 59e46c2372967ed378d0f352e998bb04, type: 3}
-  - {fileID: 5839397389604201623, guid: 59e46c2372967ed378d0f352e998bb04, type: 3}
-  enemyWeights: 010000000a000000
+  - {fileID: 201552602243764445, guid: 87b11929b50049afb8a68f892f8511ff, type: 3}
+  - {fileID: 3635563691862089033, guid: 9a5e6ca5853d78c4daa9735b6ca085de, type: 3}
+  - {fileID: 4622308703736651978, guid: 7bcc13d956f89aa44a92d20a7f03afff, type: 3}
+  - {fileID: 8872552055890305677, guid: bdd23c047e1f4f749b187e15bb2f60ec, type: 3}
+  - {fileID: 9110547844423751586, guid: 4bf53e7e00a0a54459ce297e0722f029, type: 3}
+  enemyWeights: 0f0000000a000000040000000200000001000000
   bossPrefab: {fileID: 4766655014969777500, guid: 5618d868a7a1c4e86a6bf3ac5a915354, type: 3}
   ladderPrefab: {fileID: 3677925992404981558, guid: 6a663313d1712aec5a0ab2a6e51f876d, type: 3}
   objectToDisableOnBossSpawn: {fileID: 5543132379313334195}
@@ -1917,7 +1921,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WallHealth
   ShowTopMostFoldoutHeaderGroup: 1
-  maxHealth: 10
   Health: 20
 --- !u!208 &7369960989883342712
 NavMeshObstacle:
@@ -3478,7 +3481,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WallHealth
   ShowTopMostFoldoutHeaderGroup: 1
-  maxHealth: 10
   Health: 20
 --- !u!208 &5962395699544193846
 NavMeshObstacle:
@@ -6312,7 +6314,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WallHealth
   ShowTopMostFoldoutHeaderGroup: 1
-  maxHealth: 10
   Health: 20
 --- !u!208 &8120368971211342206
 NavMeshObstacle:
@@ -8853,6 +8854,37 @@ NavMeshObstacle:
   m_CarveOnlyStationary: 1
   m_Center: {x: 0, y: 0, z: 0}
   m_TimeToStationary: 0.5
+--- !u!1 &3398546990794213428
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5302064853697335374}
+  m_Layer: 0
+  m_Name: RespawnPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5302064853697335374
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3398546990794213428}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -5.79, y: 0.31, z: -6.89}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 5137408123554898152}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &3425160559032417757
 GameObject:
   m_ObjectHideFlags: 0
@@ -11732,7 +11764,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WallHealth
   ShowTopMostFoldoutHeaderGroup: 1
-  maxHealth: 10
   Health: 20
 --- !u!208 &1060048395190719127
 NavMeshObstacle:
@@ -13387,7 +13418,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WallHealth
   ShowTopMostFoldoutHeaderGroup: 1
-  maxHealth: 10
   Health: 20
 --- !u!208 &7382390405528956635
 NavMeshObstacle:
@@ -15797,7 +15827,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WallHealth
   ShowTopMostFoldoutHeaderGroup: 1
-  maxHealth: 10
   Health: 20
 --- !u!208 &7170614576602755850
 NavMeshObstacle:
@@ -19810,7 +19839,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WallHealth
   ShowTopMostFoldoutHeaderGroup: 1
-  maxHealth: 10
   Health: 20
 --- !u!208 &5750564940123794268
 NavMeshObstacle:
@@ -20839,7 +20867,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WallHealth
   ShowTopMostFoldoutHeaderGroup: 1
-  maxHealth: 10
   Health: 20
 --- !u!208 &3212755737079174991
 NavMeshObstacle:
@@ -20983,6 +21010,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 18226758a73bcb1feaa62d7637e8cf53, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Dungeonenter
+  ShowTopMostFoldoutHeaderGroup: 1
+  dungeonRespawnPoint: {fileID: 3398546990794213428}
   player1: {fileID: 1468520820315375280, guid: 7ec0fdf7870fb51bab08c7195b63e867, type: 3}
   player2: {fileID: 8671723301485573298, guid: 6a4eba899b63be455885c09b2f4be712, type: 3}
 --- !u!1 &7451701708099036846
@@ -26233,7 +26262,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WallHealth
   ShowTopMostFoldoutHeaderGroup: 1
-  maxHealth: 10
   Health: 20
 --- !u!208 &4345427010631845687
 NavMeshObstacle:

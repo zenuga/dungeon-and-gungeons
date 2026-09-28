@@ -49,6 +49,7 @@ public class ChunkedMineGeneration : MonoBehaviour
     private readonly List<GameObject> _generatedStructures = new List<GameObject>();
     private bool _generationInProgress;
     private Vector3 _currentMineSpawnPosition;
+    private System.Random networkLayoutRandom;
 
     private void Start()
     {
@@ -68,6 +69,10 @@ public class ChunkedMineGeneration : MonoBehaviour
         }
 
         _generationInProgress = true;
+        NetworkManager networkManager = NetworkManager.Singleton;
+        networkLayoutRandom = networkManager != null && networkManager.IsListening
+            ? new System.Random(314159 + level * 7919)
+            : null;
         if (level >= 1 && AnimationImage != null)
         {
             AnimationImage.gameObject.SetActive(true);
@@ -206,17 +211,27 @@ public class ChunkedMineGeneration : MonoBehaviour
             return;
         }
 
-        Vector3 spawnPosition = _currentMineSpawnPosition;
-        if (playerObj.CompareTag("Player2"))
+        TeleportPlayer(playerObj, GetMineSpawnPosition(playerObj));
+    }
+
+    public Vector3 GetMineSpawnPosition(GameObject playerObj)
+    {
+        if (playerObj != null && playerObj.CompareTag("Player2"))
         {
-            spawnPosition = GetPlayer2SpawnPosition(_currentMineSpawnPosition);
+            return GetPlayer2SpawnPosition(_currentMineSpawnPosition);
         }
 
-        TeleportPlayer(playerObj, spawnPosition);
+        return _currentMineSpawnPosition;
     }
 
     private IEnumerator TeleportSpawnedPlayers(Vector3 targetPosition)
     {
+        NetworkManager networkManager = NetworkManager.Singleton;
+        if (networkManager != null && networkManager.IsListening && !networkManager.IsServer)
+        {
+            yield break;
+        }
+
         NetworkPlayerSpawner playerSpawner = FindFirstObjectByType<NetworkPlayerSpawner>();
         List<GameObject> players = new List<GameObject>();
 
@@ -243,20 +258,20 @@ public class ChunkedMineGeneration : MonoBehaviour
 
         if (player1 != null)
         {
-            TeleportPlayer(player1, targetPosition);
+            TeleportPlayerNetworkAware(player1, targetPosition);
         }
 
         if (player2 != null)
         {
             Vector3 player2Position = GetPlayer2SpawnPosition(targetPosition);
-            TeleportPlayer(player2, player2Position);
+            TeleportPlayerNetworkAware(player2, player2Position);
         }
 
         foreach (GameObject player in players)
         {
             if (player != player1 && player != player2)
             {
-                TeleportPlayer(player, targetPosition);
+                TeleportPlayerNetworkAware(player, targetPosition);
             }
         }
 
@@ -268,6 +283,19 @@ public class ChunkedMineGeneration : MonoBehaviour
         {
             _playerTransform = null;
             Debug.LogWarning("MineGeneration found no existing player objects with Player, Player1, or Player2 tags.", this);
+        }
+    }
+
+    private void TeleportPlayerNetworkAware(GameObject player, Vector3 targetPosition)
+    {
+        PlayerController playerController = player != null ? player.GetComponent<PlayerController>() : null;
+        if (playerController != null)
+        {
+            playerController.RequestNetworkTeleport(targetPosition);
+        }
+        else
+        {
+            TeleportPlayer(player, targetPosition);
         }
     }
 
@@ -302,7 +330,13 @@ public class ChunkedMineGeneration : MonoBehaviour
     {
         for (int i = 0; i < 500; i++)
         {
-            RectInt candidate = new RectInt(Random.Range(0, gridWidth - width), Random.Range(0, gridLength - height), width, height);
+            int x = networkLayoutRandom != null
+                ? networkLayoutRandom.Next(0, gridWidth - width)
+                : Random.Range(0, gridWidth - width);
+            int z = networkLayoutRandom != null
+                ? networkLayoutRandom.Next(0, gridLength - height)
+                : Random.Range(0, gridLength - height);
+            RectInt candidate = new RectInt(x, z, width, height);
             bool overlaps = false;
             foreach (RectInt existing in existingRects) 
             {

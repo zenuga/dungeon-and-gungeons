@@ -542,14 +542,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 1282604126
+  GlobalObjectIdHash: 4018123147
   InScenePlacedSourceGlobalObjectIdHash: 4018123147
   m_InScenePlacedDisabledByDefault: 0
   DeferredDespawnTick: 0
   Ownership: 1
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
-  m_InScenePlaced: 1
+  m_InScenePlaced: 0
   ActiveSceneSynchronization: 0
   SceneMigrationSynchronization: 0
   SpawnWithObservers: 1
@@ -570,12 +570,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyAi
   ShowTopMostFoldoutHeaderGroup: 1
-  enemyData: {fileID: 0}
+  enemyData: {fileID: 11400000, guid: b20dc2575c5aafe5c89547a52a218abb, type: 2}
   projectileSpawnPoint: {fileID: 0}
   targetTags:
   - Player1
   - Player2
-  enemyHealthBarbackgroundImagePrefab: {fileID: 0}
+  enemyHealthBarbackgroundImagePrefab: {fileID: 63510895171371261}
 --- !u!136 &2116186494288567949
 CapsuleCollider:
   m_ObjectHideFlags: 0

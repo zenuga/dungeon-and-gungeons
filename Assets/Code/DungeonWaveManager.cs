@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.Serialization;
+using Unity.Netcode;
 
 public class DungeonWaveManager : MonoBehaviour
 {
@@ -51,6 +52,11 @@ public class DungeonWaveManager : MonoBehaviour
 
     public void DungeonEntered()
     {
+        if (!NetworkSpawnUtility.IsServerOrOffline)
+        {
+            return;
+        }
+
         if (dungeonCompleted || dungeonStarted)
         {
             return;
@@ -77,10 +83,16 @@ public class DungeonWaveManager : MonoBehaviour
         GameObject boss = Instantiate(bossPrefab, GetSpawnPositionOnNavMesh(spawnPoint.position), spawnPoint.rotation);
         activeBoss = boss;
         RegisterEnemy(boss);
+        NetworkSpawnUtility.SpawnIfNetworked(boss);
     }
 
     private void Update()
     {
+        if (!NetworkSpawnUtility.IsServerOrOffline)
+        {
+            return;
+        }
+
         if (!dungeonStarted || dungeonCompleted)
         {
             return;
@@ -121,11 +133,14 @@ public class DungeonWaveManager : MonoBehaviour
                 continue;
             }
 
-            Transform spawnPoint = spawnPoints.Length > 0 ? spawnPoints[Random.Range(0, spawnPoints.Length)] : transform;
+            Transform spawnPoint = spawnPoints != null && spawnPoints.Length > 0
+                ? spawnPoints[Random.Range(0, spawnPoints.Length)]
+                : transform;
             Vector3 spawnPosition = GetSpawnPositionOnNavMesh(spawnPoint.position);
 
             GameObject spawnedEnemy = Instantiate(enemyToSpawn, spawnPosition, spawnPoint.rotation);
             RegisterEnemy(spawnedEnemy);
+            NetworkSpawnUtility.SpawnIfNetworked(spawnedEnemy);
         }
     }
 
@@ -169,6 +184,7 @@ public class DungeonWaveManager : MonoBehaviour
         if (ladderPrefab != null)
         {
             spawnedLadder = Instantiate(ladderPrefab, position + ladderSpawnOffset, Quaternion.identity);
+            NetworkSpawnUtility.SpawnIfNetworked(spawnedLadder);
         }
     }
 
@@ -247,6 +263,7 @@ public class DungeonWaveManager : MonoBehaviour
         if (chestPrefab != null)
         {
             spawnedChest = Instantiate(chestPrefab, spawnPosition, Quaternion.identity);
+            NetworkSpawnUtility.SpawnIfNetworked(spawnedChest);
             RewardChest rewardChest = spawnedChest.GetComponentInChildren<RewardChest>(true);
             if (rewardChest == null)
             {
@@ -257,6 +274,15 @@ public class DungeonWaveManager : MonoBehaviour
         }
 
         // 2. Disable the walls owned by Dungeonenter.
+        if (dungeonEnter != null)
+        {
+            dungeonEnter.DisableWalls();
+        }
+    }
+
+    public void ApplyNetworkCompletion()
+    {
+        dungeonCompleted = true;
         if (dungeonEnter != null)
         {
             dungeonEnter.DisableWalls();

@@ -3,8 +3,8 @@ using UnityEngine;
 public class TutorialScreen : MonoBehaviour
 {
     [SerializeField] private GameObject tutorialScreen;
-    [SerializeField] private GameObject BackButton;
     [SerializeField] private GameObject[] tutorialPages;
+    [SerializeField] private GameObject playerUI;
     private int currentPage = 0;
 
     public void helpButton()
@@ -16,6 +16,10 @@ public class TutorialScreen : MonoBehaviour
         tutorialPages[3].SetActive(false);
     }
 
+    public void PressingNextsecondtime()
+    {
+        playerUI = GameObject.FindWithTag("playerUI");
+    }
     public void nextButton()
     {
         // CHANGED: Fixed typo 'current page' -> 'currentPage'
@@ -24,6 +28,7 @@ public class TutorialScreen : MonoBehaviour
             tutorialPages[currentPage].SetActive(false);
             tutorialScreen.SetActive(false);
             currentPage = 0;
+            playerUI.SetActive(true);
         }
         else if (currentPage < tutorialPages.Length - 1)
         {
@@ -32,7 +37,7 @@ public class TutorialScreen : MonoBehaviour
             tutorialPages[currentPage].SetActive(true);
         }
     }
-
+    //when tutorial pages are done turn player UI back on
     public void backButton()
     {
         if (currentPage > 0)

@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ffb886eae21f9d925914b4c4958b713b, type: 3}
+  m_Name: Spider
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyData
+  maxHealth: 150
+  walkSpeed: 0.5
+  stopDistance: 7
+  rotationSpeed: 720
+  attackType: 0
+  minAttackDistance: 6
+  maxAttackDistance: 7
+  attackCooldown: 8
+  weaponData: {fileID: 11400000, guid: 6e4c8c3bdca0690168793760ef68f20e, type: 2}
+  projectilePrefab: {fileID: 3177043549984659073, guid: 42d5d4e10b4a0c2a7aec932367b2a957, type: 3}

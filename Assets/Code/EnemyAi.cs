@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.UI;
 using Unity.Netcode;
+using Unity.Netcode.Components;
 
 public enum EnemyAttackType
 {
@@ -23,6 +24,10 @@ public class EnemyAi : NetworkBehaviour
     protected NavMeshAgent navMeshAgent;
     protected float nextAttackTime;
     protected int currentHealth;
+    private readonly NetworkVariable<int> replicatedHealth = new NetworkVariable<int>(
+        100,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server);
     protected HealthBarUI healthBarUI;
     protected bool isAttacking;
     protected Depth depth;
@@ -46,7 +51,7 @@ public class EnemyAi : NetworkBehaviour
             return baseHealth * currentDepth;
         }
     }
-    public int CurrentHealth => currentHealth;
+    public int CurrentHealth => IsSpawned ? replicatedHealth.Value : currentHealth;
     public int MaxHealthValue => MaxHealth;
     public string HealthText => currentHealth + "/" + MaxHealth;
 
@@ -57,6 +62,11 @@ public class EnemyAi : NetworkBehaviour
 
     protected virtual void Awake()
     {
+        if (GetComponent<NetworkObject>() != null && GetComponent<NetworkTransform>() == null)
+        {
+            gameObject.AddComponent<NetworkTransform>();
+        }
+
         depth = FindFirstObjectByType<Depth>();
         navMeshAgent = GetComponent<NavMeshAgent>();
         if (navMeshAgent == null)
@@ -79,6 +89,30 @@ public class EnemyAi : NetworkBehaviour
             projectileSpawnPoint = transform;
         }
 
+    }
+
+    public override void OnNetworkSpawn()
+    {
+        replicatedHealth.OnValueChanged += OnReplicatedHealthChanged;
+        if (IsServer)
+        {
+            replicatedHealth.Value = MaxHealth;
+            currentHealth = MaxHealth;
+        }
+        else
+        {
+            currentHealth = replicatedHealth.Value;
+        }
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        replicatedHealth.OnValueChanged -= OnReplicatedHealthChanged;
+    }
+
+    private void OnReplicatedHealthChanged(int previousHealth, int newHealth)
+    {
+        currentHealth = newHealth;
     }
 
     protected virtual void Update()
@@ -273,6 +307,7 @@ public class EnemyAi : NetworkBehaviour
 
         Vector3 aimDirection = direction.normalized;
         projectile.transform.rotation = Quaternion.LookRotation(aimDirection, Vector3.up);
+        NetworkSpawnUtility.SpawnIfNetworked(projectile);
     }
 
     public virtual void TakeDamage(int amount)
@@ -301,6 +336,10 @@ public class EnemyAi : NetworkBehaviour
     {
 
         currentHealth = Mathf.Max(0, currentHealth - amount);
+        if (IsSpawned && IsServer)
+        {
+            replicatedHealth.Value = currentHealth;
+        }
         if (currentHealth <= 0)
         {
             OnDeath();
@@ -317,7 +356,7 @@ public class EnemyAi : NetworkBehaviour
             manager.UnregisterEnemy(gameObject);
         }
 
-        Destroy(gameObject);
+        NetworkSpawnUtility.DespawnOrDestroy(gameObject);
     }
 
     protected virtual Transform FindClosestTarget()
@@ -367,4 +406,3 @@ public class EnemyAi : NetworkBehaviour
         healthBarUI.Initialize(spawnedHealthBar, this);
     }
 }
-

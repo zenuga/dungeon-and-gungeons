@@ -21,7 +21,24 @@ public class ExplosionArea : NetworkBehaviour
             col.isTrigger = true;
         }
 
-        Destroy(gameObject, lifeTime);
+        if (!NetworkSpawnUtility.IsNetworkSessionActive)
+        {
+            Destroy(gameObject, lifeTime);
+        }
+    }
+
+    public override void OnNetworkSpawn()
+    {
+        if (IsServer)
+        {
+            StartCoroutine(DespawnAfterLifetime());
+        }
+    }
+
+    private System.Collections.IEnumerator DespawnAfterLifetime()
+    {
+        yield return new WaitForSeconds(lifeTime);
+        NetworkSpawnUtility.DespawnOrDestroy(gameObject);
     }
 
     public void Setup(int newDamage, float unusedRadius, string newOwnerTag)
@@ -31,6 +48,11 @@ public class ExplosionArea : NetworkBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
+        if (IsSpawned && !IsServer)
+        {
+            return;
+        }
+
         if (other == null || other.gameObject == null)
         {
             return;

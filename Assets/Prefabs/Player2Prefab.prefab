@@ -3115,7 +3115,7 @@ Transform:
   m_GameObject: {fileID: 8671723301485573298}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 527.3165, y: 0.32210308, z: 83.91177}
+  m_LocalPosition: {x: 568.1707, y: 0.32211787, z: 110.66754}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -3199,6 +3199,7 @@ MonoBehaviour:
   visualModel: {fileID: 8416666903961985974}
   moveSpeed: 5
   gravity: -9.81
+  settings: {fileID: 0}
 --- !u!114 &6638607713950294724
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3216,7 +3217,6 @@ MonoBehaviour:
   healthFill: {fileID: 5432086866897850123}
   healthBarRoot: {fileID: 4409930819166611727}
   maxHealth: 100
-  destroyOnZero: 0
   currentHealth: 0
 --- !u!114 &8058023396980503578
 MonoBehaviour:
@@ -3242,7 +3242,7 @@ MonoBehaviour:
   RotationMaxInterpolationTime: 0.1
   ScaleLerpSmoothing: 1
   ScaleMaxInterpolationTime: 0.1
-  AuthorityMode: 0
+  AuthorityMode: 1
   TickSyncChildren: 0
   UseUnreliableDeltas: 0
   SyncPositionX: 1

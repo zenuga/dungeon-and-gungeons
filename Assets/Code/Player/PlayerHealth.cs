@@ -10,7 +10,6 @@ public class PlayerHealth : NetworkBehaviour
     [SerializeField] private Image healthFill;
     [SerializeField] private Transform healthBarRoot;
     [SerializeField] private int maxHealth = 100;
-    [SerializeField] private bool destroyOnZero = false;
 
     [SerializeField]
     private int currentHealth = 100;

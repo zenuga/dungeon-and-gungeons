@@ -9,14 +9,39 @@ public class Crate : NetworkBehaviour
     [SerializeField] private GameObject brokenCratePrefab;
     [SerializeField] private GameObject destructionEffect;
 
+    private void Awake()
+    {
+        depth = FindFirstObjectByType<Depth>();
+        maxHealth = 10 * (depth != null ? Mathf.Max(1, depth.depth) : 1);
+        health = Mathf.Min(health, maxHealth);
+    }
+
     public void TakeDamage(int amount)
     {
-        void awake ()
+        if (amount <= 0)
         {
-            maxHealth = 10 * (depth != null ? Mathf.Max(1, depth.depth) : 1);
-            health = maxHealth;
+            return;
         }
-        health -= amount;
+
+        if (NetworkSpawnUtility.IsNetworkSessionActive)
+        {
+            if (!IsServer)
+            {
+                NetworkPlayerSpawner.Instance?.RequestWorldDamage(transform.position, amount);
+                return;
+            }
+
+            ApplyWorldDamage(amount);
+            NetworkPlayerSpawner.Instance?.BroadcastWorldDamage(transform.position, amount);
+            return;
+        }
+
+        ApplyWorldDamage(amount);
+    }
+
+    public void ApplyWorldDamage(int amount)
+    {
+        health -= Mathf.Max(0, amount);
         if (health <= 0)
         {
             DestroyCrate();
@@ -34,6 +59,14 @@ public class Crate : NetworkBehaviour
         {
             Instantiate(destructionEffect, transform.position, Quaternion.identity);
         }
-        Destroy(gameObject);
+
+        if (IsSpawned && IsServer)
+        {
+            NetworkObject.Despawn(true);
+        }
+        else if (!IsSpawned)
+        {
+            Destroy(gameObject);
+        }
     }
 }

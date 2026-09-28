@@ -1,7 +1,11 @@
 using UnityEngine;
+using Unity.Netcode;
 
-public class Dungeonenter : MonoBehaviour
+public class Dungeonenter : NetworkBehaviour // CHANGED: Fixed networkBehaviour typo
 {
+    // CHANGED: Added serialized field for dungeon respawn location
+    [SerializeField] private GameObject dungeonRespawnPoint;
+
     private DungeonWaveManager dungeonWaveManager;
 
     public GameObject player1;
@@ -23,7 +27,8 @@ public class Dungeonenter : MonoBehaviour
     private void OnTriggerEnter(Collider other)
     {
         // 1. Activate wall children attached to this GameObject
-        if ((dungeonWaveManager != null && dungeonWaveManager.IsDungeonCompleted) || (other.CompareTag("Projectile") || other.CompareTag("Ranged") || other.CompareTag("Melee")))
+        if ((dungeonWaveManager != null && dungeonWaveManager.IsDungeonCompleted) || 
+            (other.CompareTag("Projectile") || other.CompareTag("Ranged") || other.CompareTag("Melee")))
         {
             DisableWalls();
         }
@@ -46,17 +51,33 @@ public class Dungeonenter : MonoBehaviour
 
             if (enteringPlayer.CompareTag("Player1") && player2 != null)
             {
-                player2.transform.position = enteringPlayer.transform.position;
+                TeleportPlayer(player2, enteringPlayer.transform.position);
             }
             else if (enteringPlayer.CompareTag("Player2") && player1 != null)
             {
-                player1.transform.position = enteringPlayer.transform.position;
+                TeleportPlayer(player1, enteringPlayer.transform.position);
             }
-        }
 
-        if (enteringPlayer != null)
-        {
+            // CHANGED: Update FallResetTrigger with custom dungeon respawn point upon entering
+            if (dungeonRespawnPoint != null)
+            {
+                FallResetTrigger.SetOverrideRespawnPoint(dungeonRespawnPoint.transform.position);
+            }
+
             dungeonWaveManager?.DungeonEntered();
+        }
+    }
+
+    private static void TeleportPlayer(GameObject player, Vector3 position)
+    {
+        PlayerController controller = player.GetComponent<PlayerController>();
+        if (controller != null)
+        {
+            controller.RequestNetworkTeleport(position);
+        }
+        else if (!NetworkSpawnUtility.IsNetworkSessionActive)
+        {
+            player.transform.position = position;
         }
     }
 
@@ -67,6 +88,9 @@ public class Dungeonenter : MonoBehaviour
 
     public void DisableWalls()
     {
+        // CHANGED: Reset respawn point back to base mine spawn location when walls open / dungeon completes
+        FallResetTrigger.ClearOverrideRespawnPoint();
+
         foreach (Transform child in transform)
         {
             if (child.CompareTag("walls"))
