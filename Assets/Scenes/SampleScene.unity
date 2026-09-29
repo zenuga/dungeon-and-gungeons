@@ -3334,7 +3334,7 @@ MonoBehaviour:
   wallPrefab: {fileID: 5144083273759640309, guid: 1e17839334e2f244993328348a149a49, type: 3}
   singleFloorPrefab: {fileID: 7177279064057230286, guid: 97910e367639b6f639fb5d604b010da8, type: 3}
   dungeonPrefab: {fileID: 950601075600074490, guid: 90c0a59319f36675b9369824ce481a53, type: 3}
-  shopPrefab: {fileID: 6247867777847129624, guid: 6d6ea4a301af9b18f8642309478a6652, type: 3}
+  shopPrefab: {fileID: 6420980469710179190, guid: 6d6ea4a301af9b18f8642309478a6652, type: 3}
   AnimationImage: {fileID: 1727700905}
   level: 1
   loadingImage: {fileID: 1727700903}
