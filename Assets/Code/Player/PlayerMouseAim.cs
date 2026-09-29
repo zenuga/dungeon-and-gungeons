@@ -5,6 +5,7 @@ public class PlayerMouseAim : MonoBehaviour
 {
     [SerializeField] private float rotationSpeed = 20f;
     [SerializeField] private GameObject rotationOnlyObject;
+    private float lastReportedYaw = float.NaN;
 
     public Vector3 AimDirection { get; private set; } = Vector3.forward;
 
@@ -38,6 +39,13 @@ public class PlayerMouseAim : MonoBehaviour
 
         Quaternion aimRotation = Quaternion.LookRotation(aimDirection.normalized, Vector3.up);
         float targetYaw = aimRotation.eulerAngles.y;
+        if (playerController != null &&
+            (float.IsNaN(lastReportedYaw) || Mathf.Abs(Mathf.DeltaAngle(lastReportedYaw, targetYaw)) >= 1f))
+        {
+            lastReportedYaw = targetYaw;
+            playerController.ReportAimYaw(targetYaw);
+        }
+
         Quaternion targetRotation = Quaternion.Euler(-90f, targetYaw, 0f);
         transform.localRotation = Quaternion.Slerp(
             transform.localRotation,
@@ -51,6 +59,19 @@ public class PlayerMouseAim : MonoBehaviour
                 rotationOnlyObject.transform.localRotation,
                 rotationOnlyTarget,
                 rotationSpeed * Time.deltaTime);
+        }
+    }
+
+    public void ApplyReplicatedAimYaw(float yaw)
+    {
+        float normalizedYaw = Mathf.Repeat(yaw, 360f);
+        float radians = normalizedYaw * Mathf.Deg2Rad;
+        AimDirection = new Vector3(Mathf.Sin(radians), 0f, Mathf.Cos(radians));
+        transform.localRotation = Quaternion.Euler(-90f, normalizedYaw, 0f);
+
+        if (rotationOnlyObject != null && rotationOnlyObject.transform != transform)
+        {
+            rotationOnlyObject.transform.localRotation = Quaternion.Euler(0f, normalizedYaw, 0f);
         }
     }
 }

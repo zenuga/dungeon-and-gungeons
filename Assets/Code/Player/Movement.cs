@@ -34,13 +34,19 @@ public class PlayerController : NetworkBehaviour
     private float speedMultiplier = 1f;
     private GameObject playerUI;
     private Canvas[] playerCanvases;
+    private PlayerMouseAim playerMouseAim;
     private int localPresentationState = -1;
     private bool loggedMissingLocalCamera;
+    private readonly NetworkVariable<float> replicatedAimYaw = new NetworkVariable<float>(
+        0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
-    public Vector3 FacingDirection => visualModel != null ? visualModel.transform.forward : transform.forward;
+    public Vector3 FacingDirection => playerMouseAim != null && playerMouseAim.AimDirection.sqrMagnitude > 0.001f
+        ? playerMouseAim.AimDirection
+        : visualModel != null ? visualModel.transform.forward : transform.forward;
     public Transform VisualModelTransform => visualModel != null ? visualModel.transform : transform;
     public Camera PlayerCamera => playerCamera;
     public GameObject PlayerHud => playerUI;
+    public PlayerType Type => playerType;
 
     public void SetSpeedMultiplier(float multiplier)
     {
@@ -264,6 +270,7 @@ public class PlayerController : NetworkBehaviour
     private void Awake()
     {
         _characterController = GetComponent<CharacterController>();
+        playerMouseAim = GetComponentInChildren<PlayerMouseAim>(true);
 
         if (GetComponent<NetworkObject>() != null && GetComponent<NetworkTransform>() == null)
         {
@@ -351,10 +358,64 @@ public class PlayerController : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
+        replicatedAimYaw.OnValueChanged += OnReplicatedAimYawChanged;
+        playerMouseAim ??= GetComponentInChildren<PlayerMouseAim>(true);
         SetLocalPresentation(IsOwner);
+        if (!IsOwner)
+        {
+            playerMouseAim?.ApplyReplicatedAimYaw(replicatedAimYaw.Value);
+        }
+
         if (IsOwner)
         {
             Debug.Log($"[PlayerController] Received owned player prefab '{name}' for local client {NetworkManager.LocalClientId} (type: {playerType}).", this);
+        }
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        replicatedAimYaw.OnValueChanged -= OnReplicatedAimYawChanged;
+        if (LocalCamera == playerCamera)
+        {
+            LocalCamera = null;
+        }
+    }
+
+    public void ReportAimYaw(float yaw)
+    {
+        if (!IsSpawned || !IsOwner || float.IsNaN(yaw) || float.IsInfinity(yaw))
+        {
+            return;
+        }
+
+        yaw = Mathf.Repeat(yaw, 360f);
+        if (IsServer)
+        {
+            replicatedAimYaw.Value = yaw;
+        }
+        else
+        {
+            SubmitAimYawServerRpc(yaw);
+        }
+    }
+
+    [ServerRpc]
+    private void SubmitAimYawServerRpc(float yaw, ServerRpcParams rpcParams = default)
+    {
+        if (rpcParams.Receive.SenderClientId != OwnerClientId || float.IsNaN(yaw) || float.IsInfinity(yaw))
+        {
+            return;
+        }
+
+        replicatedAimYaw.Value = Mathf.Repeat(yaw, 360f);
+    }
+
+    private void OnReplicatedAimYawChanged(float previousYaw, float newYaw)
+    {
+        if (!IsOwner)
+        {
+            playerMouseAim ??= GetComponentInChildren<PlayerMouseAim>(true);
+            playerMouseAim?.ApplyReplicatedAimYaw(newYaw);
         }
     }
 

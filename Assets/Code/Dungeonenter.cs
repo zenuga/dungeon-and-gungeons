@@ -102,14 +102,19 @@ public class Dungeonenter : NetworkBehaviour // CHANGED: Fixed networkBehaviour 
 
     private void FindPlayers()
     {
-        if (player1 == null)
-        {
-            player1 = GameObject.FindGameObjectWithTag("Player1");
-        }
+        player1 = null;
+        player2 = null;
 
-        if (player2 == null)
+        foreach (PlayerController controller in FindObjectsByType<PlayerController>(FindObjectsSortMode.None))
         {
-            player2 = GameObject.FindGameObjectWithTag("Player2");
+            if (controller.Type == PlayerController.PlayerType.Player1 && player1 == null)
+            {
+                player1 = controller.gameObject;
+            }
+            else if (controller.Type == PlayerController.PlayerType.Player2 && player2 == null)
+            {
+                player2 = controller.gameObject;
+            }
         }
     }
 
@@ -118,6 +123,12 @@ public class Dungeonenter : NetworkBehaviour // CHANGED: Fixed networkBehaviour 
         Transform current = other.transform;
         while (current != null)
         {
+            PlayerController playerController = current.GetComponent<PlayerController>();
+            if (playerController != null)
+            {
+                return playerController.gameObject;
+            }
+
             if (current.CompareTag("Player") || current.CompareTag("Player1") || current.CompareTag("Player2"))
             {
                 return current.gameObject;
