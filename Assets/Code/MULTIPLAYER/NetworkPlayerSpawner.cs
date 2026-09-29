@@ -20,6 +20,20 @@ public class NetworkPlayerSpawner : NetworkBehaviour
 
     private readonly Dictionary<ulong, NetworkObject> playersByClient = new Dictionary<ulong, NetworkObject>();
 
+    private void Start()
+    {
+        // The start-screen Play button loads SampleScene without starting NGO.
+        // Spawn one local player for that offline path; network sessions spawn
+        // their owned player objects from OnNetworkSpawn/OnClientConnected.
+        if (NetworkSpawnUtility.IsNetworkSessionActive || player1Prefab == null ||
+            FindFirstObjectByType<PlayerController>() != null)
+        {
+            return;
+        }
+
+        Instantiate(player1Prefab, GetPlayer1SpawnPosition(), Quaternion.identity);
+    }
+
     public List<GameObject> GetSpawnedPlayerObjects()
     {
         List<GameObject> players = new List<GameObject>();
@@ -43,6 +57,17 @@ public class NetworkPlayerSpawner : NetworkBehaviour
             }
         }
 
+        if (players.Count == 0 && !NetworkSpawnUtility.IsNetworkSessionActive)
+        {
+            foreach (PlayerController player in FindObjectsByType<PlayerController>(FindObjectsSortMode.None))
+            {
+                if (player != null && !players.Contains(player.gameObject))
+                {
+                    players.Add(player.gameObject);
+                }
+            }
+        }
+
         return players;
     }
 
@@ -56,9 +81,16 @@ public class NetworkPlayerSpawner : NetworkBehaviour
         Instance = this;
         if (!IsServer)
         {
+            if (IsClient && UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == GameplaySceneName)
+            {
+                Debug.Log($"[NetworkPlayerSpawner] Gameplay spawner received on client {NetworkManager.LocalClientId}; requesting player assignment.");
+                RequestPlayerSpawnServerRpc();
+            }
+
             return;
         }
 
+        NetworkManager.SceneManager.OnLoadEventCompleted += HandleNetworkSceneLoadCompleted;
         RegisterPlayerPrefab(player1Prefab);
         RegisterPlayerPrefab(player2Prefab);
 
@@ -85,17 +117,58 @@ public class NetworkPlayerSpawner : NetworkBehaviour
 
         NetworkManager.OnClientConnectedCallback -= SpawnPlayerForClient;
         NetworkManager.OnClientDisconnectCallback -= RemovePlayerForClient;
+        if (NetworkManager.SceneManager != null)
+        {
+            NetworkManager.SceneManager.OnLoadEventCompleted -= HandleNetworkSceneLoadCompleted;
+        }
     }
 
-    private void SpawnPlayerForClient(ulong clientId)
+    private void HandleNetworkSceneLoadCompleted(string sceneName, UnityEngine.SceneManagement.LoadSceneMode loadSceneMode, List<ulong> clientsCompleted, List<ulong> clientsTimedOut)
     {
-        if (!IsServer || UnityEngine.SceneManagement.SceneManager.GetActiveScene().name != GameplaySceneName || playersByClient.ContainsKey(clientId))
+        if (sceneName != GameplaySceneName)
         {
             return;
         }
 
-        if (NetworkManager.ConnectedClients.TryGetValue(clientId, out NetworkClient client) &&
-            client.PlayerObject != null)
+        // Scene-placed NetworkBehaviours can spawn before every client has
+        // completed the network scene event. Reconcile after the event too.
+        foreach (ulong clientId in NetworkManager.ConnectedClientsIds)
+        {
+            SpawnPlayerForClient(clientId);
+        }
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void RequestPlayerSpawnServerRpc(ServerRpcParams rpcParams = default)
+    {
+        ulong clientId = rpcParams.Receive.SenderClientId;
+        Debug.Log($"[NetworkPlayerSpawner] Received player assignment request from client {clientId}.");
+        SpawnPlayerForClient(clientId);
+    }
+
+    private void SpawnPlayerForClient(ulong clientId)
+    {
+        if (!IsServer || UnityEngine.SceneManagement.SceneManager.GetActiveScene().name != GameplaySceneName)
+        {
+            return;
+        }
+
+        if (!NetworkManager.ConnectedClients.TryGetValue(clientId, out NetworkClient client))
+        {
+            return;
+        }
+
+        if (playersByClient.TryGetValue(clientId, out NetworkObject trackedPlayer))
+        {
+            if (trackedPlayer != null && trackedPlayer.IsSpawned)
+            {
+                return;
+            }
+
+            playersByClient.Remove(clientId);
+        }
+
+        if (client.PlayerObject != null)
         {
             playersByClient[clientId] = client.PlayerObject;
             return;
@@ -123,6 +196,7 @@ public class NetworkPlayerSpawner : NetworkBehaviour
         NetworkObject player = Instantiate(prefab, spawnPosition, Quaternion.identity);
         player.SpawnAsPlayerObject(clientId, true);
         playersByClient.Add(clientId, player);
+        Debug.Log($"[NetworkPlayerSpawner] Spawned {prefab.name} for client {clientId} at {spawnPosition}.");
         StartCoroutine(ApplySpawnPositionAfterSpawn(player, spawnPosition));
     }
 

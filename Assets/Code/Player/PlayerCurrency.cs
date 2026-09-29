@@ -4,10 +4,16 @@ using UnityEngine;
 public class PlayerCurrency : NetworkBehaviour
 {
     [SerializeField] private int startingGold;
+    private int offlineGold;
     private readonly NetworkVariable<int> gold = new NetworkVariable<int>(
         0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
-    public int Amount => gold.Value;
+    public int Amount => IsSpawned ? gold.Value : offlineGold;
+
+    private void Awake()
+    {
+        offlineGold = startingGold;
+    }
 
     public override void OnNetworkSpawn()
     {
@@ -19,7 +25,18 @@ public class PlayerCurrency : NetworkBehaviour
 
     public void AddGold(int amount)
     {
-        if (!IsServer || amount <= 0)
+        if (amount <= 0)
+        {
+            return;
+        }
+
+        if (!IsSpawned)
+        {
+            offlineGold += amount;
+            return;
+        }
+
+        if (!IsServer)
         {
             return;
         }
@@ -29,7 +46,23 @@ public class PlayerCurrency : NetworkBehaviour
 
     public bool TrySpend(int amount)
     {
-        if (amount <= 0 || gold.Value < amount)
+        if (amount <= 0)
+        {
+            return false;
+        }
+
+        if (!IsSpawned)
+        {
+            if (offlineGold < amount)
+            {
+                return false;
+            }
+
+            offlineGold -= amount;
+            return true;
+        }
+
+        if (gold.Value < amount)
         {
             return false;
         }

@@ -10,7 +10,9 @@ public static class CurrencyReward
 
         foreach (PlayerCurrency player in players)
         {
-            if (player == null || !player.IsServer || player.GetComponent<PlayerHealth>()?.IsAlive == false)
+            if (player == null ||
+                (NetworkSpawnUtility.IsNetworkSessionActive && !player.IsServer) ||
+                player.GetComponent<PlayerHealth>()?.IsAlive == false)
             {
                 continue;
             }

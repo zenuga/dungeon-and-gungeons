@@ -143,10 +143,17 @@ public class Projectile : NetworkBehaviour
 
         if (wall != null || crate != null)
         {
-            if (wall != null) 
+            int obstacleDamage = Mathf.Max(1, Mathf.RoundToInt(damage * 0.1f));
+            if (wall != null)
             {
-                wall.TakeDamage(Mathf.Max(1, Mathf.RoundToInt(damage * 0.1f)));
+                wall.TakeDamage(obstacleDamage);
             }
+            else
+            {
+                crate.TakeDamage(obstacleDamage);
+            }
+
+            NetworkSpawnUtility.DespawnOrDestroy(gameObject);
             return;
         }
 
@@ -156,12 +163,13 @@ public class Projectile : NetworkBehaviour
                 "TakeDamage",
                 Mathf.Max(1, Mathf.RoundToInt(damage * 0.1f)),
                 SendMessageOptions.DontRequireReceiver);
+            NetworkSpawnUtility.DespawnOrDestroy(gameObject);
             return;
         }
 
         if (enemy != null)
         {
-            if (IsEnemyProjectile())
+            if (!IsEnemyProjectile())
             {
                 enemy.TakeDamage(damage);
                 NetworkSpawnUtility.DespawnOrDestroy(gameObject);
@@ -171,7 +179,7 @@ public class Projectile : NetworkBehaviour
 
         if (player != null)
         {
-            if (!IsEnemyProjectile())
+            if (IsEnemyProjectile())
             {
                 player.TakeDamage(damage);
                 NetworkSpawnUtility.DespawnOrDestroy(gameObject);

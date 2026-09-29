@@ -160,15 +160,18 @@ public class PlayerPickupManager : NetworkBehaviour
                     if (deepComp != null) return deepComp;
                 }
 
-                GameObject go = GameObject.Find(prefix + name);
-                if (go == null) go = GameObject.Find(fullName + "_" + name);
-                if (go == null) go = GameObject.Find(name + "_" + fullName);
-                if (go == null) go = GameObject.Find(name);
-
-                if (go != null)
+                if (pickupUI == null)
                 {
-                    T comp = go.GetComponent<T>();
-                    if (comp != null) return comp;
+                    GameObject go = GameObject.Find(prefix + name);
+                    if (go == null) go = GameObject.Find(fullName + "_" + name);
+                    if (go == null) go = GameObject.Find(name + "_" + fullName);
+                    if (go == null) go = GameObject.Find(name);
+
+                    if (go != null)
+                    {
+                        T comp = go.GetComponent<T>();
+                        if (comp != null) return comp;
+                    }
                 }
             }
             return null;
@@ -210,7 +213,7 @@ public class PlayerPickupManager : NetworkBehaviour
                 }
             }
 
-            if (reloadUIObject == null)
+            if (reloadUIObject == null && pickupUI == null)
             {
                 GameObject taggedObj = GameObject.FindGameObjectWithTag("Reload");
                 if (taggedObj != null) reloadUIObject = taggedObj;
@@ -733,12 +736,15 @@ public class PlayerPickupManager : NetworkBehaviour
                 }
             }
 
-            GameObject result = GameObject.Find(prefix + name);
-            if (result == null) result = GameObject.Find(fullName + "_" + name);
-            if (result == null) result = GameObject.Find(name);
-            if (result != null)
+            if (pickupUI == null)
             {
-                return result;
+                GameObject result = GameObject.Find(prefix + name);
+                if (result == null) result = GameObject.Find(fullName + "_" + name);
+                if (result == null) result = GameObject.Find(name);
+                if (result != null)
+                {
+                    return result;
+                }
             }
         }
 

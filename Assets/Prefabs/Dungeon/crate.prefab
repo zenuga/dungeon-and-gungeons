@@ -139,4 +139,4 @@ MonoBehaviour:
   health: 20
   maxHealth: 20
   brokenCratePrefab: {fileID: 145475100767539893, guid: 2e2d4ba70c899b045a87af2506512c2e, type: 3}
-  destructionEffect: {fileID: 0}
+  destructionEffect: {fileID: 8956212606498969782, guid: bf87e414b91270ef2bb988b863124312, type: 3}

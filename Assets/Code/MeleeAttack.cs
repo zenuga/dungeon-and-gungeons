@@ -80,7 +80,7 @@ public class WeaponAttack : NetworkBehaviour
         }
 
         int damageAmount = GetDamageFromWeapon();
-        PlayerPickupManager pickupManager = ownerTransform.GetComponentInParent<PlayerPickupManager>();
+        PlayerPickupManager pickupManager = ownerTransform.GetComponentInChildren<PlayerPickupManager>(true);
         if (pickupManager != null)
         {
             damageAmount = Mathf.RoundToInt(damageAmount * pickupManager.DamageMultiplier);
@@ -104,7 +104,7 @@ public class WeaponAttack : NetworkBehaviour
         for (int i = 0; i < hits.Length; i++)
         {
             Collider col = hits[i];
-            if (col == null || col.transform == ownerTransform || col.gameObject == ownerTransform.gameObject || _hitThisSwing.Contains(col)) continue;
+            if (col == null || col.transform == ownerTransform || col.transform.IsChildOf(ownerTransform) || _hitThisSwing.Contains(col)) continue;
 
             if (!HasValidTargetTag(col.gameObject, ownerTransform)) continue;
 
@@ -142,27 +142,35 @@ public class WeaponAttack : NetworkBehaviour
     {
         if (obj == null || owner == null) return false;
 
-        string targetTag = obj.tag;
         string ownerTag = owner.tag;
 
         bool ownerIsPlayer = ownerTag == "Player" || ownerTag == "Player1" || ownerTag == "Player2";
         bool ownerIsEnemy = ownerTag == "Enemy" || ownerTag == "enemy" || ownerTag == "Boss" || ownerTag == "boss"||  ownerTag == "Crate" || ownerTag == "Wall";
 
-        if (ownerIsPlayer)
+        for (Transform current = obj.transform; current != null; current = current.parent)
         {
-            return targetTag == "Enemy" || targetTag == "enemy" || targetTag == "Boss" || targetTag == "boss" || targetTag == "Wall" || targetTag == "wall" || targetTag == "walls";
-        }
+            string targetTag = current.tag;
 
-        if (ownerIsEnemy)
-        {
-            return targetTag == "Player" || targetTag == "Player1" || targetTag == "Player2" || targetTag == "Wall" || targetTag == "wall" || targetTag == "walls";
-        }
-
-        foreach (string validTag in validTags)
-        {
-            if (string.Equals(targetTag, validTag, System.StringComparison.OrdinalIgnoreCase))
+            if (ownerIsPlayer &&
+                (targetTag == "Enemy" || targetTag == "enemy" || targetTag == "Boss" || targetTag == "boss" ||
+                 targetTag == "Wall" || targetTag == "wall" || targetTag == "walls"))
             {
                 return true;
+            }
+
+            if (ownerIsEnemy &&
+                (targetTag == "Player" || targetTag == "Player1" || targetTag == "Player2" ||
+                 targetTag == "Wall" || targetTag == "wall" || targetTag == "walls"))
+            {
+                return true;
+            }
+
+            foreach (string validTag in validTags)
+            {
+                if (string.Equals(targetTag, validTag, System.StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
             }
         }
 

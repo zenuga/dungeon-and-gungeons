@@ -7,6 +7,9 @@ using UnityEngine.UI;
 [RequireComponent(typeof(CharacterController))]
 public class PlayerController : NetworkBehaviour
 {
+    private const string Player1CameraTag = "MainCamera";
+    private const string Player2CameraTag = "Player2Camera";
+
     public enum PlayerType
     {
         Player1, 
@@ -30,6 +33,7 @@ public class PlayerController : NetworkBehaviour
     private GameObject playerUI;
     private Canvas[] playerCanvases;
     private int localPresentationState = -1;
+    private bool loggedMissingLocalCamera;
 
     public Vector3 FacingDirection => visualModel != null ? visualModel.transform.forward : transform.forward;
     public Transform VisualModelTransform => visualModel != null ? visualModel.transform : transform;
@@ -345,6 +349,10 @@ public class PlayerController : NetworkBehaviour
     public override void OnNetworkSpawn()
     {
         SetLocalPresentation(IsOwner);
+        if (IsOwner)
+        {
+            Debug.Log($"[PlayerController] Received owned player prefab '{name}' for local client {NetworkManager.LocalClientId} (type: {playerType}).", this);
+        }
     }
 
     public override void OnGainedOwnership()
@@ -352,29 +360,69 @@ public class PlayerController : NetworkBehaviour
         SetLocalPresentation(true);
     }
 
+    public override void OnLostOwnership()
+    {
+        SetLocalPresentation(false);
+    }
+
+    private void LateUpdate()
+    {
+        if (IsSpawned)
+        {
+            // Reapply after scene activation/ownership changes so the local player
+            // always has one enabled camera, including the joining client's Player 2.
+            SetLocalPresentation(IsOwner);
+        }
+    }
+
     public void SetLocalPresentation(bool isLocalPlayer)
     {
+        // The scene can activate this player after the prefab was first created.
+        // Resolve the child camera again here so a stale/missing serialized field
+        // cannot leave the owning client without a view after a scene load.
+        if (playerCamera == null ||
+            (playerCamera.transform != transform && !playerCamera.transform.IsChildOf(transform)))
+        {
+            playerCamera = GetComponentInChildren<Camera>(true);
+        }
+
         Camera[] cameras = GetComponentsInChildren<Camera>(true);
+        string localCameraTag = playerType == PlayerType.Player2 ? Player2CameraTag : Player1CameraTag;
         foreach (Camera cameraInRig in cameras)
         {
-            cameraInRig.enabled = isLocalPlayer;
-            if (isLocalPlayer)
+            bool shouldRender = isLocalPlayer && cameraInRig == playerCamera;
+            if (shouldRender && !cameraInRig.gameObject.activeSelf)
+            {
+                cameraInRig.gameObject.SetActive(true);
+            }
+
+            cameraInRig.enabled = shouldRender;
+            if (shouldRender)
             {
                 cameraInRig.targetDisplay = 0;
                 cameraInRig.cullingMask = ~0;
-                cameraInRig.tag = "Untagged";
+                cameraInRig.tag = localCameraTag;
             }
-            else if (cameraInRig.CompareTag("MainCamera"))
+            else if (cameraInRig.CompareTag(Player1CameraTag) || cameraInRig.CompareTag(Player2CameraTag))
             {
                 cameraInRig.tag = "Untagged";
             }
         }
 
+        if (isLocalPlayer && playerCamera == null && !loggedMissingLocalCamera)
+        {
+            loggedMissingLocalCamera = true;
+            Debug.LogError($"Local player '{name}' has no child Camera after scene activation. Add a Camera to this player prefab.", this);
+        }
+        else if (playerCamera != null)
+        {
+            loggedMissingLocalCamera = false;
+        }
+
         if (playerCamera != null && isLocalPlayer)
         {
-            playerCamera.enabled = true;
             playerCamera.targetDisplay = 0;
-            playerCamera.tag = "MainCamera";
+            playerCamera.tag = localCameraTag;
         }
 
         int requestedState = isLocalPlayer ? 1 : 0;
@@ -412,10 +460,6 @@ public class PlayerController : NetworkBehaviour
             playerUI.SetActive(isLocalPlayer);
         }
 
-        if (isLocalPlayer && playerCamera == null && cameras.Length == 0)
-        {
-            Debug.LogError($"Local player '{name}' has no child Camera. Add a Camera to this player prefab.", this);
-        }
     }
 
     private void Update()

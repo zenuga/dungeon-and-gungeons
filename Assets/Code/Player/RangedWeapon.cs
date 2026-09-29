@@ -148,7 +148,7 @@ public class RangedWeapon : NetworkBehaviour
         Vector3 fireDirection = GetPlayerFacingDirection(owner);
         Vector3 fireOrigin = muzzlePoint.position;
 
-        PlayerPickupManager pickupManager = owner.GetComponentInParent<PlayerPickupManager>();
+        PlayerPickupManager pickupManager = owner.GetComponentInChildren<PlayerPickupManager>(true);
         float damageMultiplier = pickupManager != null ? pickupManager.DamageMultiplier : 1f;
         int calculatedDamage = weaponData != null ? Mathf.RoundToInt(Mathf.Max(1, weaponData.damage) * damageMultiplier) : 1;
 

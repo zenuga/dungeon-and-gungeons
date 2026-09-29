@@ -368,7 +368,7 @@ GameObject:
   - component: {fileID: 974157019887445430}
   m_Layer: 6
   m_Name: Camera
-  m_TagString: MainCamera
+  m_TagString: Player2Camera
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -552,7 +552,8 @@ Transform:
   m_LocalPosition: {x: -0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 8194692371093516843}
   m_Father: {fileID: 7241729558534245746}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!137 &4165523140023249297
@@ -2897,6 +2898,59 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!1 &8194692371093516842
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8194692371093516843}
+  - component: {fileID: 8194692371093516844}
+  m_Layer: 0
+  m_Name: Pickup
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8194692371093516843
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8194692371093516842}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 2.5998, y: 2.5998, z: 2.5998}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3666025517401912817}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!135 &8194692371093516844
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8194692371093516842}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 0.5
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &8233863435653988116
 GameObject:
   m_ObjectHideFlags: 0
@@ -3002,6 +3056,8 @@ GameObject:
   m_Component:
   - component: {fileID: 9192138319999135469}
   - component: {fileID: 2128124002144198869}
+  - component: {fileID: 7143698602305220401}
+  - component: {fileID: 7143698602305220402}
   m_Layer: 6
   m_Name: Armature
   m_TagString: Player2
@@ -3050,6 +3106,50 @@ CapsuleCollider:
   m_Height: 2
   m_Direction: 2
   m_Center: {x: 0, y: 0.18, z: 0.8}
+--- !u!114 &7143698602305220401
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8416666903961985974}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 96dcd529a2e9722a9a38591e6ed68eaa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerPickupManager
+  ShowTopMostFoldoutHeaderGroup: 1
+  playerType: 1
+  pickupRangeSphere: {fileID: 8194692371093516842}
+  handTransform: {fileID: 5662031012401174691}
+  dropPoint: {fileID: 840098832119753000}
+  pickupUI: {fileID: 6522196779346435656}
+  weaponOrMiscImage: {fileID: 5627272130790481821}
+  weaponOrMiscText: {fileID: 114443448960467001}
+  potionImage: {fileID: 4951997519833253332}
+  potionText: {fileID: 4262862493354170118}
+  bombImage: {fileID: 4637554894338015591}
+  bombText: {fileID: 1577237872887920610}
+  activePotionEffectImage: {fileID: 0}
+  activePotionEffectCountdown: {fileID: 0}
+  reloadUIObject: {fileID: 0}
+  reloadImage: {fileID: 0}
+  maxPotions: 10
+  maxBombs: 15
+--- !u!114 &7143698602305220402
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8416666903961985974}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 42fc77b48b46cf5ca9c2cc3f84d387e0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerMouseAim
+  rotationSpeed: 20
+  rotationOnlyObject: {fileID: 7262676915215279033}
 --- !u!1 &8569331021473148422
 GameObject:
   m_ObjectHideFlags: 0
@@ -3115,7 +3215,7 @@ Transform:
   m_GameObject: {fileID: 8671723301485573298}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 534.30743, y: 0.32211804, z: 111.411446}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -3175,7 +3275,7 @@ MonoBehaviour:
   SynchronizeTransform: 1
   m_InScenePlaced: 0
   ActiveSceneSynchronization: 0
-  SceneMigrationSynchronization: 0
+  SceneMigrationSynchronization: 1
   SpawnWithObservers: 1
   DontDestroyWithOwner: 0
   AutoObjectParentSync: 1
