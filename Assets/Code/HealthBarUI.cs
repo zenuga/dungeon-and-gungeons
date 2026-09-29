@@ -49,14 +49,15 @@ public class HealthBarUI : MonoBehaviour
 
     private void LateUpdate()
     {
-        if (!faceCamera || Camera.main == null)
+        Camera viewCamera = PlayerController.LocalCamera != null ? PlayerController.LocalCamera : Camera.main;
+        if (!faceCamera || viewCamera == null)
         {
             return;
         }
 
         transform.rotation = Quaternion.LookRotation(
-            -Camera.main.transform.forward,
-            Camera.main.transform.up);
+            -viewCamera.transform.forward,
+            viewCamera.transform.up);
     }
 
     private static Image FindFillImage(Image backgroundImage)

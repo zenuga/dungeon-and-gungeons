@@ -84,19 +84,14 @@ public class NetworkPlayerSpawner : NetworkBehaviour
             return;
         }
 
-        NetworkManager.SceneManager.OnLoadComplete += HandleNetworkSceneLoadComplete;
         NetworkManager.SceneManager.OnLoadEventCompleted += HandleNetworkSceneLoadCompleted;
         RegisterPlayerPrefab(player1Prefab);
         RegisterPlayerPrefab(player2Prefab);
 
         NetworkManager.OnClientDisconnectCallback += RemovePlayerForClient;
 
-        // The server's scene object spawns when its own scene is ready. Remote
-        // player objects wait for that client's OnLoadComplete callback below.
-        if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == GameplaySceneName)
-        {
-            SpawnPlayerForClient(NetworkManager.ServerClientId);
-        }
+        // Wait for the full network load event before spawning either player.
+        // This makes the host's player visible to clients that finish loading later.
     }
 
     public override void OnNetworkDespawn()
@@ -114,20 +109,8 @@ public class NetworkPlayerSpawner : NetworkBehaviour
         NetworkManager.OnClientDisconnectCallback -= RemovePlayerForClient;
         if (NetworkManager.SceneManager != null)
         {
-            NetworkManager.SceneManager.OnLoadComplete -= HandleNetworkSceneLoadComplete;
             NetworkManager.SceneManager.OnLoadEventCompleted -= HandleNetworkSceneLoadCompleted;
         }
-    }
-
-    private void HandleNetworkSceneLoadComplete(ulong clientId, string sceneName, UnityEngine.SceneManagement.LoadSceneMode loadSceneMode)
-    {
-        if (!IsServer || sceneName != GameplaySceneName)
-        {
-            return;
-        }
-
-        Debug.Log($"[NetworkPlayerSpawner] Client {clientId} finished loading {sceneName}; assigning its player prefab.");
-        SpawnPlayerForClient(clientId);
     }
 
     private void HandleNetworkSceneLoadCompleted(string sceneName, UnityEngine.SceneManagement.LoadSceneMode loadSceneMode, List<ulong> clientsCompleted, List<ulong> clientsTimedOut)
@@ -141,6 +124,7 @@ public class NetworkPlayerSpawner : NetworkBehaviour
         // completed the network scene event. Reconcile after the event too.
         foreach (ulong clientId in NetworkManager.ConnectedClientsIds)
         {
+            Debug.Log($"[NetworkPlayerSpawner] All clients loaded {sceneName}; assigning a player prefab to client {clientId}.");
             SpawnPlayerForClient(clientId);
         }
     }

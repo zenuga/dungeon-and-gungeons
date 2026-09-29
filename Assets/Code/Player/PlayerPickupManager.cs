@@ -98,32 +98,25 @@ public class PlayerPickupManager : NetworkBehaviour
         
         if (Keyboard.current == null) return;
 
-        bool actionPressed = false;
-        if (playerType == PlayerType.Player1 && Keyboard.current.fKey.wasPressedThisFrame)
-        {
-            actionPressed = true;
-        }
-        else if (playerType == PlayerType.Player2 && Keyboard.current.semicolonKey.wasPressedThisFrame)
-        {
-            actionPressed = true;
-        }
+        // Online Player 2 uses the same controls as Player 1 on their own
+        // device; keep the alternate key for same-keyboard local play.
+        bool actionPressed = Keyboard.current.fKey.wasPressedThisFrame ||
+            (playerType == PlayerType.Player2 && Keyboard.current.semicolonKey.wasPressedThisFrame);
 
         if (actionPressed)
         {
             TryPickupItem();
         }
 
-        bool bombPressed = playerType == PlayerType.Player1
-            ? Keyboard.current.qKey.wasPressedThisFrame
-            : Keyboard.current.uKey.wasPressedThisFrame;
+        bool bombPressed = Keyboard.current.qKey.wasPressedThisFrame ||
+            (playerType == PlayerType.Player2 && Keyboard.current.uKey.wasPressedThisFrame);
         if (bombPressed)
         {
             UseBomb();
         }
 
-        bool potionPressed = playerType == PlayerType.Player1
-            ? Keyboard.current.rKey.wasPressedThisFrame
-            : Keyboard.current.pKey.wasPressedThisFrame;
+        bool potionPressed = Keyboard.current.rKey.wasPressedThisFrame ||
+            (playerType == PlayerType.Player2 && Keyboard.current.pKey.wasPressedThisFrame);
         if (potionPressed)
         {
             UsePotion();

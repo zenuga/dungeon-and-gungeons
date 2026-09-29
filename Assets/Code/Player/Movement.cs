@@ -10,6 +10,8 @@ public class PlayerController : NetworkBehaviour
     private const string Player1CameraTag = "MainCamera";
     private const string Player2CameraTag = "Player2Camera";
 
+    public static Camera LocalCamera { get; private set; }
+
     public enum PlayerType
     {
         Player1, 
@@ -37,6 +39,7 @@ public class PlayerController : NetworkBehaviour
 
     public Vector3 FacingDirection => visualModel != null ? visualModel.transform.forward : transform.forward;
     public Transform VisualModelTransform => visualModel != null ? visualModel.transform : transform;
+    public Camera PlayerCamera => playerCamera;
     public GameObject PlayerHud => playerUI;
 
     public void SetSpeedMultiplier(float multiplier)
@@ -423,6 +426,11 @@ public class PlayerController : NetworkBehaviour
         {
             playerCamera.targetDisplay = 0;
             playerCamera.tag = localCameraTag;
+            LocalCamera = playerCamera;
+        }
+        else if (playerCamera != null && LocalCamera == playerCamera)
+        {
+            LocalCamera = null;
         }
 
         int requestedState = isLocalPlayer ? 1 : 0;

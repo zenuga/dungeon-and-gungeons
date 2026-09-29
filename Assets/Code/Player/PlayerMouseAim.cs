@@ -10,12 +10,14 @@ public class PlayerMouseAim : MonoBehaviour
 
     private void Update()
     {
-        if (!NetworkOwnership.CanControl(this) || Camera.main == null || Mouse.current == null)
+        PlayerController playerController = GetComponentInParent<PlayerController>();
+        Camera aimCamera = playerController != null ? playerController.PlayerCamera : Camera.main;
+        if (!NetworkOwnership.CanControl(this) || aimCamera == null || Mouse.current == null)
         {
             return;
         }
 
-        Ray mouseRay = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
+        Ray mouseRay = aimCamera.ScreenPointToRay(Mouse.current.position.ReadValue());
         Plane movementPlane = new Plane(Vector3.up, transform.position);
 
         if (!movementPlane.Raycast(mouseRay, out float distance))
