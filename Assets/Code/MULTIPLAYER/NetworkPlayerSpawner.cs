@@ -81,25 +81,21 @@ public class NetworkPlayerSpawner : NetworkBehaviour
         Instance = this;
         if (!IsServer)
         {
-            if (IsClient && UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == GameplaySceneName)
-            {
-                Debug.Log($"[NetworkPlayerSpawner] Gameplay spawner received on client {NetworkManager.LocalClientId}; requesting player assignment.");
-                RequestPlayerSpawnServerRpc();
-            }
-
             return;
         }
 
+        NetworkManager.SceneManager.OnLoadComplete += HandleNetworkSceneLoadComplete;
         NetworkManager.SceneManager.OnLoadEventCompleted += HandleNetworkSceneLoadCompleted;
         RegisterPlayerPrefab(player1Prefab);
         RegisterPlayerPrefab(player2Prefab);
 
-        NetworkManager.OnClientConnectedCallback += SpawnPlayerForClient;
         NetworkManager.OnClientDisconnectCallback += RemovePlayerForClient;
 
-        foreach (ulong clientId in NetworkManager.ConnectedClientsIds)
+        // The server's scene object spawns when its own scene is ready. Remote
+        // player objects wait for that client's OnLoadComplete callback below.
+        if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == GameplaySceneName)
         {
-            SpawnPlayerForClient(clientId);
+            SpawnPlayerForClient(NetworkManager.ServerClientId);
         }
     }
 
@@ -115,12 +111,23 @@ public class NetworkPlayerSpawner : NetworkBehaviour
             return;
         }
 
-        NetworkManager.OnClientConnectedCallback -= SpawnPlayerForClient;
         NetworkManager.OnClientDisconnectCallback -= RemovePlayerForClient;
         if (NetworkManager.SceneManager != null)
         {
+            NetworkManager.SceneManager.OnLoadComplete -= HandleNetworkSceneLoadComplete;
             NetworkManager.SceneManager.OnLoadEventCompleted -= HandleNetworkSceneLoadCompleted;
         }
+    }
+
+    private void HandleNetworkSceneLoadComplete(ulong clientId, string sceneName, UnityEngine.SceneManagement.LoadSceneMode loadSceneMode)
+    {
+        if (!IsServer || sceneName != GameplaySceneName)
+        {
+            return;
+        }
+
+        Debug.Log($"[NetworkPlayerSpawner] Client {clientId} finished loading {sceneName}; assigning its player prefab.");
+        SpawnPlayerForClient(clientId);
     }
 
     private void HandleNetworkSceneLoadCompleted(string sceneName, UnityEngine.SceneManagement.LoadSceneMode loadSceneMode, List<ulong> clientsCompleted, List<ulong> clientsTimedOut)
@@ -136,14 +143,6 @@ public class NetworkPlayerSpawner : NetworkBehaviour
         {
             SpawnPlayerForClient(clientId);
         }
-    }
-
-    [ServerRpc(RequireOwnership = false)]
-    private void RequestPlayerSpawnServerRpc(ServerRpcParams rpcParams = default)
-    {
-        ulong clientId = rpcParams.Receive.SenderClientId;
-        Debug.Log($"[NetworkPlayerSpawner] Received player assignment request from client {clientId}.");
-        SpawnPlayerForClient(clientId);
     }
 
     private void SpawnPlayerForClient(ulong clientId)
