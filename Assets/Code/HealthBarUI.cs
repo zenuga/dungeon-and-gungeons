@@ -31,6 +31,7 @@ public class HealthBarUI : MonoBehaviour
 
     private void Update()
     {
+        if (enemyAi == null) enemyAi = GetComponentInParent<EnemyAi>();
         if (enemyAi != null)
         {
             SetHealth(enemyAi.CurrentHealth, enemyAi.MaxHealthValue);

@@ -101,7 +101,7 @@ MonoBehaviour:
   itemType: ranged
   potionType: 0
   quantity: 1
-  weaponData: {fileID: 0}
+  weaponData: {fileID: 11400000, guid: 05cf6f7112c0a52b49a6de63db803304, type: 2}
 --- !u!114 &4770728087522759016
 MonoBehaviour:
   m_ObjectHideFlags: 0

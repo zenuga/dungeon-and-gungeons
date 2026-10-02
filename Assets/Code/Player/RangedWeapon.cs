@@ -34,6 +34,7 @@ public class RangedWeapon : NetworkBehaviour
             float totalReload = (weaponData != null && weaponData.isHitscan) 
                 ? (weaponData.hitscanReloadTime > 0 ? weaponData.hitscanReloadTime : 2f) 
                 : fireRate;
+            totalReload /= GetReloadSpeedMultiplier();
                 
             if (totalReload <= 0f) return 0f;
             
@@ -116,6 +117,7 @@ public class RangedWeapon : NetworkBehaviour
             if (Time.time >= nextFireTime)
             {
                 nextFireTime = Time.time + fireRate;
+                if (weaponData != null) GameAudioManager.EnsureInstance().PlayEffect(weaponData.attackSound);
                 Fire(owner);
                 if (objectToDisableAfterShooting != null) objectToDisableAfterShooting.SetActive(false);
             }
@@ -123,19 +125,21 @@ public class RangedWeapon : NetworkBehaviour
             if (currentShootTime <= 0f)
             {
                 isReloading = true;
-                reloadEndTime = Time.time + (weaponData.hitscanReloadTime > 0 ? weaponData.hitscanReloadTime : 2f);
+                reloadEndTime = Time.time + (weaponData.hitscanReloadTime > 0 ? weaponData.hitscanReloadTime : 2f) / GetReloadSpeedMultiplier();
                 currentShootTime = 0f;
+                GameAudioManager.EnsureInstance().PlayEffect(weaponData.reloadSound);
             }
         }
         else
         {
             if (Time.time >= nextFireTime)
             {
-                nextFireTime = Time.time + fireRate;
+                nextFireTime = Time.time + fireRate / GetReloadSpeedMultiplier();
                 
                 // For a projectile, the cooldown interval acts as the singular shot reload period
                 isReloading = true;
                 reloadEndTime = nextFireTime;
+                if (weaponData != null) GameAudioManager.EnsureInstance().PlayEffect(weaponData.reloadSound);
                 
                 Fire(owner);
                 if (objectToDisableAfterShooting != null) objectToDisableAfterShooting.SetActive(false);
@@ -143,8 +147,19 @@ public class RangedWeapon : NetworkBehaviour
         }
     }
 
+    private float GetReloadSpeedMultiplier()
+    {
+        Transform owner = GetOwnerTransform();
+        PlayerPickupManager pickupManager = owner != null ? owner.GetComponentInChildren<PlayerPickupManager>(true) : null;
+        return pickupManager != null ? Mathf.Max(1f, pickupManager.ReloadSpeedMultiplier) : 1f;
+    }
+
     private void Fire(Transform owner)
     {
+        PlayerController playerController = owner.GetComponent<PlayerController>();
+        if (playerController != null) playerController.PlayShootAnimation();
+        if (weaponData != null && !weaponData.isHitscan)
+            GameAudioManager.EnsureInstance().PlayEffect(weaponData.attackSound);
         Vector3 fireDirection = GetPlayerFacingDirection(owner);
         Vector3 fireOrigin = muzzlePoint.position;
 

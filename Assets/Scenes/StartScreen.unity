@@ -2777,6 +2777,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1254523435}
   - component: {fileID: 1254523434}
+  - component: {fileID: 1254523436}
   m_Layer: 0
   m_Name: SessionManager
   m_TagString: Untagged
@@ -2802,6 +2803,25 @@ MonoBehaviour:
   joinCodeText: {fileID: 863992449}
   joinCodeInput: {fileID: 1435975067}
   statusText: {fileID: 0}
+--- !u!114 &1254523436
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1254523433}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8f48a63d1f784a289194a6a42a76eb91, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::GameAudioManager
+  backgroundMusic: {fileID: 0}
+  bossMusic: {fileID: 0}
+  playerHurtSound: {fileID: 0}
+  playerDeathSound: {fileID: 0}
+  chestOpenSound: {fileID: 0}
+  itemPickupSound: {fileID: 0}
+  wallBreakSound: {fileID: 0}
 --- !u!4 &1254523435
 Transform:
   m_ObjectHideFlags: 0

@@ -19,7 +19,9 @@ public class RewardChest : MonoBehaviour
 
     public void Configure(List<WeaponData> templates)
     {
-        weaponTemplates = templates ?? new List<WeaponData>();
+        weaponTemplates = templates == null
+            ? new List<WeaponData>()
+            : templates.FindAll(template => template != null && template.itemType != RewardItemType.Potion);
     }
 
     private void Awake()
@@ -111,6 +113,7 @@ public class RewardChest : MonoBehaviour
         }
 
         isOpen = true;
+        GameAudioManager.EnsureInstance().PlayChestOpen();
 
         int amount = Random.Range(minimumWeapons, maximumWeapons + 1);
         for (int i = 0; i < amount; i++)

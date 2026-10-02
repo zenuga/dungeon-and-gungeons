@@ -5,6 +5,11 @@ public class EnemyData : ScriptableObject
 {
     [Header("health")]
     public int maxHealth = 100;
+    [Min(0)] public int minimumCurrencyReward = 5;
+    [Min(0)] public int maximumCurrencyReward = 25;
+    [Header("Audio")]
+    public AudioClip hurtSound;
+    public AudioClip deathSound;
 
     public int MaxHealth
     {
@@ -26,4 +31,6 @@ public class EnemyData : ScriptableObject
 
     [Header("Prefabs")]
     public GameObject projectilePrefab;
+    [Tooltip("Weapon dropped when this enemy is spawned as a boss.")]
+    public WeaponData specialBossWeaponDrop;
 }

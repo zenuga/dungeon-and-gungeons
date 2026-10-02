@@ -1,5 +1,36 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &6641813219424472836
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7581229375108608346}
+  m_Layer: 0
+  m_Name: GameObject
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7581229375108608346
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6641813219424472836}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: 0, z: -0, w: 1}
+  m_LocalPosition: {x: -0.13756055, y: 0.153, z: 1.596}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3282960579186075675}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &3028057487187267568
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -66,7 +97,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
-    m_AddedGameObjects: []
+    m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: e3763f7080dd8884bb81d380b73f98cf, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7581229375108608346}
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: e3763f7080dd8884bb81d380b73f98cf, type: 3}
       insertIndex: -1
@@ -101,7 +135,7 @@ MonoBehaviour:
   itemType: ranged
   potionType: 0
   quantity: 1
-  weaponData: {fileID: 0}
+  weaponData: {fileID: 11400000, guid: 72f3d3255541a3ab7b772979fb37cb89, type: 2}
 --- !u!114 &2249563867668001426
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -143,7 +177,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::RangedWeapon
   ShowTopMostFoldoutHeaderGroup: 1
   projectilePrefab: {fileID: 0}
-  muzzlePoint: {fileID: 0}
+  muzzlePoint: {fileID: 7581229375108608346}
   fireRate: 1
   objectToDisableAfterShooting: {fileID: 0}
 --- !u!136 &5317609651229604164
@@ -169,3 +203,8 @@ CapsuleCollider:
   m_Height: 2.5
   m_Direction: 2
   m_Center: {x: -0.0006551668, y: -0.039099865, z: 0.43620807}
+--- !u!4 &3282960579186075675 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: e3763f7080dd8884bb81d380b73f98cf, type: 3}
+  m_PrefabInstance: {fileID: 3028057487187267568}
+  m_PrefabAsset: {fileID: 0}

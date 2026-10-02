@@ -16,9 +16,11 @@ MonoBehaviour:
   weaponName: Skeleton Staff
   weaponImage: {fileID: 0}
   weaponPrefab: {fileID: 768630977955021676, guid: de3b37b72b9fc13f0ab2c256c04fea32, type: 3}
-  damage: 0
-  cooldown: 0
-  currencyAmount: 40
+  damage: 60
+  cooldown: 0.4
+  currencyAmount: 999999999
+  attackSound: {fileID: 8300000, guid: f07c5c333e6f2894da9504322bb5bbf0, type: 3}
+  reloadSound: {fileID: 8300000, guid: 91eb1702894e8c44a8a04565ba4cc0c0, type: 3}
   potionType: 0
   isHitscan: 0
   hitscanRange: 100

@@ -65,6 +65,7 @@ public class CurrencyShop : MonoBehaviour
             return;
         }
 
+        WallBreakEncounterManager.DismissForTransition();
         playersInRange.Add(currency);
         activeCurrency = currency;
         if (shopUI != null)
@@ -103,7 +104,14 @@ public class CurrencyShop : MonoBehaviour
         ShopSlot slot = slots[index];
         WeaponData item = slot.item;
 
-        if (item.weaponPrefab == null)
+        PlayerPickupManager pickupManager = activeCurrency.GetComponentInChildren<PlayerPickupManager>(true);
+        if (item.itemType == RewardItemType.Potion &&
+            (pickupManager == null || !pickupManager.CanAddPotion(item)))
+        {
+            return;
+        }
+
+        if (item.itemType != RewardItemType.Potion && item.weaponPrefab == null)
         {
             return;
         }
@@ -114,17 +122,22 @@ public class CurrencyShop : MonoBehaviour
             return;
         }
 
-        // Spawn weapon at shop position + spawnOffset
-        Vector3 spawnPosition = transform.position + spawnOffset;
-        GameObject spawnedWeapon = Instantiate(item.weaponPrefab, spawnPosition, Quaternion.identity);
-
-        // Ensure the spawned weapon has its CollectibleItem data set
-        CollectibleItem collectible = spawnedWeapon.GetComponent<CollectibleItem>();
-        if (collectible == null)
+        if (item.itemType == RewardItemType.Potion)
         {
-            collectible = spawnedWeapon.AddComponent<CollectibleItem>();
+            pickupManager.TryAddPotion(item);
         }
-        collectible.weaponData = item;
+        else
+        {
+            // Spawn weapons and bombs at the shop for pickup.
+            Vector3 spawnPosition = transform.position + spawnOffset;
+            GameObject spawnedItem = Instantiate(item.weaponPrefab, spawnPosition, Quaternion.identity);
+            CollectibleItem collectible = spawnedItem.GetComponent<CollectibleItem>();
+            if (collectible == null) collectible = spawnedItem.AddComponent<CollectibleItem>();
+            collectible.weaponData = item;
+            collectible.itemType = item.itemType == RewardItemType.Bomb
+                ? "bombs"
+                : item.weaponPrefab.GetComponentInChildren<WeaponAttack>() != null ? "melee" : "ranged";
+        }
 
         // Turn off the buy button for this purchased slot
         if (slot.buyButton != null)
@@ -169,7 +182,12 @@ public class CurrencyShop : MonoBehaviour
             {
                 if (slot.itemImage != null) slot.itemImage.sprite = slot.item.weaponImage;
                 if (slot.costText != null) slot.costText.text = slot.item.currencyAmount.ToString();
-                if (slot.statsText != null) slot.statsText.text = "Damage: " + slot.item.damage + "\nCooldown: " + slot.item.cooldown.ToString("0.##");
+                if (slot.statsText != null)
+                {
+                    slot.statsText.text = slot.item.itemType == RewardItemType.Potion
+                        ? slot.item.potionType + " Potion"
+                        : "Damage: " + slot.item.damage + "\nCooldown: " + slot.item.cooldown.ToString("0.##");
+                }
             }
 
             if (slot.buyButton != null)

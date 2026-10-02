@@ -624,6 +624,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 26c91e863862bd24ba48d449d1210f38, type: 3}
       insertIndex: -1
       addedObject: {fileID: 5474460445259889435}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 26c91e863862bd24ba48d449d1210f38, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7038776064047126427}
   m_SourcePrefab: {fileID: 100100000, guid: 26c91e863862bd24ba48d449d1210f38, type: 3}
 --- !u!4 &8441146832543042840 stripped
 Transform:
@@ -720,6 +723,9 @@ MonoBehaviour:
   - Player1
   - Player2
   enemyHealthBarbackgroundImagePrefab: {fileID: 7124176047909081499}
+  enemyAnimation: {fileID: 7038776064047126427}
+  walkAnimationClip: {fileID: -8150371411603201744, guid: 26c91e863862bd24ba48d449d1210f38, type: 3}
+  attackAnimationClip: {fileID: -251351218608039746, guid: 26c91e863862bd24ba48d449d1210f38, type: 3}
 --- !u!136 &5474460445259889435
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -743,3 +749,19 @@ CapsuleCollider:
   m_Height: 2
   m_Direction: 1
   m_Center: {x: 0, y: 1, z: 0}
+--- !u!111 &7038776064047126427
+Animation:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9110547844423751586}
+  m_Enabled: 1
+  serializedVersion: 4
+  m_Animation: {fileID: 0}
+  m_Animations: []
+  m_WrapMode: 0
+  m_PlayAutomatically: 1
+  m_AnimatePhysics: 0
+  m_UpdateMode: 0
+  m_CullingType: 0

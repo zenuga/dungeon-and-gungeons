@@ -7,7 +7,7 @@ public class ReviveTriggerDetector : MonoBehaviour
     private void OnTriggerStay(Collider other)
     {
         PlayerHealth playerHealth = other.GetComponentInParent<PlayerHealth>();
-        if (playerHealth != null)
+        if (playerHealth != null && playerHealth != reviveController.GetComponent<PlayerHealth>())
         {
             reviveController.SetReviveTarget(playerHealth);
         }
@@ -18,7 +18,7 @@ public class ReviveTriggerDetector : MonoBehaviour
         PlayerHealth playerHealth = other.GetComponentInParent<PlayerHealth>();
         if (playerHealth != null)
         {
-            reviveController.SetReviveTarget(null);
+            reviveController.ClearReviveTarget(playerHealth);
         }
     }
 }

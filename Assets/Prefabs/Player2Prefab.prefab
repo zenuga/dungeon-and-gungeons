@@ -3134,7 +3134,7 @@ MonoBehaviour:
   activePotionEffectCountdown: {fileID: 0}
   reloadUIObject: {fileID: 0}
   reloadImage: {fileID: 0}
-  maxPotions: 10
+  maxPotions: 8
   maxBombs: 15
 --- !u!114 &7143698602305220402
 MonoBehaviour:
@@ -3319,6 +3319,7 @@ MonoBehaviour:
   healthFill: {fileID: 5432086866897850123}
   healthBarRoot: {fileID: 4409930819166611727}
   maxHealth: 100
+  hurtParticlePrefab: {fileID: 4112264626245002651, guid: a211ab1d587643715bd19d74d2bbff5c, type: 3}
   currentHealth: 0
 --- !u!114 &8058023396980503578
 MonoBehaviour:

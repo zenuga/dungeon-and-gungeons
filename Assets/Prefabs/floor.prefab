@@ -575,6 +575,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::FallResetTrigger
   mineGeneration: {fileID: 0}
   resetCooldown: 0.5
+  standstillstucktext: {fileID: 0}
+  holdToRespawnTime: 7
 --- !u!1 &7177279064057230286
 GameObject:
   m_ObjectHideFlags: 0
@@ -587,6 +589,7 @@ GameObject:
   - component: {fileID: 88058997187509786}
   - component: {fileID: 7632028814299272348}
   - component: {fileID: 8136942458913872295}
+  - component: {fileID: 9109202562485603733}
   m_Layer: 0
   m_Name: floor
   m_TagString: Untagged
@@ -694,6 +697,38 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &9109202562485603733
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7177279064057230286}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7a5ac11cc976e418e8d13136b07e1f52, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.AI.Navigation::Unity.AI.Navigation.NavMeshSurface
+  m_SerializedVersion: 0
+  m_AgentTypeID: 0
+  m_CollectObjects: 0
+  m_Size: {x: 10, y: 10, z: 10}
+  m_Center: {x: 0, y: 2, z: 0}
+  m_LayerMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_UseGeometry: 0
+  m_DefaultArea: 0
+  m_GenerateLinks: 0
+  m_IgnoreNavMeshAgent: 1
+  m_IgnoreNavMeshObstacle: 1
+  m_OverrideTileSize: 0
+  m_TileSize: 256
+  m_OverrideVoxelSize: 0
+  m_VoxelSize: 0.16666667
+  m_MinRegionArea: 2
+  m_NavMeshData: {fileID: 23800000, guid: 2ae0533e667cf1e3598ea07ac8a313e7, type: 2}
+  m_BuildHeightMesh: 0
 --- !u!1001 &324035562479191894
 PrefabInstance:
   m_ObjectHideFlags: 0

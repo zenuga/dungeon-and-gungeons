@@ -1,5 +1,36 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &3746875885517649381
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4363285657519859739}
+  m_Layer: 0
+  m_Name: GameObject
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4363285657519859739
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3746875885517649381}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: 0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 1.268, z: 0.317}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 135505332602313174}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &462692208371564093
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -66,7 +97,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
-    m_AddedGameObjects: []
+    m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: 597d4936f9b376040b529357d749268e, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4363285657519859739}
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 597d4936f9b376040b529357d749268e, type: 3}
       insertIndex: -1
@@ -81,6 +115,11 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 4317067298412883714}
   m_SourcePrefab: {fileID: 100100000, guid: 597d4936f9b376040b529357d749268e, type: 3}
+--- !u!4 &135505332602313174 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 597d4936f9b376040b529357d749268e, type: 3}
+  m_PrefabInstance: {fileID: 462692208371564093}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &768630977955021676 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 597d4936f9b376040b529357d749268e, type: 3}
@@ -101,7 +140,7 @@ MonoBehaviour:
   itemType: ranged
   potionType: 0
   quantity: 1
-  weaponData: {fileID: 0}
+  weaponData: {fileID: 11400000, guid: 3d1155bc0d950316c92113a4efff04d8, type: 2}
 --- !u!114 &6594977470366581982
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -114,7 +153,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 3081868822
+  GlobalObjectIdHash: 3911219552
   InScenePlacedSourceGlobalObjectIdHash: 3081868822
   m_InScenePlacedDisabledByDefault: 0
   DeferredDespawnTick: 0
@@ -143,7 +182,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::RangedWeapon
   ShowTopMostFoldoutHeaderGroup: 1
   projectilePrefab: {fileID: 0}
-  muzzlePoint: {fileID: 0}
+  muzzlePoint: {fileID: 4363285657519859739}
   fireRate: 0.75
   objectToDisableAfterShooting: {fileID: 0}
 --- !u!136 &4317067298412883714

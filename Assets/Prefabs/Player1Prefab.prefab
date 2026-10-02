@@ -583,6 +583,7 @@ GameObject:
   - component: {fileID: -2643060985970340837}
   - component: {fileID: 2118610511055300274}
   - component: {fileID: 1926064475120831156}
+  - component: {fileID: 3437477651772772020}
   m_Layer: 6
   m_Name: Player1Prefab
   m_TagString: Player1
@@ -682,6 +683,10 @@ MonoBehaviour:
   moveSpeed: 5
   gravity: -9.81
   settings: {fileID: 0}
+  playerAnimation: {fileID: 3437477651772772020}
+  walkAnimationClip: {fileID: 4677992259941259231, guid: 53e670f2b5eae0442803b4cfc04b9cd2, type: 3}
+  swingAttackAnimationClip: {fileID: 4781951162920444690, guid: 53e670f2b5eae0442803b4cfc04b9cd2, type: 3}
+  shootAnimationClip: {fileID: 0}
 --- !u!114 &-5020218394506883370
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -699,6 +704,7 @@ MonoBehaviour:
   healthFill: {fileID: 5957331669088556547}
   healthBarRoot: {fileID: 4950502207369656207}
   maxHealth: 100
+  hurtParticlePrefab: {fileID: 4112264626245002651, guid: a211ab1d587643715bd19d74d2bbff5c, type: 3}
   currentHealth: 0
 --- !u!136 &1984528559770890308
 CapsuleCollider:
@@ -874,6 +880,22 @@ MonoBehaviour:
   indicatorImage: {fileID: 2098026854045397682}
   edgePadding: 40
   searchInterval: 5
+--- !u!111 &3437477651772772020
+Animation:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1468520820315375280}
+  m_Enabled: 1
+  serializedVersion: 4
+  m_Animation: {fileID: 0}
+  m_Animations: []
+  m_WrapMode: 0
+  m_PlayAutomatically: 1
+  m_AnimatePhysics: 0
+  m_UpdateMode: 0
+  m_CullingType: 0
 --- !u!1 &1505442897888273582
 GameObject:
   m_ObjectHideFlags: 0
@@ -4589,7 +4611,7 @@ MonoBehaviour:
   activePotionEffectCountdown: {fileID: 1114808010732828964}
   reloadUIObject: {fileID: 0}
   reloadImage: {fileID: 0}
-  maxPotions: 10
+  maxPotions: 8
   maxBombs: 15
 --- !u!114 &8995526368518515291
 MonoBehaviour:

@@ -50,6 +50,7 @@ public class Crate : NetworkBehaviour
 
     private void DestroyCrate()
     {
+     GameAudioManager.EnsureInstance().PlayWallBreak();
      if (!IsSpawned || IsServer)
         {
         CurrencyReward.GiveNearestPlayer(transform.position, 10,100);

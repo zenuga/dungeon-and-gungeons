@@ -2202,6 +2202,9 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 5b823bec0262f5235b2abe497f37fb7a, type: 2}
   - {fileID: 11400000, guid: d3c55173fd08446529f383f523bb5c59, type: 2}
   - {fileID: 11400000, guid: 11a25e377da988b109de119ef4149d6f, type: 2}
+  - {fileID: 11400000, guid: 6c8847caef134087ab5264ab354a87c1, type: 2}
+  - {fileID: 11400000, guid: 7401afc7b7de421aa98f554821adea02, type: 2}
+  - {fileID: 11400000, guid: 56a8712dfde94b0e88d41643aadf2134, type: 2}
   slots:
   - itemImage: {fileID: 4835404764705391576}
     costText: {fileID: 7206749189044919459}

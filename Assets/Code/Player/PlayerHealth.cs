@@ -10,10 +10,15 @@ public class PlayerHealth : NetworkBehaviour
     [SerializeField] private Image healthFill;
     [SerializeField] private Transform healthBarRoot;
     [SerializeField] private int maxHealth = 100;
+    [SerializeField] private GameObject hurtParticlePrefab;
 
     [SerializeField]
     private int currentHealth = 100;
     private NetworkVariable<int> networkHealth = new NetworkVariable<int>(
+        100,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server);
+    private readonly NetworkVariable<int> networkMaxHealth = new NetworkVariable<int>(
         100,
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server);
@@ -42,13 +47,16 @@ public class PlayerHealth : NetworkBehaviour
     public override void OnNetworkSpawn()
     {
         networkHealth.OnValueChanged += OnHealthChanged;
+        networkMaxHealth.OnValueChanged += OnMaxHealthChanged;
         if (IsServer)
         {
+            networkMaxHealth.Value = maxHealth;
             networkHealth.Value = maxHealth;
             currentHealth = maxHealth;
         }
         else
         {
+            maxHealth = networkMaxHealth.Value;
             currentHealth = networkHealth.Value;
             UpdateHealthBar();
         }
@@ -59,6 +67,7 @@ public class PlayerHealth : NetworkBehaviour
     public override void OnNetworkDespawn()
     {
         networkHealth.OnValueChanged -= OnHealthChanged;
+        networkMaxHealth.OnValueChanged -= OnMaxHealthChanged;
     }
 
     private void Start()
@@ -105,12 +114,19 @@ public class PlayerHealth : NetworkBehaviour
 
     private void ApplyDamage(int amount)
     {
+        int previousHealth = currentHealth;
         currentHealth = Mathf.Max(0, currentHealth - amount);
         if (IsSpawned && IsServer)
         {
             networkHealth.Value = currentHealth;
         }
         UpdateHealthBar();
+        if (!IsSpawned)
+        {
+            if (currentHealth < previousHealth) PlayHurtParticle();
+            if (currentHealth <= 0) GameAudioManager.EnsureInstance().PlayPlayerDeath();
+            else GameAudioManager.EnsureInstance().PlayPlayerHurt();
+        }
         UpdatePlayerSystems();
     }
 
@@ -147,6 +163,36 @@ public class PlayerHealth : NetworkBehaviour
         Heal(Mathf.RoundToInt(maxHealth * Mathf.Max(0f, percent)));
     }
 
+    public void IncreaseMaxHealthAndHeal(int increase, float healPercent)
+    {
+        if (IsSpawned && !IsServer)
+        {
+            IncreaseMaxHealthAndHealServerRpc(increase, healPercent);
+            return;
+        }
+
+        ApplyMaxHealthIncreaseAndHeal(increase, healPercent);
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void IncreaseMaxHealthAndHealServerRpc(int increase, float healPercent)
+    {
+        ApplyMaxHealthIncreaseAndHeal(increase, healPercent);
+    }
+
+    private void ApplyMaxHealthIncreaseAndHeal(int increase, float healPercent)
+    {
+        maxHealth = Mathf.Max(1, maxHealth + Mathf.Max(0, increase));
+        currentHealth = Mathf.Min(maxHealth, currentHealth + Mathf.RoundToInt(maxHealth * Mathf.Max(0f, healPercent)));
+        if (IsSpawned && IsServer)
+        {
+            networkMaxHealth.Value = maxHealth;
+            networkHealth.Value = currentHealth;
+        }
+        UpdateHealthBar();
+        UpdatePlayerSystems();
+    }
+
     public float GetHealthPercent()
     {
         if (maxHealth <= 0)
@@ -171,8 +217,30 @@ public class PlayerHealth : NetworkBehaviour
     private void OnHealthChanged(int previousHealth, int newHealth)
     {
         currentHealth = newHealth;
+        if (newHealth < previousHealth) PlayHurtParticle();
+        GameAudioManager audio = GameAudioManager.EnsureInstance();
+        if (newHealth <= 0 && previousHealth > 0) audio.PlayPlayerDeath();
+        else if (newHealth < previousHealth) audio.PlayPlayerHurt();
         UpdateHealthBar();
         UpdatePlayerSystems();
+    }
+
+    private void PlayHurtParticle()
+    {
+        if (hurtParticlePrefab == null) return;
+
+        CharacterController characterController = GetComponent<CharacterController>();
+        Vector3 feetPosition = characterController != null
+            ? new Vector3(transform.position.x, characterController.bounds.min.y, transform.position.z)
+            : transform.position;
+        GameObject effect = Instantiate(hurtParticlePrefab, feetPosition, Quaternion.identity);
+        Destroy(effect, 5f);
+    }
+
+    private void OnMaxHealthChanged(int previousMaxHealth, int newMaxHealth)
+    {
+        maxHealth = newMaxHealth;
+        UpdateHealthBar();
     }
 
     private void UpdatePlayerSystems()

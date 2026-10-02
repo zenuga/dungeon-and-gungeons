@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b74311f2ef630af179f5ec643a6e5609, type: 3}
+  m_Name: Pistol
+  m_EditorClassIdentifier: Assembly-CSharp::WeaponData
+  itemType: 0
+  weaponName: 
+  weaponImage: {fileID: 0}
+  weaponPrefab: {fileID: 0}
+  damage: 0
+  cooldown: 0
+  currencyAmount: 50
+  attackSound: {fileID: 8300000, guid: 373f243c8a1ab0e469f146e72ceea4f7, type: 3}
+  reloadSound: {fileID: 8300000, guid: 0c3849d4d8de73f438301aa5fcf7810e, type: 3}
+  potionType: 0
+  isHitscan: 1
+  hitscanRange: 100
+  hitscanLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  impactParticlePrefab: {fileID: 4112264626245002651, guid: a211ab1d587643715bd19d74d2bbff5c, type: 3}
+  hitscanShootDuration: 1
+  hitscanReloadTime: 1.5

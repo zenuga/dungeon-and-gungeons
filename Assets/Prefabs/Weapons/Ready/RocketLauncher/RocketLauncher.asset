@@ -19,6 +19,8 @@ MonoBehaviour:
   damage: 60
   cooldown: 1.25
   currencyAmount: 300
+  attackSound: {fileID: 0}
+  reloadSound: {fileID: 0}
   potionType: 0
   isHitscan: 0
   hitscanRange: 100
@@ -26,3 +28,5 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 4294967295
   impactParticlePrefab: {fileID: 0}
+  hitscanShootDuration: 3
+  hitscanReloadTime: 2

@@ -32,7 +32,7 @@ public class PlayerPickupManager : NetworkBehaviour
     [SerializeField] private Image reloadImage;
 
     [Header("Inventory Setup")]
-    [SerializeField] private int maxPotions = 5;
+    [SerializeField] private int maxPotions = 8;
     [SerializeField] private int maxBombs = 15;
 
     private int currentPotions = 0;
@@ -108,14 +108,14 @@ public class PlayerPickupManager : NetworkBehaviour
             TryPickupItem();
         }
 
-        bool bombPressed = Keyboard.current.qKey.wasPressedThisFrame ||
+        bool bombPressed = Keyboard.current.bKey.wasPressedThisFrame ||
             (playerType == PlayerType.Player2 && Keyboard.current.uKey.wasPressedThisFrame);
         if (bombPressed)
         {
             UseBomb();
         }
 
-        bool potionPressed = Keyboard.current.rKey.wasPressedThisFrame ||
+        bool potionPressed = Keyboard.current.qKey.wasPressedThisFrame ||
             (playerType == PlayerType.Player2 && Keyboard.current.pKey.wasPressedThisFrame);
         if (potionPressed)
         {
@@ -245,7 +245,26 @@ public class PlayerPickupManager : NetworkBehaviour
         }
     }
 
-    public float DamageMultiplier => hasActivePotionEffect && activePotionType == PotionType.Strength ? 1.5f : 1f;
+    public float DamageMultiplier => hasActivePotionEffect && activePotionType == PotionType.Strength ? 2f : 1f;
+    public float ReloadSpeedMultiplier => hasActivePotionEffect && activePotionType == PotionType.Speed ? 1.5f : 1f;
+
+    public bool CanAddPotion(WeaponData data, int quantity = 1)
+    {
+        if (data == null || data.itemType != RewardItemType.Potion || quantity <= 0) return false;
+        if (currentPotions > 0 && currentPotionType != data.potionType) return false;
+        return currentPotions + quantity <= maxPotions;
+    }
+
+    public bool TryAddPotion(WeaponData data, int quantity = 1)
+    {
+        if (!CanAddPotion(data, quantity)) return false;
+        currentPotionType = data.potionType;
+        currentPotionData = data;
+        currentPotions += quantity;
+        if (potionImage != null) potionImage.sprite = data.weaponImage;
+        UpdatePotionUI();
+        return true;
+    }
 
     public bool PurchaseWeapon(WeaponData data)
     {
@@ -289,15 +308,12 @@ public class PlayerPickupManager : NetworkBehaviour
         {
             if (playerHealth != null)
             {
-                playerHealth.HealPercentOfMax(0.3f);
+                playerHealth.IncreaseMaxHealthAndHeal(5, 0.1f);
             }
             return;
         }
 
-        if (activePotionType == PotionType.Speed && playerController != null)
-        {
-            playerController.SetSpeedMultiplier(1f);
-        }
+        ClearActivePotionEffect();
 
         hasActivePotionEffect = true;
         activePotionType = currentPotionType;
@@ -305,7 +321,7 @@ public class PlayerPickupManager : NetworkBehaviour
 
         if (activePotionType == PotionType.Speed && playerController != null)
         {
-            playerController.SetSpeedMultiplier(1.25f);
+            playerController.SetSpeedMultiplier(1.4f);
         }
 
         UpdatePotionEffectUI();
@@ -326,12 +342,14 @@ public class PlayerPickupManager : NetworkBehaviour
             return;
         }
 
-        hasActivePotionEffect = false;
-        if (activePotionType == PotionType.Speed && playerController != null)
-        {
-            playerController.SetSpeedMultiplier(1f);
-        }
+        ClearActivePotionEffect();
+    }
 
+    private void ClearActivePotionEffect()
+    {
+        if (activePotionType == PotionType.Speed && playerController != null)
+            playerController.SetSpeedMultiplier(1f);
+        hasActivePotionEffect = false;
         UpdatePotionEffectUI();
     }
 
@@ -401,32 +419,6 @@ public class PlayerPickupManager : NetworkBehaviour
         }
     }
 
-    private void DropPotion()
-    {
-        if (currentPotionData == null || currentPotionData.weaponPrefab == null)
-        {
-            return;
-        }
-
-        GameObject droppedPotion = Instantiate(currentPotionData.weaponPrefab, dropPoint != null ? dropPoint.position : transform.position + transform.forward * 1.5f, Quaternion.identity);
-        CollectibleItem item = droppedPotion.GetComponent<CollectibleItem>();
-        if (item == null)
-        {
-            item = droppedPotion.AddComponent<CollectibleItem>();
-        }
-
-        item.itemType = "potion";
-        item.potionType = currentPotionType;
-        item.weaponData = currentPotionData;
-        item.quantity = currentPotions;
-        Collider collider = droppedPotion.GetComponentInChildren<Collider>();
-        if (collider == null)
-        {
-            collider = droppedPotion.AddComponent<BoxCollider>();
-        }
-        collider.isTrigger = true;
-    }
-
     private T SearchDeep<T>(Transform parent, string targetName) where T : Component
     {
         foreach (Transform child in parent)
@@ -479,29 +471,9 @@ public class PlayerPickupManager : NetworkBehaviour
 
             if (tagType == "potion")
             {
-                if (currentPotions > 0 && currentPotionType != item.potionType)
-                {
-                    DropPotion();
-                    currentPotions = 0;
-                }
-
-                if (currentPotions >= maxPotions)
-                {
-                    foreach (var c in targetColliders) c.enabled = true;
-                    continue;
-                }
-
-                currentPotionType = item.potionType;
-                currentPotionData = item.weaponData;
-                currentPotions += item.quantity;
-                currentPotions = Mathf.Min(currentPotions, maxPotions);
-                if (currentPotionData != null && potionImage != null)
-                {
-                    potionImage.sprite = currentPotionData.weaponImage;
-                }
-                UpdatePotionUI();
-                ConsumeCollectedItem(item, targetGameObject);
-                break;
+                // Potions are purchased directly from the shop and cannot be picked up in the world.
+                foreach (var c in targetColliders) c.enabled = true;
+                continue;
             }
             else if (tagType == "bombs")
             {
@@ -562,6 +534,7 @@ public class PlayerPickupManager : NetworkBehaviour
 
     private void ConsumeCollectedItem(CollectibleItem item, GameObject itemObject)
     {
+        GameAudioManager.EnsureInstance().PlayItemPickup();
         NetworkObject networkObject = itemObject != null
             ? itemObject.GetComponentInParent<NetworkObject>()
             : null;

@@ -2,6 +2,7 @@ using UnityEngine;
 
 public class TutorialScreen : MonoBehaviour
 {
+    public static bool IsBlockingHud { get; private set; }
     [SerializeField] private GameObject tutorialScreen;
     [SerializeField] private GameObject[] tutorialPages;
     [SerializeField] private GameObject playerUI;
@@ -9,16 +10,21 @@ public class TutorialScreen : MonoBehaviour
 
     private void Awake()
     {
+        IsBlockingHud = tutorialScreen != null && tutorialScreen.activeInHierarchy;
         ResolvePlayerUI();
+        if (playerUI != null) playerUI.SetActive(false);
     }
 
     public void helpButton()
     {
         tutorialScreen.SetActive(true);
-        tutorialPages[0].SetActive(true);
-        tutorialPages[1].SetActive(false);
-        tutorialPages[2].SetActive(false);
-        tutorialPages[3].SetActive(false);
+        IsBlockingHud = true;
+        if (playerUI != null) playerUI.SetActive(false);
+        currentPage = 0;
+        for (int i = 0; i < tutorialPages.Length; i++)
+        {
+            if (tutorialPages[i] != null) tutorialPages[i].SetActive(i == 0);
+        }
     }
 
     public void PressingNextsecondtime()
@@ -32,6 +38,7 @@ public class TutorialScreen : MonoBehaviour
         {
             tutorialPages[currentPage].SetActive(false);
             tutorialScreen.SetActive(false);
+            IsBlockingHud = false;
             currentPage = 0;
             ResolvePlayerUI();
             if (playerUI != null)

@@ -13,6 +13,10 @@ MonoBehaviour:
   m_Name: Goblin
   m_EditorClassIdentifier: Assembly-CSharp::EnemyData
   maxHealth: 50
+  minimumCurrencyReward: 5
+  maximumCurrencyReward: 25
+  hurtSound: {fileID: 8300000, guid: dc8973996053c364daf22331d2b2bfef, type: 3}
+  deathSound: {fileID: 8300000, guid: fcacc6f5796293e449dc2d59c7ae6132, type: 3}
   walkSpeed: 2
   stopDistance: 1.25
   rotationSpeed: 720
@@ -22,3 +26,4 @@ MonoBehaviour:
   attackCooldown: 1
   weaponData: {fileID: 11400000, guid: ba7f7c7cb8b52c712928bbb88711c2c2, type: 2}
   projectilePrefab: {fileID: 0}
+  specialBossWeaponDrop: {fileID: 0}

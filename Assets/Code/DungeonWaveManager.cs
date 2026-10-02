@@ -9,7 +9,11 @@ public class DungeonWaveManager : MonoBehaviour
     [Header("Enemy Setup")]
     public List<GameObject> enemyPrefabs = new List<GameObject>();
     public List<int> enemyWeights = new List<int>(); // Element 0 should be your basic enemy
-    public GameObject bossPrefab;
+    [Tooltip("Choose the base enemy prefab(s) that can be promoted to boss size and stats.")]
+    public GameObject[] bossBaseEnemyPrefabs = new GameObject[0];
+    [Min(1f)] public float bossScaleMultiplier = 2f;
+    [Min(1)] public int bossHealthMultiplier = 5;
+    [Min(1)] public int bossDamageMultiplier = 2;
     public GameObject ladderPrefab;
     public GameObject objectToDisableOnBossSpawn;
 
@@ -64,10 +68,11 @@ public class DungeonWaveManager : MonoBehaviour
 
         dungeonStarted = true;
         completedDungeonCount++;
+        GameObject bossPrefab = GetBossPrefab();
         if (completedDungeonCount >= 5 && bossPrefab != null)
         {
             currentWave = totalWaves;
-            SpawnBoss();
+            SpawnBoss(bossPrefab);
             if (objectToDisableOnBossSpawn != null)
             {
                 objectToDisableOnBossSpawn.SetActive(false);
@@ -77,13 +82,29 @@ public class DungeonWaveManager : MonoBehaviour
         StartNextWave();
     }
 
-    private void SpawnBoss()
+    private void SpawnBoss(GameObject bossPrefab)
     {
         Transform spawnPoint = spawnPoints != null && spawnPoints.Length > 0 ? spawnPoints[0] : transform;
         GameObject boss = Instantiate(bossPrefab, GetSpawnPositionOnNavMesh(spawnPoint.position), spawnPoint.rotation);
+        boss.transform.localScale *= bossScaleMultiplier;
+        boss.tag = "boss";
+        foreach (EnemyAi bossAi in boss.GetComponentsInChildren<EnemyAi>(true))
+        {
+            bossAi.gameObject.tag = "boss";
+            bossAi.SetBoss(bossHealthMultiplier, bossDamageMultiplier);
+        }
         activeBoss = boss;
         RegisterEnemy(boss);
         NetworkSpawnUtility.SpawnIfNetworked(boss);
+    }
+
+    private GameObject GetBossPrefab()
+    {
+        if (bossBaseEnemyPrefabs == null || bossBaseEnemyPrefabs.Length == 0) return null;
+        List<GameObject> validPrefabs = new List<GameObject>();
+        foreach (GameObject prefab in bossBaseEnemyPrefabs)
+            if (prefab != null) validPrefabs.Add(prefab);
+        return validPrefabs.Count == 0 ? null : validPrefabs[Random.Range(0, validPrefabs.Count)];
     }
 
     private void Update()
@@ -151,16 +172,26 @@ public class DungeonWaveManager : MonoBehaviour
             return;
         }
 
-        EnemyAi enemyAi = enemy.GetComponentInChildren<EnemyAi>(true);
-        if (enemyAi != null)
+        EnemyAi[] enemyAis = enemy.GetComponentsInChildren<EnemyAi>(true);
+        if (enemyAis.Length == 0)
         {
-            enemyAi.SetWaveManager(this);
+            AddActiveEnemy(enemy);
+            return;
         }
 
-        if (!activeEnemies.Contains(enemy))
+        foreach (EnemyAi enemyAi in enemyAis)
         {
-            activeEnemies.Add(enemy);
+            if (enemyAi != null)
+            {
+                enemyAi.SetWaveManager(this);
+                AddActiveEnemy(enemyAi.gameObject);
+            }
         }
+    }
+
+    private void AddActiveEnemy(GameObject enemy)
+    {
+        if (!activeEnemies.Contains(enemy)) activeEnemies.Add(enemy);
     }
 
     public void UnregisterEnemy(GameObject enemy)
@@ -170,13 +201,48 @@ public class DungeonWaveManager : MonoBehaviour
             return;
         }
 
-        activeEnemies.Remove(enemy);
-
-        if (enemy == activeBoss)
+        EnemyAi enemyAi = enemy.GetComponent<EnemyAi>();
+        if (enemyAi == null)
         {
-            InstantiateLadder(enemy.transform.position);
-            activeBoss = null;
+            // A grouped prefab may report death from a child while tracking is per enemy.
+            EnemyAi[] children = enemy.GetComponentsInChildren<EnemyAi>(true);
+            foreach (EnemyAi child in children) activeEnemies.Remove(child.gameObject);
+            activeEnemies.Remove(enemy);
         }
+        else
+        {
+            activeEnemies.Remove(enemyAi.gameObject);
+        }
+
+        if (activeBoss != null && (enemy == activeBoss || enemy.transform.IsChildOf(activeBoss.transform)))
+        {
+            bool bossGroupStillAlive = activeEnemies.Exists(active => active != null &&
+                (active == activeBoss || active.transform.IsChildOf(activeBoss.transform)));
+            if (!bossGroupStillAlive)
+            {
+                EnemyAi defeatedBoss = enemy.GetComponent<EnemyAi>();
+                if (defeatedBoss != null)
+                    DropBossWeapon(defeatedBoss.SpecialBossWeaponDrop, enemy.transform.position);
+                InstantiateLadder(activeBoss.transform.position);
+                activeBoss = null;
+            }
+        }
+    }
+
+    private void DropBossWeapon(WeaponData weaponData, Vector3 position)
+    {
+        if (weaponData == null || weaponData.weaponPrefab == null) return;
+
+        GameObject droppedWeapon = Instantiate(weaponData.weaponPrefab, position + Vector3.up * 0.5f, Quaternion.identity);
+        CollectibleItem collectible = droppedWeapon.GetComponent<CollectibleItem>();
+        if (collectible == null) collectible = droppedWeapon.AddComponent<CollectibleItem>();
+        collectible.itemType = weaponData.weaponPrefab.GetComponentInChildren<WeaponAttack>() != null ? "melee" : "ranged";
+        collectible.weaponData = weaponData;
+
+        Collider weaponCollider = droppedWeapon.GetComponentInChildren<Collider>();
+        if (weaponCollider == null) weaponCollider = droppedWeapon.AddComponent<BoxCollider>();
+        weaponCollider.isTrigger = true;
+        NetworkSpawnUtility.SpawnIfNetworked(droppedWeapon);
     }
 
     private void InstantiateLadder(Vector3 position)

@@ -39,7 +39,7 @@ public class PlayerReviveController : MonoBehaviour
             return;
         }
 
-        if (reviveRoutine == null && reviveTarget != null && Keyboard.current != null && Keyboard.current.fKey.wasPressedThisFrame)
+        if (reviveRoutine == null && reviveTarget != null && ReviveKeyPressed())
         {
             reviveRoutine = StartCoroutine(ReviveChallenge());
         }
@@ -47,14 +47,19 @@ public class PlayerReviveController : MonoBehaviour
 
     public void SetReviveTarget(PlayerHealth target)
     {
-        if (target == null)
+        if (target == null || target == playerHealth) return;
+        if (target.IsAlive)
         {
-            reviveTarget = null;
+            ClearReviveTarget(target);
+            return;
         }
-        else if (target != playerHealth && !target.IsAlive)
-        {
-            reviveTarget = target;
-        }
+
+        reviveTarget = target;
+    }
+
+    public void ClearReviveTarget(PlayerHealth target)
+    {
+        if (reviveTarget == target) reviveTarget = null;
     }
 
     private IEnumerator ReviveChallenge()
@@ -98,7 +103,7 @@ public class PlayerReviveController : MonoBehaviour
                 movingImage.anchoredPosition = anchoredPosition;
             }
 
-            if (Keyboard.current != null && Keyboard.current.fKey.wasPressedThisFrame &&
+            if (ReviveKeyPressed() &&
                 Mathf.Abs(slidePosition - targetPosition) <= 30f)
             {
                 successfulPresses++;
@@ -124,6 +129,17 @@ public class PlayerReviveController : MonoBehaviour
         {
             pickupManager.enabled = true;
         }
+    }
+
+    private bool ReviveKeyPressed()
+    {
+        if (Keyboard.current == null) return false;
+        bool playerTwoLocalControls = playerController != null &&
+            playerController.Type == PlayerController.PlayerType.Player2 &&
+            !NetworkSpawnUtility.IsNetworkSessionActive;
+        return playerTwoLocalControls
+            ? Keyboard.current.semicolonKey.wasPressedThisFrame
+            : Keyboard.current.fKey.wasPressedThisFrame;
     }
 
     private void SetReviveUi(bool visible)

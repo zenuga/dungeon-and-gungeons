@@ -47,6 +47,7 @@ public class Dungeonenter : NetworkBehaviour // CHANGED: Fixed networkBehaviour 
         GameObject enteringPlayer = GetPlayerObject(other);
         if (enteringPlayer != null)
         {
+            WallBreakEncounterManager.DismissForTransition();
             FindPlayers();
 
             if (enteringPlayer.CompareTag("Player1") && player2 != null)

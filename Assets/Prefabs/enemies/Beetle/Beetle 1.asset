@@ -13,6 +13,10 @@ MonoBehaviour:
   m_Name: Beetle 1
   m_EditorClassIdentifier: Assembly-CSharp::EnemyData
   maxHealth: 10
+  minimumCurrencyReward: 5
+  maximumCurrencyReward: 25
+  hurtSound: {fileID: 8300000, guid: 4df163ce869c3394fa53c7b357251183, type: 3}
+  deathSound: {fileID: 8300000, guid: 788c7f5d74b16654c8959e6ba4634d32, type: 3}
   walkSpeed: 4
   stopDistance: 0.5
   rotationSpeed: 720
@@ -22,3 +26,4 @@ MonoBehaviour:
   attackCooldown: 1.5
   weaponData: {fileID: 11400000, guid: 16e972efd5e16b298a4b7bf3bbe41ad9, type: 2}
   projectilePrefab: {fileID: 0}
+  specialBossWeaponDrop: {fileID: 0}

@@ -2881,7 +2881,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1689672490
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3312,6 +3312,7 @@ GameObject:
   - component: {fileID: 1950396549}
   - component: {fileID: 1950396548}
   - component: {fileID: 1950396550}
+  - component: {fileID: 7330514492761130339}
   m_Layer: 0
   m_Name: MineGeneration
   m_TagString: Untagged
@@ -3920,6 +3921,22 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2112461553}
   m_CullTransparentMesh: 1
+--- !u!114 &7330514492761130339
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1950396547}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fcc68abf9df94f5294a47102d04d7a5b, type: 3}
+  m_Name: WallBreakEncounterManager
+  m_EditorClassIdentifier: Assembly-CSharp::WallBreakEncounterManager
+  enemyPrefab: {fileID: 2985702865053688152, guid: 07bb8293b075710408e2d0648b2e9b05, type: 3}
+  spawnChancePercent: 3
+  spawnRadius: 30
+  warningText: the shadow digger has appeared! run to safety!
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

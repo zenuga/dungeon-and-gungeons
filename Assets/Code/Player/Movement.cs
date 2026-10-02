@@ -29,6 +29,13 @@ public class PlayerController : NetworkBehaviour
     [SerializeField] private float gravity = -9.81f;
     [SerializeField] private GameObject settings;
 
+    [Header("Animation Clips")]
+    [SerializeField] private Animation playerAnimation;
+    [SerializeField] private AnimationClip walkAnimationClip;
+    [SerializeField] private AnimationClip swingAttackAnimationClip;
+    [SerializeField] private AnimationClip shootAnimationClip;
+    private bool isWalkingAnimationPlaying;
+
     private CharacterController _characterController;
     private Vector3 _velocity;
     private float speedMultiplier = 1f;
@@ -47,6 +54,19 @@ public class PlayerController : NetworkBehaviour
     public Camera PlayerCamera => playerCamera;
     public GameObject PlayerHud => playerUI;
     public PlayerType Type => playerType;
+
+    public void PlaySwingAttackAnimation() => PlayPlayerAnimation(swingAttackAnimationClip);
+    public void PlayShootAnimation() => PlayPlayerAnimation(shootAnimationClip);
+
+    private void PlayPlayerAnimation(AnimationClip clip)
+    {
+        if (playerAnimation != null && clip != null)
+        {
+            if (playerAnimation.GetClip(clip.name) == null) playerAnimation.AddClip(clip, clip.name);
+            playerAnimation.Play(clip.name);
+        }
+        isWalkingAnimationPlaying = false;
+    }
 
     public void SetSpeedMultiplier(float multiplier)
     {
@@ -269,6 +289,9 @@ public class PlayerController : NetworkBehaviour
 
     private void Awake()
     {
+        if (playerAnimation == null) playerAnimation = GetComponentInChildren<Animation>(true);
+        if (playerAnimation == null && (walkAnimationClip != null || swingAttackAnimationClip != null || shootAnimationClip != null))
+            playerAnimation = gameObject.AddComponent<Animation>();
         _characterController = GetComponent<CharacterController>();
         playerMouseAim = GetComponentInChildren<PlayerMouseAim>(true);
 
@@ -526,13 +549,15 @@ public class PlayerController : NetworkBehaviour
 
         if (playerUI != null)
         {
-            playerUI.SetActive(isLocalPlayer);
+            playerUI.SetActive(isLocalPlayer && !TutorialScreen.IsBlockingHud);
         }
 
     }
 
     private void Update()
     {
+        if (playerUI != null && (!IsSpawned || IsOwner))
+            playerUI.SetActive(!TutorialScreen.IsBlockingHud && !(settings != null && settings.activeSelf));
         if ((IsSpawned && !IsOwner) || !NetworkOwnership.CanControl(this))
         {
             return;
@@ -560,6 +585,23 @@ public class PlayerController : NetworkBehaviour
 
         // Both players use the same WASD movement on their own computer.
         Vector2 inputVector = GetInput();
+
+        if (playerAnimation != null && walkAnimationClip != null)
+        {
+            if (inputVector.sqrMagnitude > 0.001f && !isWalkingAnimationPlaying)
+            {
+                if (playerAnimation.GetClip(walkAnimationClip.name) == null)
+                    playerAnimation.AddClip(walkAnimationClip, walkAnimationClip.name);
+                playerAnimation[walkAnimationClip.name].wrapMode = WrapMode.Loop;
+                playerAnimation.Play(walkAnimationClip.name);
+                isWalkingAnimationPlaying = true;
+            }
+            else if (inputVector.sqrMagnitude <= 0.001f && isWalkingAnimationPlaying)
+            {
+                playerAnimation.Stop(walkAnimationClip.name);
+                isWalkingAnimationPlaying = false;
+            }
+        }
 
         // If opposing keys are pressed, inputVector cancels out to zero
         if (inputVector.sqrMagnitude > 0.001f)

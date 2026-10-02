@@ -13,6 +13,10 @@ MonoBehaviour:
   m_Name: Spider
   m_EditorClassIdentifier: Assembly-CSharp::EnemyData
   maxHealth: 150
+  minimumCurrencyReward: 5
+  maximumCurrencyReward: 25
+  hurtSound: {fileID: 8300000, guid: 08bd8e0ef68a9cf478b8b583e133cc18, type: 3}
+  deathSound: {fileID: 8300000, guid: d5fbd2525bce0ef419e7a19a7851604c, type: 3}
   walkSpeed: 0.5
   stopDistance: 7
   rotationSpeed: 720
@@ -22,3 +26,4 @@ MonoBehaviour:
   attackCooldown: 8
   weaponData: {fileID: 11400000, guid: 6e4c8c3bdca0690168793760ef68f20e, type: 2}
   projectilePrefab: {fileID: 3177043549984659073, guid: 42d5d4e10b4a0c2a7aec932367b2a957, type: 3}
+  specialBossWeaponDrop: {fileID: 0}

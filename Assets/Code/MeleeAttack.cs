@@ -87,8 +87,10 @@ public class WeaponAttack : NetworkBehaviour
         }
         float cooldown = GetCooldownFromWeapon();
         _nextAttackTime = Time.time + cooldown;
+        if (weaponData != null) GameAudioManager.EnsureInstance().PlayEffect(weaponData.attackSound);
 
         PlayerController playerController = ownerTransform.GetComponent<PlayerController>();
+        if (playerController != null) playerController.PlaySwingAttackAnimation();
         Vector3 attackDirection = playerController != null ? playerController.FacingDirection : ownerTransform.forward;
         attackDirection.y = 0f;
         if (attackDirection.sqrMagnitude <= 0.001f)
@@ -130,12 +132,20 @@ public class WeaponAttack : NetworkBehaviour
 
     private float GetCooldownFromWeapon()
     {
+        float cooldown;
         if (weaponData != null && weaponData.cooldown > 0f)
         {
-            return weaponData.cooldown;
+            cooldown = weaponData.cooldown;
+        }
+        else
+        {
+            cooldown = attackCooldown;
         }
 
-        return attackCooldown;
+        Transform owner = GetOwnerTransform();
+        PlayerPickupManager pickupManager = owner != null ? owner.GetComponentInChildren<PlayerPickupManager>(true) : null;
+        float reloadSpeedMultiplier = pickupManager != null ? pickupManager.ReloadSpeedMultiplier : 1f;
+        return cooldown / Mathf.Max(1f, reloadSpeedMultiplier);
     }
 
     private bool HasValidTargetTag(GameObject obj, Transform owner)

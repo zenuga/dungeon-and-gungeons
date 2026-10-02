@@ -24,6 +24,9 @@ public class WeaponData : ScriptableObject
     public int damage;
     public float cooldown;
     public int currencyAmount = 40;
+    [Header("Audio")]
+    public AudioClip attackSound;
+    public AudioClip reloadSound;
     public PotionType potionType;
 
     [Header("Hitscan Settings")]

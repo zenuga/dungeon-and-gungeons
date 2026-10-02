@@ -42,6 +42,7 @@ public class SessionManager : MonoBehaviour
         }
 
         Instance = this;
+        if (GetComponent<GameAudioManager>() == null) gameObject.AddComponent<GameAudioManager>();
         DontDestroyOnLoad(gameObject);
         SceneManager.sceneLoaded += OnSceneLoaded;
         SubscribeToNetworkManager();

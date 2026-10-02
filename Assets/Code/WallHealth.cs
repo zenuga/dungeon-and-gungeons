@@ -75,6 +75,8 @@ public class WallHealth : NetworkBehaviour
         Health -= amount;
         if (Health <= 0)
         {
+            GameAudioManager.EnsureInstance().PlayWallBreak();
+            WallBreakEncounterManager.TrySpawnFromBrokenWall(transform.position);
             if ((!IsSpawned || IsServer) && Random.value <= 0.05f)
             {
                 CurrencyReward.GiveNearestPlayer(transform.position, 1, 20);

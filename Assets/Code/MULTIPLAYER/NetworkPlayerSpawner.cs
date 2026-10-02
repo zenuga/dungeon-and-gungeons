@@ -362,6 +362,22 @@ public class NetworkPlayerSpawner : NetworkBehaviour
         }
     }
 
+    public void BroadcastWallBreakWarning(bool visible, string message)
+    {
+        if (!IsSpawned || !IsServer)
+        {
+            return;
+        }
+
+        SetWallBreakWarningClientRpc(visible, message);
+    }
+
+    [ClientRpc]
+    private void SetWallBreakWarningClientRpc(bool visible, string message)
+    {
+        WallBreakEncounterUI.SetVisible(visible, message);
+    }
+
     [ClientRpc]
     private void ApplyDungeonCompletionClientRpc(Vector3 dungeonPosition, ClientRpcParams rpcParams = default)
     {

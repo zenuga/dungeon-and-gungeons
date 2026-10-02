@@ -19,6 +19,10 @@ public class EnemyAi : NetworkBehaviour
     [SerializeField] protected Transform projectileSpawnPoint;
     [SerializeField] protected string[] targetTags = {"Player1", "Player2" };
     [SerializeField] protected Image enemyHealthBarbackgroundImagePrefab;
+    [Header("Animation Clips")]
+    [SerializeField] private Animation enemyAnimation;
+    [SerializeField] private AnimationClip walkAnimationClip;
+    [SerializeField] private AnimationClip attackAnimationClip;
 
     protected Transform target;
     protected NavMeshAgent navMeshAgent;
@@ -32,6 +36,12 @@ public class EnemyAi : NetworkBehaviour
     protected bool isAttacking;
     protected Depth depth;
     private DungeonWaveManager waveManager;
+    private bool isBoss;
+    private int bossHealthMultiplier = 1;
+    private int bossDamageMultiplier = 1;
+    private bool isWalkingAnimationPlaying;
+    private bool externallyControlled;
+    public WeaponData SpecialBossWeaponDrop => enemyData != null ? enemyData.specialBossWeaponDrop : null;
 
     protected virtual float MoveSpeed => enemyData != null ? enemyData.walkSpeed : 2.5f;
     protected virtual float StopDistance => enemyData != null ? enemyData.stopDistance : 1.25f;
@@ -48,7 +58,8 @@ public class EnemyAi : NetworkBehaviour
         {
             int baseHealth = enemyData != null ? enemyData.MaxHealth : 100;
             int currentDepth = depth != null ? Mathf.Max(1, depth.depth) : 1;
-            return baseHealth * currentDepth;
+            float mineMultiplier = Mathf.Pow(1.3f, currentDepth - 1);
+            return Mathf.Max(1, Mathf.RoundToInt(baseHealth * mineMultiplier * (isBoss ? bossHealthMultiplier : 1)));
         }
     }
     public int CurrentHealth => IsSpawned ? replicatedHealth.Value : currentHealth;
@@ -58,6 +69,20 @@ public class EnemyAi : NetworkBehaviour
     public void SetWaveManager(DungeonWaveManager manager)
     {
         waveManager = manager;
+    }
+
+    public void SetExternallyControlled(bool controlled)
+    {
+        externallyControlled = controlled;
+    }
+
+    public void SetBoss(int healthMultiplier = 5, int damageMultiplier = 2)
+    {
+        isBoss = true;
+        bossHealthMultiplier = Mathf.Max(1, healthMultiplier);
+        bossDamageMultiplier = Mathf.Max(1, damageMultiplier);
+        currentHealth = MaxHealth;
+        if (!IsSpawned) GameAudioManager.EnsureInstance().PlayBossMusic();
     }
 
     protected virtual void Awake()
@@ -75,6 +100,9 @@ public class EnemyAi : NetworkBehaviour
         }
 
         currentHealth = MaxHealth;
+        if (enemyAnimation == null) enemyAnimation = GetComponentInChildren<Animation>(true);
+        if (enemyAnimation == null && (walkAnimationClip != null || attackAnimationClip != null))
+            enemyAnimation = gameObject.AddComponent<Animation>();
 
         CreateHealthBar();
 
@@ -93,7 +121,6 @@ public class EnemyAi : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
-        replicatedHealth.OnValueChanged += OnReplicatedHealthChanged;
         if (IsServer)
         {
             replicatedHealth.Value = MaxHealth;
@@ -103,6 +130,8 @@ public class EnemyAi : NetworkBehaviour
         {
             currentHealth = replicatedHealth.Value;
         }
+        replicatedHealth.OnValueChanged += OnReplicatedHealthChanged;
+        if (isBoss && IsServer) SetBossMusicClientRpc();
     }
 
     public override void OnNetworkDespawn()
@@ -113,6 +142,10 @@ public class EnemyAi : NetworkBehaviour
     private void OnReplicatedHealthChanged(int previousHealth, int newHealth)
     {
         currentHealth = newHealth;
+        if (newHealth < previousHealth && newHealth > 0 && enemyData != null)
+            GameAudioManager.EnsureInstance().PlayEffect(enemyData.hurtSound);
+        if (newHealth <= 0 && previousHealth > 0 && enemyData != null)
+            GameAudioManager.EnsureInstance().PlayEffect(enemyData.deathSound);
     }
 
     protected virtual void Update()
@@ -121,6 +154,8 @@ public class EnemyAi : NetworkBehaviour
         {
             return;
         }
+
+        if (externallyControlled) return;
 
         if (target == null)
         {
@@ -141,10 +176,12 @@ public class EnemyAi : NetworkBehaviour
         else if (distanceToTarget > StopDistance)
         {
             MoveTowardTarget();
+            PlayWalkAnimation();
         }
         else
         {
             StopMovement();
+            StopWalkAnimation();
         }
 
         if (distanceToTarget <= MaxAttackDistance && Time.time >= nextAttackTime)
@@ -183,6 +220,7 @@ public class EnemyAi : NetworkBehaviour
     {
         isAttacking = true;
         StopMovement();
+        PlayAttackAnimation();
         yield return new WaitForSeconds(0.5f);
 
         if (target != null && Vector3.Distance(transform.position, target.position) <= MaxAttackDistance)
@@ -227,7 +265,37 @@ public class EnemyAi : NetworkBehaviour
     {
         int baseDamage = WeaponData != null && WeaponData.damage > 0 ? WeaponData.damage : 10;
         int currentDepth = depth != null ? Mathf.Max(1, depth.depth) : 1;
-        return baseDamage * currentDepth;
+        float mineMultiplier = Mathf.Pow(1.3f, currentDepth - 1);
+        return Mathf.Max(1, Mathf.RoundToInt(baseDamage * mineMultiplier * (isBoss ? bossDamageMultiplier : 1)));
+    }
+
+    private void PlayWalkAnimation()
+    {
+        if (enemyAnimation == null || walkAnimationClip == null || isWalkingAnimationPlaying) return;
+        if (enemyAnimation.GetClip(walkAnimationClip.name) == null)
+            enemyAnimation.AddClip(walkAnimationClip, walkAnimationClip.name);
+        enemyAnimation[walkAnimationClip.name].wrapMode = WrapMode.Loop;
+        enemyAnimation.Play(walkAnimationClip.name);
+        isWalkingAnimationPlaying = true;
+    }
+
+    private void StopWalkAnimation()
+    {
+        if (enemyAnimation == null || !isWalkingAnimationPlaying) return;
+        enemyAnimation.Stop(walkAnimationClip != null ? walkAnimationClip.name : null);
+        isWalkingAnimationPlaying = false;
+    }
+
+    private void PlayAttackAnimation()
+    {
+        if (enemyAnimation != null && attackAnimationClip != null)
+        {
+            if (walkAnimationClip != null) enemyAnimation.Stop(walkAnimationClip.name);
+            if (enemyAnimation.GetClip(attackAnimationClip.name) == null)
+                enemyAnimation.AddClip(attackAnimationClip, attackAnimationClip.name);
+            enemyAnimation.Play(attackAnimationClip.name);
+        }
+        isWalkingAnimationPlaying = false;
     }
 
     protected virtual void ApplyDamageToTarget(GameObject target, int damageAmount)
@@ -342,13 +410,26 @@ public class EnemyAi : NetworkBehaviour
         }
         if (currentHealth <= 0)
         {
+            if (!IsSpawned && enemyData != null) GameAudioManager.EnsureInstance().PlayEffect(enemyData.deathSound);
             OnDeath();
         }
+        else if (!IsSpawned && enemyData != null)
+            GameAudioManager.EnsureInstance().PlayEffect(enemyData.hurtSound);
     }
 
     protected virtual void OnDeath()
     {
-        CurrencyReward.GiveNearestPlayer(transform.position, 5, 25);
+        if (isBoss)
+        {
+            if (IsSpawned && IsServer) StopBossMusicClientRpc();
+            else GameAudioManager.EnsureInstance().StopBossMusic();
+        }
+        if (!IsSpawned || IsServer)
+        {
+            int minimum = enemyData != null ? enemyData.minimumCurrencyReward : 5;
+            int maximum = enemyData != null ? enemyData.maximumCurrencyReward : 25;
+            CurrencyReward.GiveNearestPlayer(transform.position, minimum, Mathf.Max(minimum, maximum));
+        }
 
         DungeonWaveManager manager = waveManager != null ? waveManager : GetComponentInParent<DungeonWaveManager>();
         if (manager != null)
@@ -358,6 +439,12 @@ public class EnemyAi : NetworkBehaviour
 
         NetworkSpawnUtility.DespawnOrDestroy(gameObject);
     }
+
+    [ClientRpc]
+    private void SetBossMusicClientRpc() => GameAudioManager.EnsureInstance().PlayBossMusic();
+
+    [ClientRpc]
+    private void StopBossMusicClientRpc() => GameAudioManager.EnsureInstance().StopBossMusic();
 
     protected virtual Transform FindClosestTarget()
     {
@@ -390,6 +477,12 @@ public class EnemyAi : NetworkBehaviour
     {
         if (enemyHealthBarbackgroundImagePrefab == null)
         {
+            healthBarUI = GetComponentInChildren<HealthBarUI>(true);
+            if (healthBarUI != null)
+            {
+                healthBarUI.Initialize(healthBarUI.GetComponent<Image>(), this);
+                return;
+            }
             Debug.LogWarning(name + " has no enemy health-bar background Image assigned.", this);
             return;
         }
