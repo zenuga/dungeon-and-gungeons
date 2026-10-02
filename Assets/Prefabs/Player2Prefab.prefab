@@ -3304,8 +3304,8 @@ MonoBehaviour:
   gravity: -9.81
   settings: {fileID: 0}
   playerAnimation: {fileID: -5182337449797207385}
-  walkAnimationClip: {fileID: 0}
-  swingAttackAnimationClip: {fileID: 0}
+  walkAnimationClip: {fileID: -4159849291455229913, guid: 2b2738d0691349044b2a4d86da8da239, type: 3}
+  swingAttackAnimationClip: {fileID: 7546039358729094694, guid: 027969273cdd24843b723805a437a277, type: 3}
   shootAnimationClip: {fileID: 0}
 --- !u!114 &6638607713950294724
 MonoBehaviour:
@@ -3324,7 +3324,7 @@ MonoBehaviour:
   healthFill: {fileID: 5432086866897850123}
   healthBarRoot: {fileID: 4409930819166611727}
   maxHealth: 100
-  hurtParticlePrefab: {fileID: 4112264626245002651, guid: a211ab1d587643715bd19d74d2bbff5c, type: 3}
+  hurtParticlePrefab: {fileID: 6129862434143452988, guid: 17a2b606314be1992b03fac91fed3780, type: 3}
   currentHealth: 0
 --- !u!114 &8058023396980503578
 MonoBehaviour:

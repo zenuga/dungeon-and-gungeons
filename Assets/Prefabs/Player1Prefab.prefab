@@ -686,7 +686,7 @@ MonoBehaviour:
   playerAnimation: {fileID: 3437477651772772020}
   walkAnimationClip: {fileID: 4677992259941259231, guid: 53e670f2b5eae0442803b4cfc04b9cd2, type: 3}
   swingAttackAnimationClip: {fileID: 1755863689834921032, guid: eff19f37be6d9a14299749186bb2101c, type: 3}
-  shootAnimationClip: {fileID: -4497948680062601603, guid: eff19f37be6d9a14299749186bb2101c, type: 3}
+  shootAnimationClip: {fileID: 0}
 --- !u!114 &-5020218394506883370
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -704,7 +704,7 @@ MonoBehaviour:
   healthFill: {fileID: 5957331669088556547}
   healthBarRoot: {fileID: 4950502207369656207}
   maxHealth: 100
-  hurtParticlePrefab: {fileID: 4112264626245002651, guid: a211ab1d587643715bd19d74d2bbff5c, type: 3}
+  hurtParticlePrefab: {fileID: 6129862434143452988, guid: 17a2b606314be1992b03fac91fed3780, type: 3}
   currentHealth: 0
 --- !u!136 &1984528559770890308
 CapsuleCollider:
