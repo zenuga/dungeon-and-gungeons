@@ -17,13 +17,13 @@ MonoBehaviour:
   maximumCurrencyReward: 25
   hurtSound: {fileID: 0}
   deathSound: {fileID: 0}
-  walkSpeed: 2.5
+  walkSpeed: 1.75
   stopDistance: 1.25
   rotationSpeed: 5
   attackType: 0
   minAttackDistance: 0.8
   maxAttackDistance: 2.2
   attackCooldown: 1
-  weaponData: {fileID: 0}
+  weaponData: {fileID: 11400000, guid: 59488e4c39aca2b00b2a1bf20da8e2d5, type: 2}
   projectilePrefab: {fileID: 0}
   specialBossWeaponDrop: {fileID: 0}

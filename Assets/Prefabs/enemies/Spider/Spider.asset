@@ -26,4 +26,4 @@ MonoBehaviour:
   attackCooldown: 8
   weaponData: {fileID: 11400000, guid: 6e4c8c3bdca0690168793760ef68f20e, type: 2}
   projectilePrefab: {fileID: 3177043549984659073, guid: 42d5d4e10b4a0c2a7aec932367b2a957, type: 3}
-  specialBossWeaponDrop: {fileID: 0}
+  specialBossWeaponDrop: {fileID: 11400000, guid: 4e83536b734a9c41fb66320122d13f3a, type: 2}

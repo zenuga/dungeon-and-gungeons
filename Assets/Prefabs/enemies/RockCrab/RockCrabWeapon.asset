@@ -16,8 +16,8 @@ MonoBehaviour:
   weaponName: 
   weaponImage: {fileID: 0}
   weaponPrefab: {fileID: 0}
-  damage: 0
-  cooldown: 0
+  damage: 20
+  cooldown: 1
   currencyAmount: 40
   attackSound: {fileID: 0}
   reloadSound: {fileID: 0}

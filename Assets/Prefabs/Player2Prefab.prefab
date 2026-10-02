@@ -3199,6 +3199,7 @@ GameObject:
   - component: {fileID: 6906028135510548427}
   - component: {fileID: 6992599059459325393}
   - component: {fileID: 3320683983577846892}
+  - component: {fileID: -5182337449797207385}
   m_Layer: 6
   m_Name: Player2Prefab
   m_TagString: Player2
@@ -3267,7 +3268,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 1735575027
+  GlobalObjectIdHash: 1047207701
   InScenePlacedSourceGlobalObjectIdHash: 0
   m_InScenePlacedDisabledByDefault: 0
   DeferredDespawnTick: 0
@@ -3302,6 +3303,10 @@ MonoBehaviour:
   moveSpeed: 5
   gravity: -9.81
   settings: {fileID: 0}
+  playerAnimation: {fileID: -5182337449797207385}
+  walkAnimationClip: {fileID: 0}
+  swingAttackAnimationClip: {fileID: 0}
+  shootAnimationClip: {fileID: 0}
 --- !u!114 &6638607713950294724
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3413,6 +3418,22 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerCurrency
   ShowTopMostFoldoutHeaderGroup: 1
   startingGold: 0
+--- !u!111 &-5182337449797207385
+Animation:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8671723301485573298}
+  m_Enabled: 1
+  serializedVersion: 4
+  m_Animation: {fileID: 0}
+  m_Animations: []
+  m_WrapMode: 0
+  m_PlayAutomatically: 1
+  m_AnimatePhysics: 0
+  m_UpdateMode: 0
+  m_CullingType: 0
 --- !u!1 &8755928825176714312
 GameObject:
   m_ObjectHideFlags: 0

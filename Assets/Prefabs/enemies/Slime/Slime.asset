@@ -13,6 +13,10 @@ MonoBehaviour:
   m_Name: Slime
   m_EditorClassIdentifier: Assembly-CSharp::EnemyData
   maxHealth: 30
+  minimumCurrencyReward: 5
+  maximumCurrencyReward: 25
+  hurtSound: {fileID: 0}
+  deathSound: {fileID: 0}
   walkSpeed: 3
   stopDistance: 0.5
   rotationSpeed: 720
@@ -22,4 +26,4 @@ MonoBehaviour:
   attackCooldown: 1
   weaponData: {fileID: 11400000, guid: eee0f9e723473bac6abd7c1dbfa15cdc, type: 2}
   projectilePrefab: {fileID: 0}
-  specialBossWeaponDrop: {fileID: 11400000, guid: 4e83536b734a9c41fb66320122d13f3a, type: 2}
+  specialBossWeaponDrop: {fileID: 11400000, guid: 05cf6f7112c0a52b49a6de63db803304, type: 2}
