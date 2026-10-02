@@ -102,15 +102,15 @@ public class SessionManager : MonoBehaviour
 
         if (scene.name == "StartScreen")
         {
+            Time.timeScale = 1f;
+            gameStarting = false;
+            waitingToStartGame = false;
+            joinInProgress = false;
+            sessionGeneration++;
+
             if (currentSession != null)
             {
                 _ = LeaveCurrentSessionForMenuAsync();
-            }
-            else
-            {
-                gameStarting = false;
-                waitingToStartGame = false;
-                joinInProgress = false;
             }
 
             joinCodeText = GameObject.Find("JoinCodeText")?.GetComponent<TMP_Text>();

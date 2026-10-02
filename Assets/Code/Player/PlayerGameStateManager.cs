@@ -92,6 +92,7 @@ public class PlayerGameStateManager : MonoBehaviour
     {
         if (resetTransitionStarted) return;
         resetTransitionStarted = true;
+        Time.timeScale = 1f;
 
         SessionManager sessionManager = SessionManager.Instance;
         if (sessionManager != null)

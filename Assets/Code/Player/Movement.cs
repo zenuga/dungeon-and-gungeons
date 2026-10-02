@@ -4,6 +4,8 @@ using Unity.Netcode;
 using Unity.Netcode.Components;
 using UnityEngine.UI;
 using System.Collections.Generic;
+using UnityEngine.SceneManagement;
+using TMPro;
 
 [RequireComponent(typeof(CharacterController))]
 public class PlayerController : NetworkBehaviour
@@ -45,6 +47,7 @@ public class PlayerController : NetworkBehaviour
     private PlayerMouseAim playerMouseAim;
     private int localPresentationState = -1;
     private bool loggedMissingLocalCamera;
+    private bool pauseMenuActionsBound;
     private readonly HashSet<EntityId> rootMotionFilteredClips = new HashSet<EntityId>();
     private readonly NetworkVariable<float> replicatedAimYaw = new NetworkVariable<float>(
         0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
@@ -548,6 +551,11 @@ public class PlayerController : NetworkBehaviour
 
     public void SetLocalPresentation(bool isLocalPlayer)
     {
+        if (isLocalPlayer && !pauseMenuActionsBound)
+        {
+            BindPauseMenuActions();
+        }
+
         // The scene can activate this player after the prefab was first created.
         // Resolve the child camera again here so a stale/missing serialized field
         // cannot leave the owning client without a view after a scene load.
@@ -638,6 +646,29 @@ public class PlayerController : NetworkBehaviour
 
     }
 
+    private void BindPauseMenuActions()
+    {
+        if (settings == null) return;
+
+        foreach (Button button in settings.GetComponentsInChildren<Button>(true))
+        {
+            TMP_Text label = button.GetComponentInChildren<TMP_Text>(true);
+            if (label == null) continue;
+
+            string action = label.text.Trim().ToLowerInvariant();
+            if (action == "resume")
+            {
+                button.onClick.AddListener(ResumeGame);
+                pauseMenuActionsBound = true;
+            }
+            else if (action == "main menu" || action == "return to menu" || action == "quit to menu")
+            {
+                button.onClick.AddListener(ReturnToMainMenu);
+                pauseMenuActionsBound = true;
+            }
+        }
+    }
+
     private void Update()
     {
         RefreshPlayerHudVisibility();
@@ -651,14 +682,17 @@ public class PlayerController : NetworkBehaviour
         {
             if (settings != null && settings.activeSelf)
             {
-                settings.SetActive(false);
-                RefreshPlayerHudVisibility();
+                ResumeGame();
             }
             else if (settings != null && !settings.activeSelf)
             {
-                settings.SetActive(true);
-                RefreshPlayerHudVisibility();
+                PauseGame();
             }
+        }
+
+        if (Time.timeScale == 0f)
+        {
+            return;
         }
 
         if (_characterController.isGrounded && _velocity.y < 0)
@@ -702,6 +736,34 @@ public class PlayerController : NetworkBehaviour
         // Apply continuous gravity (No Jump functionality)
         _velocity.y += gravity * Time.deltaTime;
         _characterController.Move(_velocity * Time.deltaTime);
+    }
+
+    public void PauseGame()
+    {
+        Time.timeScale = 0f;
+        if (settings != null) settings.SetActive(true);
+        RefreshPlayerHudVisibility();
+    }
+
+    public void ResumeGame()
+    {
+        Time.timeScale = 1f;
+        if (settings != null) settings.SetActive(false);
+        RefreshPlayerHudVisibility();
+    }
+
+    public void ReturnToMainMenu()
+    {
+        Time.timeScale = 1f;
+        if (settings != null) settings.SetActive(false);
+
+        SessionManager sessionManager = SessionManager.Instance;
+        if (sessionManager != null) _ = sessionManager.LeaveCurrentSessionForMenuAsync();
+
+        NetworkManager networkManager = NetworkManager.Singleton;
+        if (networkManager != null && networkManager.IsListening) networkManager.Shutdown();
+
+        SceneManager.LoadScene("StartScreen");
     }
 
     private Vector2 GetInput()

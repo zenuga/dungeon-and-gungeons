@@ -193,6 +193,7 @@ GameObject:
   - component: {fileID: 5988235616822403091}
   - component: {fileID: 6977075574295692657}
   - component: {fileID: 1080329887041278927}
+  - component: {fileID: 4453209659238537481}
   m_Layer: 8
   m_Name: slime
   m_TagString: Enemy
@@ -363,6 +364,29 @@ Animation:
   m_AnimatePhysics: 0
   m_UpdateMode: 0
   m_CullingType: 0
+--- !u!136 &4453209659238537481
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4622308703736651978}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 0.50000024
+  m_Height: 0.5658398
+  m_Direction: 1
+  m_Center: {x: 0, y: 0.1433121, z: 0}
 --- !u!1 &4758433438899684626
 GameObject:
   m_ObjectHideFlags: 0

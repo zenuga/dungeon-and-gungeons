@@ -11,6 +11,7 @@ public class StartScreen : MonoBehaviour
 
     private void Awake()
     {
+        Time.timeScale = 1f;
         bool fullscreen = PlayerPrefs.GetInt(FullscreenPreference, Screen.fullScreen ? 1 : 0) == 1;
         Screen.fullScreen = fullscreen;
 
@@ -33,6 +34,7 @@ public class StartScreen : MonoBehaviour
 
     public void StartGame()
     {
+        Time.timeScale = 1f;
         // Make sure "SampleScene" matches your scene's exact file name in Build Settings
         SceneManager.LoadScene("SampleScene");
     }
