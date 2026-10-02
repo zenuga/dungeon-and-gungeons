@@ -3,6 +3,7 @@ using UnityEngine.AI;
 using UnityEngine.UI;
 using Unity.Netcode;
 using Unity.Netcode.Components;
+using System.Collections.Generic;
 
 public enum EnemyAttackType
 {
@@ -41,6 +42,7 @@ public class EnemyAi : NetworkBehaviour
     private int bossDamageMultiplier = 1;
     private bool isWalkingAnimationPlaying;
     private bool externallyControlled;
+    private readonly HashSet<EntityId> rootMotionFilteredClips = new HashSet<EntityId>();
     public WeaponData SpecialBossWeaponDrop => enemyData != null ? enemyData.specialBossWeaponDrop : null;
 
     protected virtual float MoveSpeed => enemyData != null ? enemyData.walkSpeed : 2.5f;
@@ -272,11 +274,38 @@ public class EnemyAi : NetworkBehaviour
     private void PlayWalkAnimation()
     {
         if (enemyAnimation == null || walkAnimationClip == null || isWalkingAnimationPlaying) return;
-        if (enemyAnimation.GetClip(walkAnimationClip.name) == null)
-            enemyAnimation.AddClip(walkAnimationClip, walkAnimationClip.name);
-        enemyAnimation[walkAnimationClip.name].wrapMode = WrapMode.Loop;
+        if (!TryGetEnemyAnimationState(walkAnimationClip, out AnimationState walkState)) return;
+        walkState.enabled = true;
+        walkState.wrapMode = WrapMode.Loop;
         enemyAnimation.Play(walkAnimationClip.name);
         isWalkingAnimationPlaying = true;
+    }
+
+    private bool TryGetEnemyAnimationState(AnimationClip clip, out AnimationState state)
+    {
+        state = null;
+        if (enemyAnimation == null || clip == null) return false;
+
+        if (enemyAnimation.GetClip(clip.name) == null)
+        {
+            enemyAnimation.AddClip(clip, clip.name);
+        }
+
+        state = enemyAnimation[clip.name];
+        if (state != null && rootMotionFilteredClips.Add(clip.GetEntityId()))
+        {
+            Transform rigRoot = enemyAnimation.transform;
+            if (rigRoot.childCount == 1 && rigRoot.GetChild(0).name == "Armature")
+            {
+                rigRoot = rigRoot.GetChild(0);
+            }
+
+            for (int i = 0; i < rigRoot.childCount; i++)
+            {
+                state.AddMixingTransform(rigRoot.GetChild(i), true);
+            }
+        }
+        return state != null;
     }
 
     private void StopWalkAnimation()
@@ -288,11 +317,11 @@ public class EnemyAi : NetworkBehaviour
 
     private void PlayAttackAnimation()
     {
-        if (enemyAnimation != null && attackAnimationClip != null)
+        if (TryGetEnemyAnimationState(attackAnimationClip, out AnimationState attackState))
         {
             if (walkAnimationClip != null) enemyAnimation.Stop(walkAnimationClip.name);
-            if (enemyAnimation.GetClip(attackAnimationClip.name) == null)
-                enemyAnimation.AddClip(attackAnimationClip, attackAnimationClip.name);
+            attackState.enabled = true;
+            attackState.wrapMode = WrapMode.Once;
             enemyAnimation.Play(attackAnimationClip.name);
         }
         isWalkingAnimationPlaying = false;

@@ -685,8 +685,8 @@ MonoBehaviour:
   settings: {fileID: 0}
   playerAnimation: {fileID: 3437477651772772020}
   walkAnimationClip: {fileID: 4677992259941259231, guid: 53e670f2b5eae0442803b4cfc04b9cd2, type: 3}
-  swingAttackAnimationClip: {fileID: 1755863689834921032, guid: eff19f37be6d9a14299749186bb2101c, type: 3}
-  shootAnimationClip: {fileID: 0}
+  swingAttackAnimationClip: {fileID: 1755863689834921032, guid: 0b7b63f98af3a8943ab0b5159365195f, type: 3}
+  shootAnimationClip: {fileID: 7546039358729094694, guid: 0b7b63f98af3a8943ab0b5159365195f, type: 3}
 --- !u!114 &-5020218394506883370
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -29,6 +29,7 @@ public class SessionManager : MonoBehaviour
     private bool joinInProgress = false;
     private bool shuttingDown = false;
     private bool waitingToStartGame = false;
+    private int sessionGeneration;
 
     private async void Awake()
     {
@@ -94,12 +95,90 @@ public class SessionManager : MonoBehaviour
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode loadSceneMode)
     {
-        if (shuttingDown || scene.name != gameSceneName)
+        if (shuttingDown)
         {
             return;
         }
 
-        SetStatus("In game");
+        if (scene.name == "StartScreen")
+        {
+            if (currentSession != null)
+            {
+                _ = LeaveCurrentSessionForMenuAsync();
+            }
+            else
+            {
+                gameStarting = false;
+                waitingToStartGame = false;
+                joinInProgress = false;
+            }
+
+            joinCodeText = GameObject.Find("JoinCodeText")?.GetComponent<TMP_Text>();
+            joinCodeInput = GameObject.Find("JoinCodeInput")?.GetComponent<TMP_InputField>();
+            SetStatus("Ready");
+            return;
+        }
+
+        if (scene.name == gameSceneName)
+        {
+            SetStatus("In game");
+        }
+    }
+
+    public async Task LeaveCurrentSessionForMenuAsync()
+    {
+        int generation = ++sessionGeneration;
+        gameStarting = false;
+        waitingToStartGame = false;
+        joinInProgress = false;
+
+        ISession session = currentSession;
+        currentSession = null;
+        if (session == null)
+        {
+            SetStatus("Ready");
+            return;
+        }
+
+        session.PlayerJoined -= OnPlayerJoined;
+        session.PlayerLeaving -= OnPlayerLeft;
+        try
+        {
+            Task leaveTask = session.LeaveAsync();
+            if (await Task.WhenAny(leaveTask, Task.Delay(2000)) == leaveTask)
+            {
+                await leaveTask;
+            }
+            else
+            {
+                Debug.LogWarning("The previous multiplayer session is still closing; returning to the menu anyway.");
+                _ = ObserveSessionLeaveAsync(leaveTask);
+            }
+        }
+        catch (Exception exception)
+        {
+            Debug.LogWarning($"Could not leave the previous multiplayer session cleanly: {exception.Message}");
+        }
+
+        if (generation == sessionGeneration)
+        {
+            gameStarting = false;
+            waitingToStartGame = false;
+            joinInProgress = false;
+            SetStatus("Ready");
+        }
+    }
+
+    private static async Task ObserveSessionLeaveAsync(Task leaveTask)
+    {
+        try
+        {
+            await leaveTask;
+        }
+        catch (Exception exception)
+        {
+            Debug.LogWarning($"Previous multiplayer session cleanup failed: {exception.Message}");
+        }
     }
 
     private async Task InitializeUnityServices()
@@ -149,6 +228,8 @@ public class SessionManager : MonoBehaviour
         {
             return;
         }
+
+        sessionGeneration++;
 
         Debug.Log("=================================");
         Debug.Log("CREATE GAME");
@@ -269,6 +350,7 @@ public class SessionManager : MonoBehaviour
         }
 
         waitingToStartGame = true;
+        int generation = sessionGeneration;
 
         try
         {
@@ -276,6 +358,7 @@ public class SessionManager : MonoBehaviour
             while (!shuttingDown &&
                    Application.isPlaying &&
                    !gameStarting &&
+                   generation == sessionGeneration &&
                    DateTime.UtcNow < deadline)
             {
                 NetworkManager manager = NetworkManager.Singleton;
@@ -288,7 +371,7 @@ public class SessionManager : MonoBehaviour
                 await Task.Delay(100);
             }
 
-            if (shuttingDown || !Application.isPlaying || gameStarting)
+            if (shuttingDown || !Application.isPlaying || gameStarting || generation != sessionGeneration)
             {
                 return;
             }
@@ -306,7 +389,10 @@ public class SessionManager : MonoBehaviour
         }
         finally
         {
-            waitingToStartGame = false;
+            if (generation == sessionGeneration)
+            {
+                waitingToStartGame = false;
+            }
         }
     }
 

@@ -1517,7 +1517,7 @@ RectTransform:
   m_GameObject: {fileID: 651840660}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1175079868}
@@ -2955,7 +2955,7 @@ RectTransform:
   m_GameObject: {fileID: 1689672489}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 812759665}
@@ -3180,6 +3180,57 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1727700903}
   m_CullTransparentMesh: 1
+--- !u!1 &1748936493
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1748936495}
+  - component: {fileID: 1748936494}
+  m_Layer: 0
+  m_Name: GameAudioManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1748936494
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1748936493}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8f48a63d1f784a289194a6a42a76eb91, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameAudioManager
+  backgroundMusic: {fileID: 8300000, guid: e09b075406338fd4081d636b43bbd91e, type: 3}
+  bossMusic: {fileID: 8300000, guid: 325be757c308bbf4798470cf769de657, type: 3}
+  playerHurtSound: {fileID: 0}
+  playerDeathSound: {fileID: 0}
+  chestOpenSound: {fileID: 8300000, guid: 1e0bc238132721d47a369c42a4491e0f, type: 3}
+  itemPickupSound: {fileID: 8300000, guid: 474da9edbfe48504ea6b40c75ea3af96, type: 3}
+  wallBreakSound: {fileID: 8300000, guid: 325be757c308bbf4798470cf769de657, type: 3}
+--- !u!4 &1748936495
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1748936493}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 891.08014, y: 0.00001, z: 453.9982}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1926701689
 GameObject:
   m_ObjectHideFlags: 0
@@ -3313,6 +3364,7 @@ GameObject:
   - component: {fileID: 1950396548}
   - component: {fileID: 1950396550}
   - component: {fileID: 7330514492761130339}
+  - component: {fileID: 7642001337000100221}
   m_Layer: 0
   m_Name: MineGeneration
   m_TagString: Untagged
@@ -3937,6 +3989,21 @@ MonoBehaviour:
   spawnChancePercent: 3
   spawnRadius: 30
   warningText: the shadow digger has appeared! run to safety!
+--- !u!114 &7642001337000100221
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1950396547}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: def48f53c492b22929f2e5dca82c01e5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerGameStateManager
+  allPlayersDeadImage: {fileID: 0}
+  startSceneName: StartScreen
+  resetDelay: 3
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -3952,3 +4019,4 @@ SceneRoots:
   - {fileID: 1689672493}
   - {fileID: 744011520}
   - {fileID: 651840664}
+  - {fileID: 1748936495}

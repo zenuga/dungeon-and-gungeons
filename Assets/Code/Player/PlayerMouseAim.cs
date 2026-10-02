@@ -1,11 +1,14 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
+[DefaultExecutionOrder(1000)]
 public class PlayerMouseAim : MonoBehaviour
 {
     [SerializeField] private float rotationSpeed = 20f;
     [SerializeField] private GameObject rotationOnlyObject;
     private float lastReportedYaw = float.NaN;
+    private float desiredYaw;
+    private bool hasDesiredYaw;
 
     public Vector3 AimDirection { get; private set; } = Vector3.forward;
 
@@ -37,8 +40,9 @@ public class PlayerMouseAim : MonoBehaviour
 
         AimDirection = aimDirection.normalized;
 
-        Quaternion aimRotation = Quaternion.LookRotation(aimDirection.normalized, Vector3.up);
-        float targetYaw = aimRotation.eulerAngles.y;
+        float targetYaw = Quaternion.LookRotation(aimDirection.normalized, Vector3.up).eulerAngles.y;
+        desiredYaw = targetYaw;
+        hasDesiredYaw = true;
         if (playerController != null &&
             (float.IsNaN(lastReportedYaw) || Mathf.Abs(Mathf.DeltaAngle(lastReportedYaw, targetYaw)) >= 1f))
         {
@@ -46,15 +50,21 @@ public class PlayerMouseAim : MonoBehaviour
             playerController.ReportAimYaw(targetYaw);
         }
 
-        Quaternion targetRotation = Quaternion.Euler(-90f, targetYaw, 0f);
+    }
+
+    private void LateUpdate()
+    {
+        if (!hasDesiredYaw) return;
+
+        Quaternion aimTarget = Quaternion.Euler(-90f, desiredYaw, 0f);
         transform.localRotation = Quaternion.Slerp(
             transform.localRotation,
-            targetRotation,
+            aimTarget,
             rotationSpeed * Time.deltaTime);
 
         if (rotationOnlyObject != null && rotationOnlyObject.transform != transform)
         {
-            Quaternion rotationOnlyTarget = Quaternion.Euler(0f, targetYaw, 0f);
+            Quaternion rotationOnlyTarget = Quaternion.Euler(0f, desiredYaw, 0f);
             rotationOnlyObject.transform.localRotation = Quaternion.Slerp(
                 rotationOnlyObject.transform.localRotation,
                 rotationOnlyTarget,
@@ -67,11 +77,7 @@ public class PlayerMouseAim : MonoBehaviour
         float normalizedYaw = Mathf.Repeat(yaw, 360f);
         float radians = normalizedYaw * Mathf.Deg2Rad;
         AimDirection = new Vector3(Mathf.Sin(radians), 0f, Mathf.Cos(radians));
-        transform.localRotation = Quaternion.Euler(-90f, normalizedYaw, 0f);
-
-        if (rotationOnlyObject != null && rotationOnlyObject.transform != transform)
-        {
-            rotationOnlyObject.transform.localRotation = Quaternion.Euler(0f, normalizedYaw, 0f);
-        }
+        desiredYaw = normalizedYaw;
+        hasDesiredYaw = true;
     }
 }

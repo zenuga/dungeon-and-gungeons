@@ -664,6 +664,9 @@ MonoBehaviour:
   - Player1
   - Player2
   enemyHealthBarbackgroundImagePrefab: {fileID: 7835141751493347684}
+  enemyAnimation: {fileID: 0}
+  walkAnimationClip: {fileID: 7168293901883076996, guid: fbd0b90f4e707ec478baf1c80f50997e, type: 3}
+  attackAnimationClip: {fileID: 1755863689834921032, guid: 027969273cdd24843b723805a437a277, type: 3}
 --- !u!114 &5319092615775127363
 MonoBehaviour:
   m_ObjectHideFlags: 0

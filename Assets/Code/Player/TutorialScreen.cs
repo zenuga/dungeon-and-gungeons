@@ -10,7 +10,21 @@ public class TutorialScreen : MonoBehaviour
 
     private void Awake()
     {
-        IsBlockingHud = tutorialScreen != null && tutorialScreen.activeInHierarchy;
+        if (tutorialScreen != null)
+        {
+            tutorialScreen.SetActive(true);
+            IsBlockingHud = true;
+            currentPage = 0;
+            for (int i = 0; tutorialPages != null && i < tutorialPages.Length; i++)
+            {
+                if (tutorialPages[i] != null) tutorialPages[i].SetActive(i == 0);
+            }
+        }
+        else
+        {
+            IsBlockingHud = false;
+        }
+
         ResolvePlayerUI();
         if (playerUI != null) playerUI.SetActive(false);
     }
@@ -33,7 +47,14 @@ public class TutorialScreen : MonoBehaviour
     }
     public void nextButton()
     {
-        // CHANGED: Fixed typo 'current page' -> 'currentPage'
+        if (tutorialScreen == null || tutorialPages == null || tutorialPages.Length == 0)
+        {
+            IsBlockingHud = false;
+            ResolvePlayerUI();
+            if (playerUI != null) playerUI.SetActive(true);
+            return;
+        }
+
         if (currentPage >= tutorialPages.Length - 1)
         {
             tutorialPages[currentPage].SetActive(false);

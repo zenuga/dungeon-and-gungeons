@@ -6,10 +6,11 @@ using UnityEngine.UI;
 public class PlayerGameStateManager : MonoBehaviour
 {
     [SerializeField] private Image allPlayersDeadImage;
-    [SerializeField] private string startSceneName = "SampleScene";
-    [SerializeField] private float resetDelay = 2f;
+    [SerializeField] private string startSceneName = "StartScreen";
+    [SerializeField] private float resetDelay = 3f;
 
     private bool resetStarted;
+    private bool resetTransitionStarted;
     private float resetTime;
 
     private void OnEnable()
@@ -32,14 +33,15 @@ public class PlayerGameStateManager : MonoBehaviour
     {
         if (resetStarted)
         {
-            if (Time.unscaledTime >= resetTime)
+            if (!resetTransitionStarted && Time.unscaledTime >= resetTime)
             {
                 ResetGame();
             }
             return;
         }
 
-        if (NetworkManager.Singleton == null)
+        bool networkSessionActive = NetworkSpawnUtility.IsNetworkSessionActive;
+        if (networkSessionActive && (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsServer))
         {
             return;
         }
@@ -54,14 +56,15 @@ public class PlayerGameStateManager : MonoBehaviour
             }
         }
 
-        if (players.Length >= 2 && alivePlayers == 0)
+        bool gameOver = players.Length > 0 && alivePlayers == 0;
+        if (gameOver)
         {
             if (allPlayersDeadImage != null)
             {
                 allPlayersDeadImage.gameObject.SetActive(true);
             }
 
-            if (NetworkManager.Singleton.IsServer)
+            if (!networkSessionActive || (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer))
             {
                 resetStarted = true;
                 resetTime = Time.unscaledTime + resetDelay;
@@ -87,12 +90,22 @@ public class PlayerGameStateManager : MonoBehaviour
 
     private void ResetGame()
     {
-        resetStarted = false;
-        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
+        if (resetTransitionStarted) return;
+        resetTransitionStarted = true;
+
+        SessionManager sessionManager = SessionManager.Instance;
+        if (sessionManager != null)
         {
-            NetworkManager.Singleton.Shutdown();
+            _ = sessionManager.LeaveCurrentSessionForMenuAsync();
         }
 
+        NetworkManager networkManager = NetworkManager.Singleton;
+        if (networkManager != null && networkManager.IsListening)
+        {
+            networkManager.Shutdown();
+        }
+
+        resetStarted = false;
         SceneManager.LoadScene(startSceneName);
     }
 }

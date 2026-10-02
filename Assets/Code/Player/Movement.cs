@@ -3,6 +3,7 @@ using UnityEngine.InputSystem;
 using Unity.Netcode;
 using Unity.Netcode.Components;
 using UnityEngine.UI;
+using System.Collections.Generic;
 
 [RequireComponent(typeof(CharacterController))]
 public class PlayerController : NetworkBehaviour
@@ -44,6 +45,7 @@ public class PlayerController : NetworkBehaviour
     private PlayerMouseAim playerMouseAim;
     private int localPresentationState = -1;
     private bool loggedMissingLocalCamera;
+    private readonly HashSet<EntityId> rootMotionFilteredClips = new HashSet<EntityId>();
     private readonly NetworkVariable<float> replicatedAimYaw = new NetworkVariable<float>(
         0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
@@ -60,12 +62,39 @@ public class PlayerController : NetworkBehaviour
 
     private void PlayPlayerAnimation(AnimationClip clip)
     {
-        if (playerAnimation != null && clip != null)
+        if (TryGetPlayerAnimationState(clip, out AnimationState state))
         {
-            if (playerAnimation.GetClip(clip.name) == null) playerAnimation.AddClip(clip, clip.name);
+            state.enabled = true;
             playerAnimation.Play(clip.name);
         }
         isWalkingAnimationPlaying = false;
+    }
+
+    private bool TryGetPlayerAnimationState(AnimationClip clip, out AnimationState state)
+    {
+        state = null;
+        if (playerAnimation == null || clip == null) return false;
+
+        if (playerAnimation.GetClip(clip.name) == null)
+        {
+            playerAnimation.AddClip(clip, clip.name);
+        }
+
+        state = playerAnimation[clip.name];
+        if (state != null && rootMotionFilteredClips.Add(clip.GetEntityId()))
+        {
+            Transform rigRoot = playerAnimation.transform;
+            if (rigRoot.childCount == 1 && rigRoot.GetChild(0).name == "Armature")
+            {
+                rigRoot = rigRoot.GetChild(0);
+            }
+
+            for (int i = 0; i < rigRoot.childCount; i++)
+            {
+                state.AddMixingTransform(rigRoot.GetChild(i), true);
+            }
+        }
+        return state != null;
     }
 
     public void SetSpeedMultiplier(float multiplier)
@@ -289,9 +318,26 @@ public class PlayerController : NetworkBehaviour
 
     private void Awake()
     {
-        if (playerAnimation == null) playerAnimation = GetComponentInChildren<Animation>(true);
-        if (playerAnimation == null && (walkAnimationClip != null || swingAttackAnimationClip != null || shootAnimationClip != null))
-            playerAnimation = gameObject.AddComponent<Animation>();
+        if (visualModel != null)
+        {
+            playerAnimation = visualModel.GetComponent<Animation>();
+            if (playerAnimation == null)
+            {
+                playerAnimation = visualModel.GetComponentInChildren<Animation>(true);
+            }
+            if (playerAnimation == null && (walkAnimationClip != null || swingAttackAnimationClip != null || shootAnimationClip != null))
+            {
+                playerAnimation = visualModel.AddComponent<Animation>();
+            }
+        }
+        else if (playerAnimation == null)
+        {
+            playerAnimation = GetComponentInChildren<Animation>(true);
+            if (playerAnimation == null && (walkAnimationClip != null || swingAttackAnimationClip != null || shootAnimationClip != null))
+            {
+                playerAnimation = gameObject.AddComponent<Animation>();
+            }
+        }
         _characterController = GetComponent<CharacterController>();
         playerMouseAim = GetComponentInChildren<PlayerMouseAim>(true);
 
@@ -335,8 +381,8 @@ public class PlayerController : NetworkBehaviour
             }
         }
 
-        // CHANGED: Removed invalid .GetComponent<GameObject>() since FindGameObjectWithTag already returns a GameObject
-        settings = GameObject.FindGameObjectWithTag("settings");
+        settings = FindSettingsPanel();
+        HideOtherPlayerLocationForOfflinePlayerOne();
 
         // Set layer so physics/collisions use the "Player" layer settings
         int layerIndex = LayerMask.NameToLayer(playerLayerName);
@@ -377,6 +423,44 @@ public class PlayerController : NetworkBehaviour
         }
 
         SetLocalPresentation(!IsSpawned || IsOwner);
+    }
+
+    private static GameObject FindSettingsPanel()
+    {
+        foreach (Transform candidate in FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        {
+            if (candidate != null && (candidate.name == "Settings" || candidate.gameObject.tag == "settings"))
+            {
+                return candidate.gameObject;
+            }
+        }
+
+        return null;
+    }
+
+    private void HideOtherPlayerLocationForOfflinePlayerOne()
+    {
+        if (playerType != PlayerType.Player1 || NetworkSpawnUtility.IsNetworkSessionActive)
+        {
+            return;
+        }
+
+        foreach (Transform child in GetComponentsInChildren<Transform>(true))
+        {
+            if (child.name == "OtherPLayerLOcation")
+            {
+                child.gameObject.SetActive(false);
+                return;
+            }
+        }
+    }
+
+    private void RefreshPlayerHudVisibility()
+    {
+        if (playerUI != null && (!IsSpawned || IsOwner))
+        {
+            playerUI.SetActive(!TutorialScreen.IsBlockingHud && !(settings != null && settings.activeSelf));
+        }
     }
 
     public override void OnNetworkSpawn()
@@ -549,15 +633,14 @@ public class PlayerController : NetworkBehaviour
 
         if (playerUI != null)
         {
-            playerUI.SetActive(isLocalPlayer && !TutorialScreen.IsBlockingHud);
+            playerUI.SetActive(isLocalPlayer && !TutorialScreen.IsBlockingHud && !(settings != null && settings.activeSelf));
         }
 
     }
 
     private void Update()
     {
-        if (playerUI != null && (!IsSpawned || IsOwner))
-            playerUI.SetActive(!TutorialScreen.IsBlockingHud && !(settings != null && settings.activeSelf));
+        RefreshPlayerHudVisibility();
         if ((IsSpawned && !IsOwner) || !NetworkOwnership.CanControl(this))
         {
             return;
@@ -569,12 +652,12 @@ public class PlayerController : NetworkBehaviour
             if (settings != null && settings.activeSelf)
             {
                 settings.SetActive(false);
-                if (playerUI != null) playerUI.SetActive(true);
+                RefreshPlayerHudVisibility();
             }
             else if (settings != null && !settings.activeSelf)
             {
                 settings.SetActive(true);
-                if (playerUI != null) playerUI.SetActive(false);
+                RefreshPlayerHudVisibility();
             }
         }
 
@@ -590,11 +673,13 @@ public class PlayerController : NetworkBehaviour
         {
             if (inputVector.sqrMagnitude > 0.001f && !isWalkingAnimationPlaying)
             {
-                if (playerAnimation.GetClip(walkAnimationClip.name) == null)
-                    playerAnimation.AddClip(walkAnimationClip, walkAnimationClip.name);
-                playerAnimation[walkAnimationClip.name].wrapMode = WrapMode.Loop;
-                playerAnimation.Play(walkAnimationClip.name);
-                isWalkingAnimationPlaying = true;
+                if (TryGetPlayerAnimationState(walkAnimationClip, out AnimationState walkState))
+                {
+                    walkState.enabled = true;
+                    walkState.wrapMode = WrapMode.Loop;
+                    playerAnimation.Play(walkAnimationClip.name);
+                    isWalkingAnimationPlaying = true;
+                }
             }
             else if (inputVector.sqrMagnitude <= 0.001f && isWalkingAnimationPlaying)
             {
