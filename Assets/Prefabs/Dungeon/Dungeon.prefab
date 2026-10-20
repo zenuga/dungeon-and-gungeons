@@ -1387,8 +1387,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5137408123554898152}
-  - component: {fileID: 2450378614454590008}
   - component: {fileID: 100451502262552082}
+  - component: {fileID: 2450378614454590008}
   m_Layer: 0
   m_Name: Dungeon
   m_TagString: Untagged
@@ -1562,6 +1562,33 @@ Transform:
   - {fileID: 5302064853697335374}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &100451502262552082
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 950601075600074490}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 3375861873
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  m_InScenePlacedDisabledByDefault: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  m_InScenePlaced: 0
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
 --- !u!114 &2450378614454590008
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1574,6 +1601,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 034c4ae1fc2effc36953e43f419c3852, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DungeonWaveManager
+  ShowTopMostFoldoutHeaderGroup: 1
   enemyPrefabs:
   - {fileID: 201552602243764445, guid: 87b11929b50049afb8a68f892f8511ff, type: 3}
   - {fileID: 3635563691862089033, guid: 9a5e6ca5853d78c4daa9735b6ca085de, type: 3}
@@ -1614,33 +1642,6 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 7401afc7b7de421aa98f554821adea02, type: 2}
   - {fileID: 11400000, guid: 56a8712dfde94b0e88d41643aadf2134, type: 2}
   - {fileID: 11400000, guid: 6c8847caef134087ab5264ab354a87c1, type: 2}
---- !u!114 &100451502262552082
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 950601075600074490}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 0
-  InScenePlacedSourceGlobalObjectIdHash: 0
-  m_InScenePlacedDisabledByDefault: 0
-  DeferredDespawnTick: 0
-  Ownership: 1
-  AlwaysReplicateAsRoot: 0
-  SynchronizeTransform: 1
-  m_InScenePlaced: 0
-  ActiveSceneSynchronization: 0
-  SceneMigrationSynchronization: 1
-  SpawnWithObservers: 1
-  DontDestroyWithOwner: 0
-  AutoObjectParentSync: 1
-  SyncOwnerTransformWhenParented: 1
-  AllowOwnerToParent: 0
 --- !u!1 &1017272494787225740
 GameObject:
   m_ObjectHideFlags: 0
