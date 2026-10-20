@@ -1388,6 +1388,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5137408123554898152}
   - component: {fileID: 2450378614454590008}
+  - component: {fileID: 100451502262552082}
   m_Layer: 0
   m_Name: Dungeon
   m_TagString: Untagged
@@ -1590,7 +1591,7 @@ MonoBehaviour:
   bossHealthMultiplier: 5
   bossDamageMultiplier: 2
   ladderPrefab: {fileID: 3677925992404981558, guid: 6a663313d1712aec5a0ab2a6e51f876d, type: 3}
-  objectToDisableOnBossSpawn: {fileID: 5543132379313334195}
+  objectToDisableOnBossSpawn: {fileID: 7418307039262997088}
   totalWaves: 3
   baseEnemiesPerWave: 4
   enemiesAddedPerWave: 3
@@ -1613,6 +1614,33 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 7401afc7b7de421aa98f554821adea02, type: 2}
   - {fileID: 11400000, guid: 56a8712dfde94b0e88d41643aadf2134, type: 2}
   - {fileID: 11400000, guid: 6c8847caef134087ab5264ab354a87c1, type: 2}
+--- !u!114 &100451502262552082
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 950601075600074490}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 0
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  m_InScenePlacedDisabledByDefault: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  m_InScenePlaced: 0
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
 --- !u!1 &1017272494787225740
 GameObject:
   m_ObjectHideFlags: 0
@@ -20361,6 +20389,7 @@ GameObject:
   - component: {fileID: 2876041781150812815}
   - component: {fileID: 983588515987970767}
   - component: {fileID: 968081768652184502}
+  - component: {fileID: 4069946926146184767}
   m_Layer: 8
   m_Name: Dungeontes (1)
   m_TagString: Untagged
@@ -20478,6 +20507,33 @@ MonoBehaviour:
   dungeonRespawnPoint: {fileID: 3398546990794213428}
   player1: {fileID: 1468520820315375280, guid: 7ec0fdf7870fb51bab08c7195b63e867, type: 3}
   player2: {fileID: 8671723301485573298, guid: 6a4eba899b63be455885c09b2f4be712, type: 3}
+--- !u!114 &4069946926146184767
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7418307039262997088}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 0
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  m_InScenePlacedDisabledByDefault: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  m_InScenePlaced: 0
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
 --- !u!1 &7451701708099036846
 GameObject:
   m_ObjectHideFlags: 0

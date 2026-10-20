@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
@@ -18,15 +19,14 @@ public class PlayerReviveController : MonoBehaviour
 
     private PlayerHealth playerHealth;
     private PlayerHealth reviveTarget;
-    private PlayerController playerController;
     private PlayerPickupManager pickupManager;
+    private readonly List<RangedWeapon> disabledRangedWeapons = new List<RangedWeapon>();
     private Vector3 reviveStartPosition;
     private Coroutine reviveRoutine;
 
     private void Awake()
     {
         playerHealth = GetComponent<PlayerHealth>();
-        playerController = GetComponent<PlayerController>();
         pickupManager = GetComponentInChildren<PlayerPickupManager>(true);
         CreateReviveTrigger();
         SetReviveUi(false);
@@ -59,7 +59,7 @@ public class PlayerReviveController : MonoBehaviour
 
     public void ClearReviveTarget(PlayerHealth target)
     {
-        if (reviveTarget == target) reviveTarget = null;
+        if (target == null || reviveTarget == target) reviveTarget = null;
     }
 
     private IEnumerator ReviveChallenge()
@@ -70,6 +70,9 @@ public class PlayerReviveController : MonoBehaviour
         {
             pickupManager.enabled = false;
         }
+        DisableRangedWeapons();
+        // Let the Space press that starts the challenge finish before counting timing presses.
+        yield return null;
         int successfulPresses = 0;
         float slidePosition = -slideDistance;
         float direction = 1f;
@@ -78,6 +81,7 @@ public class PlayerReviveController : MonoBehaviour
         while (successfulPresses < successfulPressesRequired)
         {
             if (playerHealth == null || !playerHealth.IsAlive || reviveTarget == null || reviveTarget.IsAlive ||
+                Vector3.Distance(transform.position, reviveTarget.transform.position) > reviveTriggerRadius ||
                 Vector3.Distance(transform.position, reviveStartPosition) > 0.05f)
             {
                 CancelRevive();
@@ -112,7 +116,7 @@ public class PlayerReviveController : MonoBehaviour
             yield return null;
         }
 
-        reviveTarget.HealPercentOfMax(0.4f);
+        reviveTarget.HealPercentOfMax(0.3f);
         CancelRevive();
     }
 
@@ -129,17 +133,31 @@ public class PlayerReviveController : MonoBehaviour
         {
             pickupManager.enabled = true;
         }
+
+        if (playerHealth != null && playerHealth.IsAlive)
+        {
+            foreach (RangedWeapon rangedWeapon in disabledRangedWeapons)
+            {
+                if (rangedWeapon != null) rangedWeapon.enabled = true;
+            }
+        }
+        disabledRangedWeapons.Clear();
     }
 
     private bool ReviveKeyPressed()
     {
-        if (Keyboard.current == null) return false;
-        bool playerTwoLocalControls = playerController != null &&
-            playerController.Type == PlayerController.PlayerType.Player2 &&
-            !NetworkSpawnUtility.IsNetworkSessionActive;
-        return playerTwoLocalControls
-            ? Keyboard.current.semicolonKey.wasPressedThisFrame
-            : Keyboard.current.fKey.wasPressedThisFrame;
+        return Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame;
+    }
+
+    private void DisableRangedWeapons()
+    {
+        disabledRangedWeapons.Clear();
+        foreach (RangedWeapon rangedWeapon in GetComponentsInChildren<RangedWeapon>(true))
+        {
+            if (rangedWeapon == null || !rangedWeapon.enabled) continue;
+            rangedWeapon.enabled = false;
+            disabledRangedWeapons.Add(rangedWeapon);
+        }
     }
 
     private void SetReviveUi(bool visible)

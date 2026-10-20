@@ -79,6 +79,8 @@ public class Ladder : MonoBehaviour
                     depth.depth++;
                 }
 
+                DungeonWaveManager.ResetRunProgress();
+
                 if (chunkedMineGeneration != null)
                 {
                     chunkedMineGeneration.level++;

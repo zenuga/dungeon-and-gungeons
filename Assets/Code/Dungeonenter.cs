@@ -11,7 +11,10 @@ public class Dungeonenter : NetworkBehaviour // CHANGED: Fixed networkBehaviour 
     public GameObject player1;
     public GameObject player2;
 
-    private int dungeonsDone;
+    private readonly NetworkVariable<bool> wallsClosedNetwork = new NetworkVariable<bool>(
+        false,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server);
 
     private void Awake()
     {
@@ -24,49 +27,48 @@ public class Dungeonenter : NetworkBehaviour // CHANGED: Fixed networkBehaviour 
         FindPlayers();
     }
 
+    public override void OnNetworkSpawn()
+    {
+        wallsClosedNetwork.OnValueChanged += OnWallsClosedChanged;
+        ApplyWallState(wallsClosedNetwork.Value);
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        wallsClosedNetwork.OnValueChanged -= OnWallsClosedChanged;
+    }
+
     private void OnTriggerEnter(Collider other)
     {
-        // 1. Activate wall children attached to this GameObject
-        if ((dungeonWaveManager != null && dungeonWaveManager.IsDungeonCompleted) || 
-            (other.CompareTag("Projectile") || other.CompareTag("Ranged") || other.CompareTag("Melee")))
-        {
-            DisableWalls();
-        }
-        else
-        {
-            foreach (Transform child in transform)
-            {
-                if (child.CompareTag("walls"))
-                {
-                    child.gameObject.SetActive(true);
-                }
-            }
-        }
-
-        // 2. Check the incoming trigger object ('other') and teleport the players
         GameObject enteringPlayer = GetPlayerObject(other);
-        if (enteringPlayer != null)
+        if (enteringPlayer == null) return;
+
+        bool dungeonCompleted = dungeonWaveManager != null && dungeonWaveManager.IsDungeonCompleted;
+        if (dungeonCompleted) DisableWalls();
+        else CloseWalls();
+
+        WallBreakEncounterManager.DismissForTransition();
+        FindPlayers();
+
+        if (enteringPlayer.CompareTag("Player1") && player2 != null)
         {
-            WallBreakEncounterManager.DismissForTransition();
-            FindPlayers();
-
-            if (enteringPlayer.CompareTag("Player1") && player2 != null)
-            {
-                TeleportPlayer(player2, enteringPlayer.transform.position);
-            }
-            else if (enteringPlayer.CompareTag("Player2") && player1 != null)
-            {
-                TeleportPlayer(player1, enteringPlayer.transform.position);
-            }
-
-            // CHANGED: Update FallResetTrigger with custom dungeon respawn point upon entering
-            if (dungeonRespawnPoint != null)
-            {
-                FallResetTrigger.SetOverrideRespawnPoint(dungeonRespawnPoint.transform.position);
-            }
-
-            dungeonWaveManager?.DungeonEntered();
+            TeleportPlayer(player2, enteringPlayer.transform.position);
         }
+        else if (enteringPlayer.CompareTag("Player2") && player1 != null)
+        {
+            TeleportPlayer(player1, enteringPlayer.transform.position);
+        }
+
+        if (!dungeonCompleted && dungeonRespawnPoint != null)
+        {
+            FallResetTrigger.SetOverrideRespawnPoint(dungeonRespawnPoint.transform.position);
+        }
+        else if (dungeonCompleted)
+        {
+            FallResetTrigger.ClearOverrideRespawnPoint();
+        }
+
+        dungeonWaveManager?.DungeonEntered();
     }
 
     private static void TeleportPlayer(GameObject player, Vector3 position)
@@ -82,21 +84,60 @@ public class Dungeonenter : NetworkBehaviour // CHANGED: Fixed networkBehaviour 
         }
     }
 
-    private void OnTriggerExit(Collider other)
-    {
-        dungeonsDone++;
-    }
-
     public void DisableWalls()
     {
-        // CHANGED: Reset respawn point back to base mine spawn location when walls open / dungeon completes
         FallResetTrigger.ClearOverrideRespawnPoint();
+        if (NetworkSpawnUtility.IsNetworkSessionActive && IsSpawned && IsServer)
+        {
+            wallsClosedNetwork.Value = false;
+        }
 
+        ApplyWallState(false);
+    }
+
+    private void CloseWalls()
+    {
+        if (NetworkSpawnUtility.IsNetworkSessionActive && IsSpawned)
+        {
+            if (IsServer)
+            {
+                SetWallsClosed(true);
+            }
+            else
+            {
+                RequestCloseWallsServerRpc();
+            }
+            return;
+        }
+
+        ApplyWallState(true);
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void RequestCloseWallsServerRpc()
+    {
+        if (dungeonWaveManager != null && dungeonWaveManager.IsDungeonCompleted) return;
+        SetWallsClosed(true);
+    }
+
+    private void SetWallsClosed(bool closed)
+    {
+        if (IsSpawned && IsServer) wallsClosedNetwork.Value = closed;
+        ApplyWallState(closed);
+    }
+
+    private void OnWallsClosedChanged(bool previousValue, bool newValue)
+    {
+        ApplyWallState(newValue);
+    }
+
+    private void ApplyWallState(bool closed)
+    {
         foreach (Transform child in transform)
         {
             if (child.CompareTag("walls"))
             {
-                child.gameObject.SetActive(false);
+                child.gameObject.SetActive(closed);
             }
         }
     }

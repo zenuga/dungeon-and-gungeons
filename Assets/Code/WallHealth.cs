@@ -29,6 +29,11 @@ public class WallHealth : NetworkBehaviour
 
     public void TakeDamage(int amount)
     {
+        TakeDamageAtPosition(amount, transform.position, Vector3.up);
+    }
+
+    public void TakeDamageAtPosition(int amount, Vector3 hitPosition, Vector3 surfaceNormal)
+    {
         if (amount <= 0)
         {
             return;
@@ -38,21 +43,40 @@ public class WallHealth : NetworkBehaviour
         {
             if (!IsServer)
             {
-                NetworkPlayerSpawner.Instance?.RequestWorldDamage(transform.position, amount);
+                if (IsSpawned)
+                {
+                    TakeDamageServerRpc(amount, hitPosition, surfaceNormal);
+                }
+                else
+                {
+                    NetworkPlayerSpawner.Instance?.RequestWorldDamage(hitPosition, amount);
+                }
                 return;
             }
 
+            if (IsSpawned)
+            {
+                PlayRockWallImpactClientRpc(hitPosition, surfaceNormal);
+            }
+            else
+            {
+                PlayLocalRockWallImpact(hitPosition, surfaceNormal);
+            }
             ApplyDamage(amount);
-            NetworkPlayerSpawner.Instance?.BroadcastWorldDamage(transform.position, amount);
+            if (!IsSpawned)
+            {
+                NetworkPlayerSpawner.Instance?.BroadcastWorldDamage(hitPosition, amount);
+            }
             return;
         }
 
         if (IsSpawned && !IsServer)
         {
-            TakeDamageServerRpc(amount);
+            TakeDamageServerRpc(amount, hitPosition, surfaceNormal);
             return;
         }
 
+        PlayLocalRockWallImpact(hitPosition, surfaceNormal);
         ApplyDamage(amount);
     }
 
@@ -64,10 +88,30 @@ public class WallHealth : NetworkBehaviour
         }
     }
 
-    [ServerRpc(RequireOwnership = false)]
-    private void TakeDamageServerRpc(int amount)
+    public void ApplyWorldDamageAtPosition(int amount, Vector3 hitPosition, Vector3 surfaceNormal)
     {
+        if (amount <= 0) return;
+        PlayLocalRockWallImpact(hitPosition, surfaceNormal);
         ApplyDamage(amount);
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void TakeDamageServerRpc(int amount, Vector3 hitPosition, Vector3 surfaceNormal)
+    {
+        PlayRockWallImpactClientRpc(hitPosition, surfaceNormal);
+        ApplyDamage(amount);
+    }
+
+    [ClientRpc]
+    private void PlayRockWallImpactClientRpc(Vector3 hitPosition, Vector3 surfaceNormal)
+    {
+        PlayLocalRockWallImpact(hitPosition, surfaceNormal);
+    }
+
+    private void PlayLocalRockWallImpact(Vector3 hitPosition, Vector3 surfaceNormal)
+    {
+        if (!gameObject.name.ToLowerInvariant().Contains("rock wall")) return;
+        GameAudioManager.EnsureInstance().SpawnRockWallImpact(hitPosition, surfaceNormal);
     }
 
     private void ApplyDamage(int amount)

@@ -119,7 +119,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 1744049476
+  GlobalObjectIdHash: 105079555
   InScenePlacedSourceGlobalObjectIdHash: 0
   m_InScenePlacedDisabledByDefault: 0
   DeferredDespawnTick: 0
@@ -167,9 +167,6 @@ LODGroup:
     renderers:
     - renderer: {fileID: 6657314257523665696}
   - screenRelativeHeight: 0.05738351
-    fadeTransitionWidth: 0
-    renderers: []
-  - screenRelativeHeight: 0.05396669
     fadeTransitionWidth: 0
     renderers: []
   m_Enabled: 1

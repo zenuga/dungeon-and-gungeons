@@ -4,6 +4,10 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public class GameAudioManager : MonoBehaviour
 {
+    private const string LegacyVolumePreference = "MasterVolume";
+    private const string EffectVolumePreference = "VfxVolume";
+    private const string MusicVolumePreference = "BackgroundMusicVolume";
+
     public static GameAudioManager Instance { get; private set; }
 
     [Header("Music")]
@@ -16,6 +20,10 @@ public class GameAudioManager : MonoBehaviour
     [SerializeField] private AudioClip chestOpenSound;
     [SerializeField] private AudioClip itemPickupSound;
     [SerializeField] private AudioClip wallBreakSound;
+
+    [Header("Visual Feedback")]
+    [SerializeField] private GameObject meleeHitParticlePrefab;
+    [SerializeField] private GameObject rockWallImpactParticlePrefab;
 
     private AudioSource musicSource;
     private AudioSource effectSource;
@@ -31,6 +39,8 @@ public class GameAudioManager : MonoBehaviour
         musicSource.loop = true;
         musicSource.spatialBlend = 0f;
         effectSource.spatialBlend = 0f;
+        musicSource.volume = GetSavedMusicVolume();
+        effectSource.volume = GetSavedEffectVolume();
         PlayBackgroundMusic();
     }
 
@@ -70,6 +80,42 @@ public class GameAudioManager : MonoBehaviour
     public void PlayItemPickup() => PlayEffect(itemPickupSound);
     public void PlayWallBreak() => PlayEffect(wallBreakSound);
 
+    public static float GetSavedEffectVolume()
+    {
+        return GetSavedVolume(EffectVolumePreference);
+    }
+
+    public static float GetSavedMusicVolume()
+    {
+        return GetSavedVolume(MusicVolumePreference);
+    }
+
+    public static void SetEffectVolume(float volume)
+    {
+        volume = Mathf.Clamp01(volume);
+        if (Instance != null && Instance.effectSource != null) Instance.effectSource.volume = volume;
+        PlayerPrefs.SetFloat(EffectVolumePreference, volume);
+        PlayerPrefs.Save();
+    }
+
+    public static void SetMusicVolume(float volume)
+    {
+        volume = Mathf.Clamp01(volume);
+        if (Instance != null && Instance.musicSource != null) Instance.musicSource.volume = volume;
+        PlayerPrefs.SetFloat(MusicVolumePreference, volume);
+        PlayerPrefs.Save();
+    }
+
+    public void SpawnMeleeHitEffect(Vector3 position, Vector3 direction)
+    {
+        SpawnParticleEffect(meleeHitParticlePrefab, position, direction);
+    }
+
+    public void SpawnRockWallImpact(Vector3 position, Vector3 surfaceNormal)
+    {
+        SpawnParticleEffect(rockWallImpactParticlePrefab, position, surfaceNormal);
+    }
+
     private void PlayMusic(AudioClip clip)
     {
         if (musicSource == null || clip == null) return;
@@ -78,5 +124,30 @@ public class GameAudioManager : MonoBehaviour
         musicSource.clip = clip;
         musicSource.loop = true;
         musicSource.Play();
+    }
+
+    private static float GetSavedVolume(string preference)
+    {
+        float legacyVolume = PlayerPrefs.GetFloat(LegacyVolumePreference, 1f);
+        return Mathf.Clamp01(PlayerPrefs.GetFloat(preference, legacyVolume));
+    }
+
+    private static void SpawnParticleEffect(GameObject prefab, Vector3 position, Vector3 forward)
+    {
+        if (prefab == null) return;
+
+        Vector3 direction = forward.sqrMagnitude > 0.001f ? forward.normalized : Vector3.up;
+        Vector3 up = Mathf.Abs(Vector3.Dot(direction, Vector3.up)) > 0.99f ? Vector3.forward : Vector3.up;
+        GameObject effect = Instantiate(prefab, position, Quaternion.LookRotation(direction, up));
+        ParticleSystem[] particles = effect.GetComponentsInChildren<ParticleSystem>(true);
+        float lifetime = 1f;
+        foreach (ParticleSystem particle in particles)
+        {
+            ParticleSystem.MainModule main = particle.main;
+            lifetime = Mathf.Max(lifetime, main.duration + main.startLifetime.constantMax);
+            particle.Play(true);
+        }
+
+        Destroy(effect, lifetime + 0.25f);
     }
 }

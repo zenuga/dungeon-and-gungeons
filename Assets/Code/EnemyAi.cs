@@ -295,9 +295,16 @@ public class EnemyAi : NetworkBehaviour
         if (state != null && rootMotionFilteredClips.Add(clip.GetEntityId()))
         {
             Transform rigRoot = enemyAnimation.transform;
-            if (rigRoot.childCount == 1 && rigRoot.GetChild(0).name == "Armature")
+            if (rigRoot.name != "Armature")
             {
-                rigRoot = rigRoot.GetChild(0);
+                for (int i = 0; i < rigRoot.childCount; i++)
+                {
+                    if (rigRoot.GetChild(i).name == "Armature")
+                    {
+                        rigRoot = rigRoot.GetChild(i);
+                        break;
+                    }
+                }
             }
 
             for (int i = 0; i < rigRoot.childCount; i++)

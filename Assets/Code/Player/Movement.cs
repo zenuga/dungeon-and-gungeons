@@ -87,9 +87,16 @@ public class PlayerController : NetworkBehaviour
         if (state != null && rootMotionFilteredClips.Add(clip.GetEntityId()))
         {
             Transform rigRoot = playerAnimation.transform;
-            if (rigRoot.childCount == 1 && rigRoot.GetChild(0).name == "Armature")
+            if (rigRoot.name != "Armature")
             {
-                rigRoot = rigRoot.GetChild(0);
+                for (int i = 0; i < rigRoot.childCount; i++)
+                {
+                    if (rigRoot.GetChild(i).name == "Armature")
+                    {
+                        rigRoot = rigRoot.GetChild(i);
+                        break;
+                    }
+                }
             }
 
             for (int i = 0; i < rigRoot.childCount; i++)
@@ -321,7 +328,7 @@ public class PlayerController : NetworkBehaviour
 
     private void Awake()
     {
-        if (visualModel != null)
+        if (playerAnimation == null && visualModel != null)
         {
             playerAnimation = visualModel.GetComponent<Animation>();
             if (playerAnimation == null)
@@ -650,6 +657,8 @@ public class PlayerController : NetworkBehaviour
     {
         if (settings == null) return;
 
+        Button quitButton = null;
+        bool mainMenuButtonFound = false;
         foreach (Button button in settings.GetComponentsInChildren<Button>(true))
         {
             TMP_Text label = button.GetComponentInChildren<TMP_Text>(true);
@@ -661,12 +670,84 @@ public class PlayerController : NetworkBehaviour
                 button.onClick.AddListener(ResumeGame);
                 pauseMenuActionsBound = true;
             }
-            else if (action == "main menu" || action == "return to menu" || action == "quit to menu")
+            else if (action == "main menu" || action == "return to menu" || action == "quit to menu" || action == "return to start screen")
             {
+                button.onClick.RemoveListener(ReturnToMainMenu);
                 button.onClick.AddListener(ReturnToMainMenu);
                 pauseMenuActionsBound = true;
+                mainMenuButtonFound = true;
+            }
+            else if (action.StartsWith("quit") && quitButton == null)
+            {
+                quitButton = button;
             }
         }
+
+        if (!mainMenuButtonFound && quitButton != null)
+        {
+            CreateReturnToStartScreenButton(quitButton);
+            pauseMenuActionsBound = true;
+        }
+    }
+
+    private void CreateReturnToStartScreenButton(Button referenceButton)
+    {
+        RectTransform referenceRect = referenceButton.GetComponent<RectTransform>();
+        if (referenceRect == null) return;
+
+        GameObject buttonObject = new GameObject(
+            "Return To Start Screen Button",
+            typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
+        buttonObject.transform.SetParent(referenceButton.transform.parent, false);
+
+        RectTransform rect = buttonObject.GetComponent<RectTransform>();
+        rect.anchorMin = referenceRect.anchorMin;
+        rect.anchorMax = referenceRect.anchorMax;
+        rect.pivot = referenceRect.pivot;
+        rect.sizeDelta = referenceRect.sizeDelta;
+        rect.localScale = referenceRect.localScale;
+        float horizontalGap = referenceRect.rect.width * referenceRect.localScale.x + 24f;
+        rect.anchoredPosition = referenceRect.anchoredPosition + new Vector2(horizontalGap, 0f);
+
+        Image image = buttonObject.GetComponent<Image>();
+        Image referenceImage = referenceButton.targetGraphic as Image;
+        if (referenceImage != null)
+        {
+            image.sprite = referenceImage.sprite;
+            image.type = referenceImage.type;
+            image.color = referenceImage.color;
+            image.material = referenceImage.material;
+        }
+
+        Button button = buttonObject.GetComponent<Button>();
+        button.transition = referenceButton.transition;
+        button.colors = referenceButton.colors;
+        button.navigation = referenceButton.navigation;
+        button.targetGraphic = image;
+        button.onClick.AddListener(ReturnToMainMenu);
+
+        GameObject textObject = new GameObject("Text (TMP)", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
+        textObject.transform.SetParent(buttonObject.transform, false);
+        RectTransform textRect = textObject.GetComponent<RectTransform>();
+        textRect.anchorMin = Vector2.zero;
+        textRect.anchorMax = Vector2.one;
+        textRect.offsetMin = Vector2.zero;
+        textRect.offsetMax = Vector2.zero;
+
+        TextMeshProUGUI label = textObject.GetComponent<TextMeshProUGUI>();
+        TMP_Text referenceLabel = referenceButton.GetComponentInChildren<TMP_Text>(true);
+        if (referenceLabel != null)
+        {
+            label.font = referenceLabel.font;
+            label.fontSize = referenceLabel.fontSize;
+            label.fontSizeMin = referenceLabel.fontSizeMin;
+            label.fontSizeMax = referenceLabel.fontSizeMax;
+            label.enableAutoSizing = referenceLabel.enableAutoSizing;
+            label.color = referenceLabel.color;
+            label.alignment = referenceLabel.alignment;
+        }
+        label.text = "Return to Start Screen";
+        label.raycastTarget = false;
     }
 
     private void Update()
@@ -754,6 +835,13 @@ public class PlayerController : NetworkBehaviour
 
     public void ReturnToMainMenu()
     {
+        StartScreen startScreen = FindFirstObjectByType<StartScreen>();
+        if (startScreen != null)
+        {
+            startScreen.GoBackToStartScreen();
+            return;
+        }
+
         Time.timeScale = 1f;
         if (settings != null) settings.SetActive(false);
 

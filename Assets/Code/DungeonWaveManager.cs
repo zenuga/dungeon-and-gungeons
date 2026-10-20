@@ -4,7 +4,7 @@ using UnityEngine.AI;
 using UnityEngine.Serialization;
 using Unity.Netcode;
 
-public class DungeonWaveManager : MonoBehaviour
+public class DungeonWaveManager : NetworkBehaviour
 {
     [Header("Enemy Setup")]
     public List<GameObject> enemyPrefabs = new List<GameObject>();
@@ -41,9 +41,18 @@ public class DungeonWaveManager : MonoBehaviour
     private GameObject activeBoss;
     private GameObject spawnedChest;
     private GameObject spawnedLadder;
+    private static int dungeonEntriesStarted;
     private static int completedDungeonCount;
 
     public bool IsDungeonCompleted => dungeonCompleted;
+    public static int CompletedDungeonCount => completedDungeonCount;
+
+    public static void ResetRunProgress()
+    {
+        dungeonEntriesStarted = 0;
+        completedDungeonCount = 0;
+        DungeonProgressDisplay.SetProgress(0);
+    }
 
     private void Awake()
     {
@@ -67,16 +76,12 @@ public class DungeonWaveManager : MonoBehaviour
         }
 
         dungeonStarted = true;
-        completedDungeonCount++;
+        dungeonEntriesStarted++;
         GameObject bossPrefab = GetBossPrefab();
-        if (completedDungeonCount >= 5 && bossPrefab != null)
+        if (dungeonEntriesStarted >= 5 && bossPrefab != null)
         {
             currentWave = totalWaves;
             SpawnBoss(bossPrefab);
-            if (objectToDisableOnBossSpawn != null)
-            {
-                objectToDisableOnBossSpawn.SetActive(false);
-            }
             return;
         }
         StartNextWave();
@@ -264,13 +269,13 @@ public class DungeonWaveManager : MonoBehaviour
                 rewardChest.ClearSpawnedRewards();
             }
 
-            Destroy(spawnedChest);
+            NetworkSpawnUtility.DespawnOrDestroy(spawnedChest);
             spawnedChest = null;
         }
 
         if (spawnedLadder != null)
         {
-            Destroy(spawnedLadder);
+            NetworkSpawnUtility.DespawnOrDestroy(spawnedLadder);
             spawnedLadder = null;
         }
     }
@@ -322,7 +327,27 @@ public class DungeonWaveManager : MonoBehaviour
 
     private void CompleteDungeon()
     {
+        if (dungeonCompleted) return;
         dungeonCompleted = true;
+
+        completedDungeonCount = Mathf.Min(5, completedDungeonCount + 1);
+        DungeonProgressDisplay.SetProgress(completedDungeonCount);
+        if (NetworkSpawnUtility.IsNetworkSessionActive && IsSpawned && IsServer)
+        {
+            UpdateDungeonProgressClientRpc(completedDungeonCount);
+        }
+
+        if (objectToDisableOnBossSpawn != null)
+        {
+            if (NetworkSpawnUtility.IsNetworkSessionActive && IsSpawned && IsServer)
+            {
+                DisableDungeonCompletionObjectClientRpc();
+            }
+            else
+            {
+                objectToDisableOnBossSpawn.SetActive(false);
+            }
+        }
 
         // 1. Spawn Chest in the middle of the dungeon
         Vector3 spawnPosition = (chestSpawnPoint != null ? chestSpawnPoint.position : transform.position) + chestSpawnOffset;
@@ -349,9 +374,26 @@ public class DungeonWaveManager : MonoBehaviour
     public void ApplyNetworkCompletion()
     {
         dungeonCompleted = true;
+        if (objectToDisableOnBossSpawn != null) objectToDisableOnBossSpawn.SetActive(false);
         if (dungeonEnter != null)
         {
             dungeonEnter.DisableWalls();
+        }
+    }
+
+    [ClientRpc]
+    private void UpdateDungeonProgressClientRpc(int count)
+    {
+        completedDungeonCount = Mathf.Clamp(count, 0, 5);
+        DungeonProgressDisplay.SetProgress(completedDungeonCount);
+    }
+
+    [ClientRpc]
+    private void DisableDungeonCompletionObjectClientRpc()
+    {
+        if (objectToDisableOnBossSpawn != null)
+        {
+            objectToDisableOnBossSpawn.SetActive(false);
         }
     }
 
@@ -363,10 +405,7 @@ public class DungeonWaveManager : MonoBehaviour
             currentTriggerObject = gameObject;
 
             // If 3 waves are done and player enters trigger, disable walls
-            if (dungeonCompleted)
-            {
-                OpenWalls(gameObject);
-            }
+            if (dungeonCompleted) dungeonEnter?.DisableWalls();
         }
     }
 
@@ -384,14 +423,4 @@ public class DungeonWaveManager : MonoBehaviour
         return col.CompareTag("Player") || col.CompareTag("Player1") || col.CompareTag("Player2");
     }
 
-    private void OpenWalls(GameObject triggerObj)
-    {
-        foreach (Transform child in triggerObj.transform)
-        {
-            if (child.CompareTag("walls"))
-            {
-                child.gameObject.SetActive(false);
-            }
-        }
-    }
 }

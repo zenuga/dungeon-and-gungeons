@@ -119,7 +119,12 @@ public class ExplosionArea : NetworkBehaviour
         WallHealth wallHealth = hit.GetComponentInParent<WallHealth>();
         if (wallHealth != null)
         {
-            wallHealth.TakeDamage(damage);
+            Collider obstacleCollider = hit.GetComponent<Collider>();
+            if (obstacleCollider == null) obstacleCollider = hit.GetComponentInParent<Collider>();
+            Vector3 hitPoint = obstacleCollider != null
+                ? obstacleCollider.ClosestPoint(transform.position)
+                : wallHealth.transform.position;
+            wallHealth.TakeDamageAtPosition(damage, hitPoint, (transform.position - hitPoint).normalized);
             return;
         }
 

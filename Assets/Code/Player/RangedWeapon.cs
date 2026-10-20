@@ -184,7 +184,8 @@ public class RangedWeapon : NetworkBehaviour
 
         if (Physics.Raycast(origin, direction, out RaycastHit hit, range, mask))
         {
-            if (weaponData != null && weaponData.impactParticlePrefab != null)
+            WallHealth wallHealth = hit.collider.GetComponentInParent<WallHealth>();
+            if (wallHealth == null && weaponData != null && weaponData.impactParticlePrefab != null)
             {
                 GameObject impactEffect = Instantiate(
                     weaponData.impactParticlePrefab,
@@ -196,6 +197,12 @@ public class RangedWeapon : NetworkBehaviour
 
             if (owner != null && (hit.transform == owner || hit.transform.IsChildOf(owner)))
             {
+                return;
+            }
+
+            if (wallHealth != null)
+            {
+                wallHealth.TakeDamageAtPosition(damage, hit.point, hit.normal);
                 return;
             }
 

@@ -95,16 +95,21 @@ public class Projectile : NetworkBehaviour
     private void OnTriggerEnter(Collider other)
     {
         if (other == null) return;
-        ProcessContact(other.gameObject, other.transform);
+        Vector3 impactPoint = other.ClosestPoint(transform.position);
+        Vector3 impactNormal = (transform.position - impactPoint).normalized;
+        ProcessContact(other.gameObject, other.transform, impactPoint, impactNormal);
     }
 
     private void OnCollisionEnter(Collision collision)
     {
         if (collision == null || collision.gameObject == null) return;
-        ProcessContact(collision.gameObject, collision.transform);
+        ContactPoint[] contacts = collision.contacts;
+        Vector3 impactPoint = contacts.Length > 0 ? contacts[0].point : transform.position;
+        Vector3 impactNormal = contacts.Length > 0 ? contacts[0].normal : Vector3.up;
+        ProcessContact(collision.gameObject, collision.transform, impactPoint, impactNormal);
     }
 
-    private void ProcessContact(GameObject hitObject, Transform hitTransform)
+    private void ProcessContact(GameObject hitObject, Transform hitTransform, Vector3 impactPoint, Vector3 impactNormal)
     {
         if (IsSpawned && !IsServer)
         {
@@ -146,7 +151,7 @@ public class Projectile : NetworkBehaviour
             int obstacleDamage = Mathf.Max(1, Mathf.RoundToInt(damage * 0.1f));
             if (wall != null)
             {
-                wall.TakeDamage(obstacleDamage);
+                wall.TakeDamageAtPosition(obstacleDamage, impactPoint, impactNormal);
             }
             else
             {

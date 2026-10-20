@@ -269,6 +269,7 @@ public class NetworkPlayerSpawner : NetworkBehaviour
         Collider[] colliders = Physics.OverlapSphere(targetPosition, 1.5f, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Collide);
         WallHealth wall = null;
         Crate crate = null;
+        Collider wallCollider = null;
         float closestDistance = float.MaxValue;
 
         foreach (Collider collider in colliders)
@@ -294,11 +295,17 @@ public class NetworkPlayerSpawner : NetworkBehaviour
             closestDistance = distance;
             wall = candidateWall;
             crate = candidateWall == null ? candidateCrate : null;
+            wallCollider = candidateWall != null ? collider : null;
         }
 
         if (wall != null)
         {
-            wall.ApplyWorldDamage(damage);
+            Vector3 hitPosition = wallCollider != null ? wallCollider.ClosestPoint(targetPosition) : targetPosition;
+            Vector3 hitNormal = hitPosition - (wallCollider != null ? wallCollider.bounds.center : wall.transform.position);
+            if (hitNormal.sqrMagnitude <= 0.001f) hitNormal = Vector3.up;
+            else hitNormal.Normalize();
+            wall.ApplyWorldDamageAtPosition(damage, hitPosition, hitNormal);
+            targetPosition = hitPosition;
         }
         else if (crate != null)
         {
@@ -404,6 +411,7 @@ public class NetworkPlayerSpawner : NetworkBehaviour
         Collider[] colliders = Physics.OverlapSphere(targetPosition, 1.5f, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Collide);
         WallHealth wall = null;
         Crate crate = null;
+        Collider wallCollider = null;
         float closestDistance = float.MaxValue;
 
         foreach (Collider collider in colliders)
@@ -429,11 +437,16 @@ public class NetworkPlayerSpawner : NetworkBehaviour
             closestDistance = distance;
             wall = candidateWall;
             crate = candidateWall == null ? candidateCrate : null;
+            wallCollider = candidateWall != null ? collider : null;
         }
 
         if (wall != null)
         {
-            wall.ApplyWorldDamage(damage);
+            Vector3 hitPosition = wallCollider != null ? wallCollider.ClosestPoint(targetPosition) : targetPosition;
+            Vector3 hitNormal = hitPosition - (wallCollider != null ? wallCollider.bounds.center : wall.transform.position);
+            if (hitNormal.sqrMagnitude <= 0.001f) hitNormal = Vector3.up;
+            else hitNormal.Normalize();
+            wall.ApplyWorldDamageAtPosition(damage, hitPosition, hitNormal);
         }
         else if (crate != null)
         {

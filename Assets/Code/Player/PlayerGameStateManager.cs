@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using Unity.Netcode;
 using UnityEngine.UI;
+using System.Threading.Tasks;
 
 public class PlayerGameStateManager : MonoBehaviour
 {
@@ -88,7 +89,7 @@ public class PlayerGameStateManager : MonoBehaviour
         }
     }
 
-    private void ResetGame()
+    private async void ResetGame()
     {
         if (resetTransitionStarted) return;
         resetTransitionStarted = true;
@@ -97,15 +98,17 @@ public class PlayerGameStateManager : MonoBehaviour
         SessionManager sessionManager = SessionManager.Instance;
         if (sessionManager != null)
         {
-            _ = sessionManager.LeaveCurrentSessionForMenuAsync();
+            await sessionManager.LeaveCurrentSessionForMenuAsync();
         }
 
         NetworkManager networkManager = NetworkManager.Singleton;
         if (networkManager != null && networkManager.IsListening)
         {
             networkManager.Shutdown();
+            await Task.Yield();
         }
 
+        DungeonWaveManager.ResetRunProgress();
         resetStarted = false;
         SceneManager.LoadScene(startSceneName);
     }

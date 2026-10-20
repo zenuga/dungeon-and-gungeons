@@ -1,8 +1,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Unity.Netcode;
 
-public class RewardChest : MonoBehaviour
+public class RewardChest : NetworkBehaviour
 {
     [Header("Rewards")]
     [SerializeField] private int minimumWeapons = 1;
@@ -59,7 +60,15 @@ public class RewardChest : MonoBehaviour
         {
             if (IsOpenKeyPressed(player))
             {
-                Open();
+                if (NetworkSpawnUtility.IsNetworkSessionActive && IsSpawned)
+                {
+                    if (IsServer) Open();
+                    else RequestOpenServerRpc();
+                }
+                else
+                {
+                    Open();
+                }
                 return;
             }
         }
@@ -100,6 +109,8 @@ public class RewardChest : MonoBehaviour
 
     private void Open()
     {
+        if (isOpen || (NetworkSpawnUtility.IsNetworkSessionActive && IsSpawned && !IsServer)) return;
+
         GameObject opener = playersInRange.Count > 0 ? playersInRange[0] : null;
         PlayerCurrency currency = opener != null ? opener.GetComponent<PlayerCurrency>() : null;
         if (currency != null && currency.IsServer)
@@ -107,13 +118,15 @@ public class RewardChest : MonoBehaviour
             currency.AddGold(50);
         }
 
-        if (chestAnimator != null)
-        {
-            chestAnimator.Play("Open");
-        }
-
         isOpen = true;
-        GameAudioManager.EnsureInstance().PlayChestOpen();
+        if (NetworkSpawnUtility.IsNetworkSessionActive && IsSpawned)
+        {
+            PlayOpenPresentationClientRpc();
+        }
+        else
+        {
+            PlayOpenPresentation();
+        }
 
         int amount = Random.Range(minimumWeapons, maximumWeapons + 1);
         for (int i = 0; i < amount; i++)
@@ -170,6 +183,26 @@ public class RewardChest : MonoBehaviour
             rewardCollider = rewardObject.AddComponent<BoxCollider>();
         }
         rewardCollider.isTrigger = true;
+        NetworkSpawnUtility.SpawnIfNetworked(rewardObject);
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void RequestOpenServerRpc()
+    {
+        Open();
+    }
+
+    [ClientRpc]
+    private void PlayOpenPresentationClientRpc()
+    {
+        isOpen = true;
+        PlayOpenPresentation();
+    }
+
+    private void PlayOpenPresentation()
+    {
+        if (chestAnimator != null) chestAnimator.Play("Open");
+        GameAudioManager.EnsureInstance().PlayChestOpen();
     }
 
     public void ClearSpawnedRewards()
@@ -178,7 +211,7 @@ public class RewardChest : MonoBehaviour
         {
             if (reward != null)
             {
-                Destroy(reward);
+                NetworkSpawnUtility.DespawnOrDestroy(reward);
             }
         }
 

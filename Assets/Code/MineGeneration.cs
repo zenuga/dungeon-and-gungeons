@@ -100,7 +100,9 @@ public class ChunkedMineGeneration : MonoBehaviour
             if (dungeonPrefab != null)
             {
                 Vector3 spawnPosition = GetSpawnPosition(dungeonRect, dungeonSpawnOffset);
-                _generatedStructures.Add(Instantiate(dungeonPrefab, spawnPosition, Quaternion.identity));
+                GameObject dungeon = Instantiate(dungeonPrefab, spawnPosition, Quaternion.identity);
+                _generatedStructures.Add(dungeon);
+                NetworkSpawnUtility.SpawnIfNetworked(dungeon);
             }
         }
 
@@ -172,7 +174,7 @@ public class ChunkedMineGeneration : MonoBehaviour
         {
             if (structure != null)
             {
-                Destroy(structure);
+                NetworkSpawnUtility.DespawnOrDestroy(structure);
             }
         }
         _generatedStructures.Clear();

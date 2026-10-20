@@ -11,9 +11,15 @@ public class PlayerHealth : NetworkBehaviour
     [SerializeField] private Transform healthBarRoot;
     [SerializeField] private int maxHealth = 100;
     [SerializeField] private GameObject hurtParticlePrefab;
+    [SerializeField] private Sprite healthWarning75Sprite;
+    [SerializeField] private Sprite healthWarning50Sprite;
+    [SerializeField] private Sprite healthWarning25Sprite;
 
     [SerializeField]
     private int currentHealth = 100;
+    private Image healthWarning75Image;
+    private Image healthWarning50Image;
+    private Image healthWarning25Image;
     private NetworkVariable<int> networkHealth = new NetworkVariable<int>(
         100,
         NetworkVariableReadPermission.Everyone,
@@ -87,7 +93,9 @@ public class PlayerHealth : NetworkBehaviour
             playerTag = gameObject.tag;
         }
 
+        ResolveHealthWarningImages();
         UpdateHealthBar();
+        DungeonProgressDisplay.SetProgress(DungeonWaveManager.CompletedDungeonCount);
     }
 
     public void TakeDamage(int amount)
@@ -205,13 +213,81 @@ public class PlayerHealth : NetworkBehaviour
 
     public void UpdateHealthBar()
     {
-        if (healthFill == null)
+        if (healthFill != null)
         {
-            return;
+            healthFill.type = Image.Type.Filled;
+            healthFill.fillAmount = GetHealthPercent();
         }
 
-        healthFill.type = Image.Type.Filled;
-        healthFill.fillAmount = GetHealthPercent();
+        UpdateHealthWarningImages();
+    }
+
+    private void ResolveHealthWarningImages()
+    {
+        if (healthBarRoot == null) return;
+
+        Image[] images = healthBarRoot.GetComponentsInChildren<Image>(true);
+        healthWarning75Image = FindWarningImage(images, healthWarning75Sprite);
+        healthWarning50Image = FindWarningImage(images, healthWarning50Sprite);
+        healthWarning25Image = FindWarningImage(images, healthWarning25Sprite);
+
+        if (healthWarning75Image == null) healthWarning75Image = CreateWarningImage("Health Warning 75", healthWarning75Sprite);
+        if (healthWarning50Image == null) healthWarning50Image = CreateWarningImage("Health Warning 50", healthWarning50Sprite);
+        if (healthWarning25Image == null) healthWarning25Image = CreateWarningImage("Health Warning 25", healthWarning25Sprite);
+
+        if (healthWarning75Image != null) healthWarning75Image.raycastTarget = false;
+        if (healthWarning50Image != null) healthWarning50Image.raycastTarget = false;
+        if (healthWarning25Image != null) healthWarning25Image.raycastTarget = false;
+    }
+
+    private static Image FindWarningImage(Image[] images, Sprite sprite)
+    {
+        if (sprite == null || images == null) return null;
+        foreach (Image image in images)
+        {
+            if (image != null && image.sprite == sprite) return image;
+        }
+
+        return null;
+    }
+
+    private Image CreateWarningImage(string objectName, Sprite sprite)
+    {
+        if (healthBarRoot == null || sprite == null) return null;
+
+        GameObject imageObject = new GameObject(objectName, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+        imageObject.transform.SetParent(healthBarRoot, false);
+        RectTransform rect = imageObject.GetComponent<RectTransform>();
+        rect.anchorMin = new Vector2(0.5f, 0.5f);
+        rect.anchorMax = new Vector2(0.5f, 0.5f);
+        rect.pivot = new Vector2(0.5f, 0.5f);
+        rect.anchoredPosition = Vector2.zero;
+        rect.sizeDelta = healthFill != null && healthFill.rectTransform != null
+            ? healthFill.rectTransform.sizeDelta
+            : new Vector2(157f, 169f);
+
+        Image image = imageObject.GetComponent<Image>();
+        image.sprite = sprite;
+        image.color = new Color(1f, 1f, 1f, 0f);
+        image.raycastTarget = false;
+        imageObject.transform.SetAsLastSibling();
+        return image;
+    }
+
+    private void UpdateHealthWarningImages()
+    {
+        float healthPercent = GetHealthPercent();
+        SetWarningAlpha(healthWarning75Image, healthPercent <= 0.75f);
+        SetWarningAlpha(healthWarning50Image, healthPercent <= 0.50f);
+        SetWarningAlpha(healthWarning25Image, healthPercent <= 0.25f);
+    }
+
+    private static void SetWarningAlpha(Image image, bool visible)
+    {
+        if (image == null) return;
+        Color color = image.color;
+        color.a = visible ? 1f : 0f;
+        image.color = color;
     }
 
     private void OnHealthChanged(int previousHealth, int newHealth)

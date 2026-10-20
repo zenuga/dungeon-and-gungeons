@@ -121,6 +121,7 @@ public class SessionManager : MonoBehaviour
 
         if (scene.name == gameSceneName)
         {
+            DungeonWaveManager.ResetRunProgress();
             SetStatus("In game");
         }
     }

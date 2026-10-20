@@ -116,7 +116,24 @@ public class WeaponAttack : NetworkBehaviour
             if (angleToTarget > swingAngle * 0.5f) continue;
 
             _hitThisSwing.Add(col);
-            ApplyDamage(col.gameObject, damageAmount);
+            Vector3 hitPoint = col.ClosestPoint(attackOrigin);
+            Vector3 hitNormal = (attackOrigin - hitPoint).normalized;
+            WallHealth wallHealth = col.GetComponentInParent<WallHealth>();
+            bool usesRockWallImpact = wallHealth != null &&
+                wallHealth.gameObject.name.ToLowerInvariant().Contains("rock wall");
+            if (!usesRockWallImpact)
+            {
+                GameAudioManager.EnsureInstance().SpawnMeleeHitEffect(hitPoint, -attackDirection);
+            }
+
+            if (wallHealth != null)
+            {
+                wallHealth.TakeDamageAtPosition(damageAmount, hitPoint, hitNormal);
+            }
+            else
+            {
+                ApplyDamage(col.gameObject, damageAmount);
+            }
         }
     }
 
