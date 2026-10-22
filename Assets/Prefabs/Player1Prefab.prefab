@@ -615,7 +615,7 @@ GameObject:
   - component: {fileID: 2540046543284673462}
   - component: {fileID: 5985505452885255257}
   m_Layer: 6
-  m_Name: Image
+  m_Name: health bar fill
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -914,8 +914,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerHealth
   ShowTopMostFoldoutHeaderGroup: 1
   playerTag: Player1
-  healthFill: {fileID: 5957331669088556547}
-  healthBarRoot: {fileID: 4950502207369656207}
+  healthFill: {fileID: 5985505452885255257}
+  healthBarRoot: {fileID: 4440381008053399347}
   maxHealth: 100
   hurtParticlePrefab: {fileID: 6129862434143452988, guid: 17a2b606314be1992b03fac91fed3780, type: 3}
   healthWarning75Sprite: {fileID: 21300000, guid: 5884b5d88c0ad98109af629f70cc6c67, type: 3}
@@ -1192,7 +1192,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &5162094534527239825
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1972,7 +1972,7 @@ GameObject:
   - component: {fileID: 490098501451653345}
   - component: {fileID: 5957331669088556547}
   m_Layer: 6
-  m_Name: HealthPlayer1
+  m_Name: health heart
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2212,7 +2212,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0.326}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -687, y: 315}
+  m_AnchoredPosition: {x: -687, y: 313}
   m_SizeDelta: {x: 546.3365, y: 145.519}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &452048239679827047
@@ -2243,7 +2243,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: de6c5c12b8252f2679f41ea2ee2df0e8, type: 3}
+  m_Sprite: {fileID: 21300000, guid: a492043ba488ca1308f215aa2b625116, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -4927,7 +4927,7 @@ GameObject:
   - component: {fileID: 3770570861783228230}
   - component: {fileID: 804645055892820965}
   m_Layer: 6
-  m_Name: HealthPlayer1 (1)
+  m_Name: health bar border
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

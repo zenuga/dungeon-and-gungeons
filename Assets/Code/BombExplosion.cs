@@ -34,15 +34,22 @@ public class BombExplosionTrigger : MonoBehaviour
         }
 
         // 3. Destroy Wall (1 shot no matter the health)
-        GameObject rootObject = other.transform.root.gameObject;
-        if  (other.CompareTag("wall"))
+        if (other.CompareTag("wall"))
         {
-            if (hitEntities.Add(other.gameObject) && hitEntities.Add(rootObject))
+            WallHealth wallHealth = other.GetComponentInParent<WallHealth>();
+            GameObject breakable = wallHealth != null ? wallHealth.gameObject : other.gameObject;
+            // Wall colliders can be children of a dungeon prefab root. Never destroy the
+            // hierarchy root: only damage the object that owns the breakable component.
+            if (breakable.GetComponent<DungeonWaveManager>() != null || breakable.GetComponent<Dungeonenter>() != null)
             {
-                other.SendMessage("TakeDamage", 999999, SendMessageOptions.DontRequireReceiver);
-                other.SendMessage("DestroyWall", SendMessageOptions.DontRequireReceiver);
-                Destroy(other.gameObject);
+                return;
             }
+
+            if (!hitEntities.Add(breakable)) return;
+            if (wallHealth != null)
+                wallHealth.TakeDamage(999999);
+            else
+                breakable.SendMessage("TakeDamage", 999999, SendMessageOptions.DontRequireReceiver);
         }
     }
 }

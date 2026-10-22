@@ -408,9 +408,6 @@ public class EnemyAi : NetworkBehaviour
         projectileComponent.SetDirection(direction.normalized);
         projectileComponent.SetOwnerTag(gameObject.tag);
         projectileComponent.SetDamage(GetAttackDamage());
-
-        Vector3 aimDirection = direction.normalized;
-        projectile.transform.rotation = Quaternion.LookRotation(aimDirection, Vector3.up);
         NetworkSpawnUtility.SpawnIfNetworked(projectile);
     }
 

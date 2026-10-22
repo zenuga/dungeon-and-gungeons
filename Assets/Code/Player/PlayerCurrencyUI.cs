@@ -15,7 +15,17 @@ public class PlayerCurrencyUI : MonoBehaviour
 
         if (amountText == null)
         {
-            amountText = GetComponentInChildren<TMP_Text>(true);
+            Transform root = transform;
+            PlayerController playerController = GetComponent<PlayerController>();
+            if (playerController != null) root = playerController.transform;
+            foreach (TMP_Text text in root.GetComponentsInChildren<TMP_Text>(true))
+            {
+                if (text.gameObject.name == "CurrencyGoldAmount")
+                {
+                    amountText = text;
+                    break;
+                }
+            }
         }
     }
 

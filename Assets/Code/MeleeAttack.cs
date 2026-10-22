@@ -100,6 +100,8 @@ public class WeaponAttack : NetworkBehaviour
         }
 
         attackDirection.Normalize();
+        GameAudioManager.EnsureInstance().SpawnMeleeSlash(
+            ownerTransform.position + attackDirection * (attackRange * 0.65f), attackDirection);
         Vector3 attackOrigin = ownerTransform.position + attackDirection * (attackRange * 0.5f);
         Collider[] hits = Physics.OverlapSphere(attackOrigin, attackRadius, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore);
 

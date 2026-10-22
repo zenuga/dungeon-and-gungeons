@@ -328,6 +328,6 @@ public class Settings : MonoBehaviour
 
     private static Font BuiltinFont()
     {
-        return Resources.GetBuiltinResource<Font>("Arial.ttf");
+        return Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
     }
 }

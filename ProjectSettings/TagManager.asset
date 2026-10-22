@@ -19,6 +19,7 @@ TagManager:
   - boss
   - settings
   - playerUI
+  - SessionManager
   layers:
   - Default
   - TransparentFX

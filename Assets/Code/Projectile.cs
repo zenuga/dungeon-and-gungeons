@@ -19,6 +19,7 @@ public class Projectile : NetworkBehaviour
     [SerializeField] private int damage = 10;
     [SerializeField] private GameObject explosionPrefab;
     [SerializeField] private LayerMask damageMask = ~0;
+    [SerializeField] private Vector3 directionRotationOffset;
 
     private Vector3 direction;
     private float timer;
@@ -52,7 +53,7 @@ public class Projectile : NetworkBehaviour
     {
         newDirection.y = 0f;
         direction = newDirection.sqrMagnitude > 0.001f ? newDirection.normalized : Vector3.forward;
-        transform.rotation = Quaternion.LookRotation(direction, Vector3.up);
+        transform.rotation = Quaternion.LookRotation(direction, Vector3.up) * Quaternion.Euler(directionRotationOffset);
     }
 
     public void SetOwnerTag(string newOwnerTag)

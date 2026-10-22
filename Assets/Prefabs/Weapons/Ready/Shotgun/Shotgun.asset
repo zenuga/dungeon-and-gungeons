@@ -16,7 +16,7 @@ MonoBehaviour:
   weaponName: shotgun
   weaponImage: {fileID: 0}
   weaponPrefab: {fileID: 2793564291822744225, guid: 407081857a2488753952f1bca79c30c9, type: 3}
-  damage: 80
+  damage: 120
   cooldown: 0.5
   currencyAmount: 130
   attackSound: {fileID: 8300000, guid: a3b9e5a26fcb72e4695ac2e59413d03a, type: 3}

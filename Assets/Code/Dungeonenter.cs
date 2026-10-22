@@ -87,12 +87,25 @@ public class Dungeonenter : NetworkBehaviour // CHANGED: Fixed networkBehaviour 
     public void DisableWalls()
     {
         FallResetTrigger.ClearOverrideRespawnPoint();
-        if (NetworkSpawnUtility.IsNetworkSessionActive && IsSpawned && IsServer)
+        if (NetworkSpawnUtility.IsNetworkSessionActive && IsSpawned)
         {
-            wallsClosedNetwork.Value = false;
+            if (IsServer)
+            {
+                wallsClosedNetwork.Value = false;
+            }
+            else
+            {
+                RequestOpenWallsServerRpc();
+            }
         }
 
         ApplyWallState(false);
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void RequestOpenWallsServerRpc()
+    {
+        wallsClosedNetwork.Value = false;
     }
 
     private void CloseWalls()
@@ -133,9 +146,9 @@ public class Dungeonenter : NetworkBehaviour // CHANGED: Fixed networkBehaviour 
 
     private void ApplyWallState(bool closed)
     {
-        foreach (Transform child in transform)
+        foreach (Transform child in GetComponentsInChildren<Transform>(true))
         {
-            if (child.CompareTag("walls"))
+            if (child != transform && child.CompareTag("walls"))
             {
                 child.gameObject.SetActive(closed);
             }

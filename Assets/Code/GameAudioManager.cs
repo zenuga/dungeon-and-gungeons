@@ -23,6 +23,7 @@ public class GameAudioManager : MonoBehaviour
 
     [Header("Visual Feedback")]
     [SerializeField] private GameObject meleeHitParticlePrefab;
+    [SerializeField] private GameObject meleeSlashPrefab;
     [SerializeField] private GameObject rockWallImpactParticlePrefab;
 
     private AudioSource musicSource;
@@ -31,7 +32,14 @@ public class GameAudioManager : MonoBehaviour
 
     private void Awake()
     {
-        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
+        if (Instance != null && Instance != this)
+        {
+            // The title scene's SessionManager object is a button target and must stay
+            // present as a forwarding proxy; only remove its duplicate audio component.
+            if (GetComponent<SessionManager>() != null) Destroy(this);
+            else Destroy(gameObject);
+            return;
+        }
         Instance = this;
         DontDestroyOnLoad(gameObject);
         musicSource = gameObject.AddComponent<AudioSource>();
@@ -111,6 +119,16 @@ public class GameAudioManager : MonoBehaviour
         SpawnParticleEffect(meleeHitParticlePrefab, position, direction);
     }
 
+    public void SpawnMeleeSlash(Vector3 position, Vector3 direction)
+    {
+        Vector3 flatDirection = direction;
+        flatDirection.y = 0f;
+        if (flatDirection.sqrMagnitude <= 0.001f) flatDirection = Vector3.forward;
+
+        float facingYaw = Quaternion.LookRotation(flatDirection.normalized, Vector3.up).eulerAngles.y;
+        SpawnParticleEffect(meleeSlashPrefab, position, Quaternion.Euler(-90f, facingYaw, 0f), 2.5f);
+    }
+
     public void SpawnRockWallImpact(Vector3 position, Vector3 surfaceNormal)
     {
         SpawnParticleEffect(rockWallImpactParticlePrefab, position, surfaceNormal);
@@ -134,11 +152,15 @@ public class GameAudioManager : MonoBehaviour
 
     private static void SpawnParticleEffect(GameObject prefab, Vector3 position, Vector3 forward)
     {
+        SpawnParticleEffect(prefab, position, forward, 1f);
+    }
+
+    private static void SpawnParticleEffect(GameObject prefab, Vector3 position, Quaternion rotation, float scale)
+    {
         if (prefab == null) return;
 
-        Vector3 direction = forward.sqrMagnitude > 0.001f ? forward.normalized : Vector3.up;
-        Vector3 up = Mathf.Abs(Vector3.Dot(direction, Vector3.up)) > 0.99f ? Vector3.forward : Vector3.up;
-        GameObject effect = Instantiate(prefab, position, Quaternion.LookRotation(direction, up));
+        GameObject effect = Instantiate(prefab, position, rotation);
+        effect.transform.localScale *= scale;
         ParticleSystem[] particles = effect.GetComponentsInChildren<ParticleSystem>(true);
         float lifetime = 1f;
         foreach (ParticleSystem particle in particles)
@@ -149,5 +171,12 @@ public class GameAudioManager : MonoBehaviour
         }
 
         Destroy(effect, lifetime + 0.25f);
+    }
+
+    private static void SpawnParticleEffect(GameObject prefab, Vector3 position, Vector3 forward, float scale)
+    {
+        Vector3 direction = forward.sqrMagnitude > 0.001f ? forward.normalized : Vector3.up;
+        Vector3 up = Mathf.Abs(Vector3.Dot(direction, Vector3.up)) > 0.99f ? Vector3.forward : Vector3.up;
+        SpawnParticleEffect(prefab, position, Quaternion.LookRotation(direction, up), scale);
     }
 }

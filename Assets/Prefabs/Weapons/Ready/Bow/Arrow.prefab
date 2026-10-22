@@ -180,3 +180,4 @@ MonoBehaviour:
   damageMask:
     serializedVersion: 2
     m_Bits: 4294967295
+  directionRotationOffset: {x: 90, y: 0, z: 0}

@@ -2292,7 +2292,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &651840661
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7809,7 +7809,7 @@ MonoBehaviour:
   m_Name: WallBreakEncounterManager
   m_EditorClassIdentifier: Assembly-CSharp::WallBreakEncounterManager
   enemyPrefab: {fileID: 2985702865053688152, guid: 07bb8293b075710408e2d0648b2e9b05, type: 3}
-  spawnChancePercent: 3
+  spawnChancePercent: 1.5
   spawnRadius: 30
   warningText: the shadow digger has appeared! run to safety!
 --- !u!114 &7642001337000100221

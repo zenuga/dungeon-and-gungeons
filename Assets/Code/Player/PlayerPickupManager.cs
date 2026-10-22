@@ -400,7 +400,7 @@ public class PlayerPickupManager : NetworkBehaviour
             }
             else
             {
-                reloadImage.color = Color.blue;
+                reloadImage.color = Color.white;
                 reloadImage.fillAmount = currentRangedWeaponScript.AmmoRatio;
             }
         }
@@ -413,7 +413,7 @@ public class PlayerPickupManager : NetworkBehaviour
             }
             else
             {
-                reloadImage.color = Color.blue;
+                reloadImage.color = Color.white;
                 reloadImage.fillAmount = 1f;
             }
         }

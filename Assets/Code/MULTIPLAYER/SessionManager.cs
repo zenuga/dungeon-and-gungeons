@@ -1,7 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 using TMPro;
 
 using Unity.Services.Core;
@@ -30,6 +32,7 @@ public class SessionManager : MonoBehaviour
     private bool shuttingDown = false;
     private bool waitingToStartGame = false;
     private int sessionGeneration;
+    private readonly HashSet<Button> createButtonsBound = new HashSet<Button>();
 
     private async void Awake()
     {
@@ -38,7 +41,8 @@ public class SessionManager : MonoBehaviour
 
         if (Instance != null && Instance != this)
         {
-            Destroy(gameObject);
+            // Keep the menu scene object alive because its Button event targets this
+            // component. CreateGame forwards to the persistent manager instance.
             return;
         }
 
@@ -47,6 +51,7 @@ public class SessionManager : MonoBehaviour
         DontDestroyOnLoad(gameObject);
         SceneManager.sceneLoaded += OnSceneLoaded;
         SubscribeToNetworkManager();
+        BindCreateGameButton(SceneManager.GetActiveScene());
 
         await InitializeUnityServices();
     }
@@ -102,6 +107,7 @@ public class SessionManager : MonoBehaviour
 
         if (scene.name == "StartScreen")
         {
+            RebindCreateGameButton(scene);
             Time.timeScale = 1f;
             gameStarting = false;
             waitingToStartGame = false;
@@ -124,6 +130,70 @@ public class SessionManager : MonoBehaviour
             DungeonWaveManager.ResetRunProgress();
             SetStatus("In game");
         }
+    }
+
+    public static void RebindCreateGameButton(Scene scene)
+    {
+        if (!scene.IsValid() || scene.name != "StartScreen") return;
+
+        SessionManager buttonManager = Instance;
+        if (buttonManager == null)
+        {
+            GameObject taggedManagerObject = GameObject.FindGameObjectWithTag("SessionManager");
+            if (taggedManagerObject != null) buttonManager = taggedManagerObject.GetComponent<SessionManager>();
+        }
+        if (buttonManager == null)
+        {
+            SessionManager[] managers = Resources.FindObjectsOfTypeAll<SessionManager>();
+            foreach (SessionManager candidate in managers)
+            {
+                if (candidate != null && candidate.gameObject.scene.IsValid())
+                {
+                    buttonManager = candidate;
+                    break;
+                }
+            }
+        }
+
+        if (buttonManager == null)
+        {
+            Debug.LogError("Could not bind Create Game: no SessionManager instance or tagged object was found.");
+            return;
+        }
+
+        foreach (GameObject root in scene.GetRootGameObjects())
+        {
+            Button[] buttons = root.GetComponentsInChildren<Button>(true);
+            foreach (Button button in buttons)
+            {
+                if (!string.Equals(button.gameObject.name, "create", StringComparison.OrdinalIgnoreCase)) continue;
+                if (buttonManager.createButtonsBound.Contains(button)) return;
+
+                for (int i = 0; i < button.onClick.GetPersistentEventCount(); i++)
+                {
+                    if (button.onClick.GetPersistentMethodName(i) == nameof(CreateGame) &&
+                        button.onClick.GetPersistentTarget(i) is SessionManager)
+                    {
+                        buttonManager.createButtonsBound.Add(button);
+                        return;
+                    }
+                }
+
+                // A freshly loaded menu's saved listener can point to its duplicate
+                // SessionManager, which is destroyed because the persistent one wins.
+                button.onClick.AddListener(buttonManager.CreateGame);
+                buttonManager.createButtonsBound.Add(button);
+                Debug.Log("Bound the Create button to the persistent SessionManager.CreateGame method.", button);
+                return;
+            }
+        }
+
+        Debug.LogError("Could not bind Create Game: no Button named 'create' was found in the StartScreen scene.");
+    }
+
+    private void BindCreateGameButton(Scene scene)
+    {
+        RebindCreateGameButton(scene);
     }
 
     public async Task LeaveCurrentSessionForMenuAsync()
@@ -225,6 +295,12 @@ public class SessionManager : MonoBehaviour
 
     public async void CreateGame()
     {
+        if (Instance != null && Instance != this)
+        {
+            Instance.CreateGame();
+            return;
+        }
+
         if (shuttingDown || !Application.isPlaying)
         {
             return;

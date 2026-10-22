@@ -20,6 +20,13 @@ public class StartScreen : MonoBehaviour
         settings.Configure(settingsUI);
     }
 
+    private void Start()
+    {
+        // Fallback for scene-load paths where the persistent manager's callback was not
+        // registered before this menu loaded.
+        SessionManager.RebindCreateGameButton(SceneManager.GetActiveScene());
+    }
+
     public async void StartGame()
     {
         if (sceneTransitionStarted) return;

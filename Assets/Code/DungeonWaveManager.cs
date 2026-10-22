@@ -90,7 +90,8 @@ public class DungeonWaveManager : NetworkBehaviour
     private void SpawnBoss(GameObject bossPrefab)
     {
         Transform spawnPoint = spawnPoints != null && spawnPoints.Length > 0 ? spawnPoints[0] : transform;
-        GameObject boss = Instantiate(bossPrefab, GetSpawnPositionOnNavMesh(spawnPoint.position), spawnPoint.rotation);
+        Vector3 spawnPosition = GetSpawnPositionOnNavMesh(spawnPoint.position);
+        GameObject boss = Instantiate(bossPrefab, spawnPosition, GetInitialFacingRotation(spawnPosition, spawnPoint.rotation));
         boss.transform.localScale *= bossScaleMultiplier;
         boss.tag = "boss";
         foreach (EnemyAi bossAi in boss.GetComponentsInChildren<EnemyAi>(true))
@@ -164,7 +165,7 @@ public class DungeonWaveManager : NetworkBehaviour
                 : transform;
             Vector3 spawnPosition = GetSpawnPositionOnNavMesh(spawnPoint.position);
 
-            GameObject spawnedEnemy = Instantiate(enemyToSpawn, spawnPosition, spawnPoint.rotation);
+            GameObject spawnedEnemy = Instantiate(enemyToSpawn, spawnPosition, GetInitialFacingRotation(spawnPosition, spawnPoint.rotation));
             RegisterEnemy(spawnedEnemy);
             NetworkSpawnUtility.SpawnIfNetworked(spawnedEnemy);
         }
@@ -289,6 +290,30 @@ public class DungeonWaveManager : NetworkBehaviour
         }
 
         return desiredPosition;
+    }
+
+    private static Quaternion GetInitialFacingRotation(Vector3 spawnPosition, Quaternion fallbackRotation)
+    {
+        PlayerController[] players = FindObjectsByType<PlayerController>(FindObjectsSortMode.None);
+        PlayerController closestPlayer = null;
+        float closestDistance = float.PositiveInfinity;
+
+        foreach (PlayerController player in players)
+        {
+            if (player == null) continue;
+            float distance = (player.transform.position - spawnPosition).sqrMagnitude;
+            if (distance < closestDistance)
+            {
+                closestDistance = distance;
+                closestPlayer = player;
+            }
+        }
+
+        if (closestPlayer == null) return fallbackRotation;
+
+        Vector3 direction = closestPlayer.transform.position - spawnPosition;
+        direction.y = 0f;
+        return direction.sqrMagnitude > 0.001f ? Quaternion.LookRotation(direction.normalized) : fallbackRotation;
     }
 
     private GameObject GetWeightedRandomEnemy()
