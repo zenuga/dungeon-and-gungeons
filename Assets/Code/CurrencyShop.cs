@@ -19,7 +19,7 @@ public class CurrencyShop : MonoBehaviour
 
     [Header("Shop Setup")]
     [SerializeField] private GameObject shopUI;
-    [SerializeField] private Vector3 spawnOffset = new Vector3(0f, 1f, 1.5f);
+    [SerializeField] private Transform weaponSpawnPoint;
     [SerializeField] private List<WeaponData> itemPool = new List<WeaponData>();
     [SerializeField] private ShopSlot[] slots = new ShopSlot[3];
 
@@ -129,8 +129,8 @@ public class CurrencyShop : MonoBehaviour
         else
         {
             // Spawn weapons and bombs at the shop for pickup.
-            Vector3 spawnPosition = transform.position + spawnOffset;
-            GameObject spawnedItem = Instantiate(item.weaponPrefab, spawnPosition, Quaternion.identity);
+            Transform spawnPoint = GetWeaponSpawnPoint();
+            GameObject spawnedItem = Instantiate(item.weaponPrefab, spawnPoint.position, spawnPoint.rotation);
             CollectibleItem collectible = spawnedItem.GetComponent<CollectibleItem>();
             if (collectible == null) collectible = spawnedItem.AddComponent<CollectibleItem>();
             collectible.weaponData = item;
@@ -144,6 +144,36 @@ public class CurrencyShop : MonoBehaviour
         {
             slot.buyButton.gameObject.SetActive(false);
         }
+    }
+
+    private Transform GetWeaponSpawnPoint()
+    {
+        if (weaponSpawnPoint != null) return weaponSpawnPoint;
+
+        Transform[] children = GetComponentsInChildren<Transform>(true);
+        foreach (Transform child in children)
+        {
+            if (child != transform && child.name.ToLowerInvariant().Contains("crate"))
+            {
+                return child;
+            }
+        }
+
+        Crate[] nearbyCrates = FindObjectsByType<Crate>(FindObjectsSortMode.None);
+        Crate closestCrate = null;
+        float closestDistance = 4f;
+        foreach (Crate crate in nearbyCrates)
+        {
+            if (crate == null) continue;
+            float distance = Vector3.Distance(transform.position, crate.transform.position);
+            if (distance < closestDistance)
+            {
+                closestDistance = distance;
+                closestCrate = crate;
+            }
+        }
+
+        return closestCrate != null ? closestCrate.transform : transform;
     }
 
     public void Reroll()

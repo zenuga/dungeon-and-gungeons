@@ -16,7 +16,22 @@ MonoBehaviour:
   weaponName: Sword
   weaponImage: {fileID: 21300000, guid: 7228e7109fc3cc38abfe71945baf03f2, type: 3}
   weaponPrefab: {fileID: 8039010276732677699, guid: a5c592cebfe3f4147be5c6a417c4e956, type: 3}
-  damage: 50
-  cooldown: 0.4
+  damage: 20
+  cooldown: 0.3
+  poisonDamagePerTick: 0
+  poisonDuration: 0
+  poisonTickInterval: 1
   currencyAmount: 120
+  attackSound: {fileID: 0}
+  reloadSound: {fileID: 0}
   potionType: 0
+  isHitscan: 0
+  hitscanRange: 100
+  hitscanLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  hitscanPelletCount: 1
+  hitscanSpreadAngle: 0
+  impactParticlePrefab: {fileID: 0}
+  hitscanShootDuration: 3
+  hitscanReloadTime: 2

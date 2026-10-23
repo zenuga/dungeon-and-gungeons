@@ -196,7 +196,7 @@ public class PlayerController : NetworkBehaviour
         _characterController.enabled = true;
     }
 
-    public void RequestPlayerProjectile(GameObject projectilePrefab, Vector3 position, Vector3 direction, int damage)
+    public void RequestPlayerProjectile(GameObject projectilePrefab, Vector3 position, Vector3 direction, int damage, int poisonDamagePerTick = 0, float poisonDuration = 0f, float poisonTickInterval = 1f)
     {
         if (projectilePrefab == null || direction.sqrMagnitude <= 0.001f)
         {
@@ -205,7 +205,7 @@ public class PlayerController : NetworkBehaviour
 
         if (!NetworkSpawnUtility.IsNetworkSessionActive)
         {
-            SpawnPlayerProjectile(projectilePrefab, position, direction, damage);
+            SpawnPlayerProjectile(projectilePrefab, position, direction, damage, poisonDamagePerTick, poisonDuration, poisonTickInterval);
             return;
         }
 
@@ -223,21 +223,21 @@ public class PlayerController : NetworkBehaviour
 
         if (IsServer)
         {
-            SpawnPlayerProjectile(prefabNetworkObject.PrefabIdHash, position, direction, damage);
+            SpawnPlayerProjectile(prefabNetworkObject.PrefabIdHash, position, direction, damage, poisonDamagePerTick, poisonDuration, poisonTickInterval);
         }
         else
         {
-            SpawnPlayerProjectileServerRpc(prefabNetworkObject.PrefabIdHash, position, direction, damage);
+            SpawnPlayerProjectileServerRpc(prefabNetworkObject.PrefabIdHash, position, direction, damage, poisonDamagePerTick, poisonDuration, poisonTickInterval);
         }
     }
 
     [ServerRpc]
-    private void SpawnPlayerProjectileServerRpc(uint prefabHash, Vector3 position, Vector3 direction, int damage)
+    private void SpawnPlayerProjectileServerRpc(uint prefabHash, Vector3 position, Vector3 direction, int damage, int poisonDamagePerTick, float poisonDuration, float poisonTickInterval)
     {
-        SpawnPlayerProjectile(prefabHash, position, direction, damage);
+        SpawnPlayerProjectile(prefabHash, position, direction, damage, poisonDamagePerTick, poisonDuration, poisonTickInterval);
     }
 
-    private void SpawnPlayerProjectile(uint prefabHash, Vector3 position, Vector3 direction, int damage)
+    private void SpawnPlayerProjectile(uint prefabHash, Vector3 position, Vector3 direction, int damage, int poisonDamagePerTick, float poisonDuration, float poisonTickInterval)
     {
         foreach (NetworkPrefab registeredPrefab in NetworkManager.NetworkConfig.Prefabs.Prefabs)
         {
@@ -263,6 +263,7 @@ public class PlayerController : NetworkBehaviour
             projectile.SetDirection(direction);
             projectile.SetOwnerTag(gameObject.tag);
             projectile.SetDamage(Mathf.Clamp(damage, 1, 500));
+            projectile.SetPoison(poisonDamagePerTick, poisonDuration, poisonTickInterval);
             NetworkSpawnUtility.SpawnIfNetworked(projectileObject);
             return;
         }
@@ -270,7 +271,7 @@ public class PlayerController : NetworkBehaviour
         Debug.LogWarning($"Projectile prefab hash {prefabHash} is not registered on the server.", this);
     }
 
-    private void SpawnPlayerProjectile(GameObject prefab, Vector3 position, Vector3 direction, int damage)
+    private void SpawnPlayerProjectile(GameObject prefab, Vector3 position, Vector3 direction, int damage, int poisonDamagePerTick, float poisonDuration, float poisonTickInterval)
     {
         GameObject projectileObject = Instantiate(
             prefab,
@@ -285,6 +286,7 @@ public class PlayerController : NetworkBehaviour
         projectile.SetDirection(direction);
         projectile.SetOwnerTag(gameObject.tag);
         projectile.SetDamage(damage);
+        projectile.SetPoison(poisonDamagePerTick, poisonDuration, poisonTickInterval);
     }
 
     public void RequestCollectible(NetworkObject collectibleObject)
@@ -328,38 +330,36 @@ public class PlayerController : NetworkBehaviour
 
     private void Awake()
     {
-        if (playerAnimation == null && visualModel != null)
+        if (visualModel == null)
         {
-            playerAnimation = visualModel.GetComponent<Animation>();
-            if (playerAnimation == null)
-            {
-                playerAnimation = visualModel.GetComponentInChildren<Animation>(true);
-            }
-            if (playerAnimation == null && (walkAnimationClip != null || swingAttackAnimationClip != null || shootAnimationClip != null))
-            {
-                playerAnimation = visualModel.AddComponent<Animation>();
-            }
+            visualModel = gameObject;
+        }
+
+        // Legacy Animation clips resolve transform paths from the component's
+        // transform. Keep it on the visual model root so bone paths line up.
+        Animation modelAnimation = visualModel.GetComponent<Animation>();
+        if (modelAnimation == null && (walkAnimationClip != null || swingAttackAnimationClip != null || shootAnimationClip != null))
+        {
+            modelAnimation = visualModel.AddComponent<Animation>();
+        }
+
+        if (modelAnimation != null)
+        {
+            playerAnimation = modelAnimation;
+            playerAnimation.playAutomatically = false;
+            playerAnimation.cullingType = AnimationCullingType.AlwaysAnimate;
         }
         else if (playerAnimation == null)
         {
             playerAnimation = GetComponentInChildren<Animation>(true);
-            if (playerAnimation == null && (walkAnimationClip != null || swingAttackAnimationClip != null || shootAnimationClip != null))
-            {
-                playerAnimation = gameObject.AddComponent<Animation>();
-            }
         }
+
         _characterController = GetComponent<CharacterController>();
         playerMouseAim = GetComponentInChildren<PlayerMouseAim>(true);
 
         if (GetComponent<NetworkObject>() != null && GetComponent<NetworkTransform>() == null)
         {
             gameObject.AddComponent<NetworkTransform>();
-        }
-
-        // Default visual object to this transform if unassigned
-        if (visualModel == null)
-        {
-            visualModel = gameObject;
         }
 
         if (playerCamera == null)
@@ -792,8 +792,7 @@ public class PlayerController : NetworkBehaviour
                 {
                     walkState.enabled = true;
                     walkState.wrapMode = WrapMode.Loop;
-                    playerAnimation.Play(walkAnimationClip.name);
-                    isWalkingAnimationPlaying = true;
+                    isWalkingAnimationPlaying = playerAnimation.Play(walkAnimationClip.name);
                 }
             }
             else if (inputVector.sqrMagnitude <= 0.001f && isWalkingAnimationPlaying)

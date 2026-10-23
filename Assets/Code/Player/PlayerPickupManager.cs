@@ -25,6 +25,7 @@ public class PlayerPickupManager : NetworkBehaviour
     [SerializeField] private Image bombImage;
     [SerializeField] private TextMeshProUGUI bombText;
     [SerializeField] private GameObject activePotionEffectImage;
+    [SerializeField] private Image activePotionEffectIcon;
     [SerializeField] private TextMeshProUGUI activePotionEffectCountdown;
     
     [Header("Reload UI")]
@@ -43,6 +44,8 @@ public class PlayerPickupManager : NetworkBehaviour
     private PotionType currentPotionType;
     private WeaponData currentPotionData;
     private float potionEffectTimeRemaining;
+    private const float PotionEffectDuration = 30f;
+    private Sprite activePotionEffectSprite;
     private PlayerHealth playerHealth;
     private PlayerController playerController;
     private PotionType activePotionType;
@@ -66,6 +69,7 @@ public class PlayerPickupManager : NetworkBehaviour
         playerHealth = GetComponentInParent<PlayerHealth>();
         playerController = GetComponentInParent<PlayerController>();
         AutoFindUIReferences();
+        ResolveActivePotionEffectUIReferences();
 
         if (pickupRangeSphere != null)
         {
@@ -86,6 +90,7 @@ public class PlayerPickupManager : NetworkBehaviour
 
         UpdatePotionUI();
         UpdateBombUI();
+        UpdatePotionEffectUI();
     }
 
     private void Update()
@@ -186,7 +191,7 @@ public class PlayerPickupManager : NetworkBehaviour
 
         if (activePotionEffectImage == null)
         {
-            activePotionEffectImage = FindUIObject("ActivePotionEffect", "PotionEffectImage");
+            activePotionEffectImage = FindUIObject("ActivePotionEffect", "PotionEffectImage", "activePotion");
         }
 
         if (activePotionEffectCountdown == null && activePotionEffectImage != null)
@@ -361,7 +366,8 @@ public class PlayerPickupManager : NetworkBehaviour
 
         hasActivePotionEffect = true;
         activePotionType = currentPotionType;
-        potionEffectTimeRemaining = 30f;
+        potionEffectTimeRemaining = PotionEffectDuration;
+        activePotionEffectSprite = currentPotionData != null ? currentPotionData.weaponImage : null;
 
         if (activePotionType == PotionType.Speed && playerController != null)
         {
@@ -408,6 +414,84 @@ public class PlayerPickupManager : NetworkBehaviour
         {
             activePotionEffectCountdown.text = hasActivePotionEffect ? Mathf.CeilToInt(potionEffectTimeRemaining).ToString() : string.Empty;
         }
+
+        if (activePotionEffectIcon != null)
+        {
+            if (activePotionEffectSprite != null)
+            {
+                activePotionEffectIcon.sprite = activePotionEffectSprite;
+            }
+
+            activePotionEffectIcon.type = Image.Type.Filled;
+            activePotionEffectIcon.fillMethod = Image.FillMethod.Radial360;
+            activePotionEffectIcon.fillAmount = hasActivePotionEffect
+                ? Mathf.Clamp01(potionEffectTimeRemaining / PotionEffectDuration)
+                : 0f;
+        }
+    }
+
+    private void ResolveActivePotionEffectUIReferences()
+    {
+        if (activePotionEffectImage != null)
+        {
+            Transform candidate = activePotionEffectImage.transform;
+            while (candidate != null)
+            {
+                if (IsPotionEffectContainerName(candidate.name))
+                {
+                    activePotionEffectImage = candidate.gameObject;
+                    break;
+                }
+
+                candidate = candidate.parent;
+            }
+        }
+
+        Transform playerRoot = transform.root;
+        if (activePotionEffectImage == null && playerRoot != null)
+        {
+            Transform[] descendants = playerRoot.GetComponentsInChildren<Transform>(true);
+            foreach (Transform candidate in descendants)
+            {
+                if (IsPotionEffectContainerName(candidate.name))
+                {
+                    activePotionEffectImage = candidate.gameObject;
+                    break;
+                }
+            }
+        }
+
+        if (activePotionEffectImage == null)
+        {
+            return;
+        }
+
+        Image[] images = activePotionEffectImage.GetComponentsInChildren<Image>(true);
+        if (activePotionEffectIcon == null || activePotionEffectIcon.gameObject == activePotionEffectImage)
+        {
+            foreach (Image image in images)
+            {
+                if (image.gameObject != activePotionEffectImage)
+                {
+                    activePotionEffectIcon = image;
+                    break;
+                }
+            }
+        }
+
+        if (activePotionEffectCountdown == null)
+        {
+            activePotionEffectCountdown = activePotionEffectImage.GetComponentInChildren<TextMeshProUGUI>(true);
+        }
+    }
+
+    private static bool IsPotionEffectContainerName(string objectName)
+    {
+        return objectName.Equals("PotionEffects", System.StringComparison.OrdinalIgnoreCase) ||
+            objectName.Equals("PotionEffect", System.StringComparison.OrdinalIgnoreCase) ||
+            objectName.Equals("ActivePotionEffect", System.StringComparison.OrdinalIgnoreCase) ||
+            objectName.Equals("PotionEffectImage", System.StringComparison.OrdinalIgnoreCase) ||
+            objectName.Equals("activePotion", System.StringComparison.OrdinalIgnoreCase);
     }
 
     // CHANGED: Added melee weapon cooldown evaluation to the Reload UI update pipeline
@@ -515,7 +599,20 @@ public class PlayerPickupManager : NetworkBehaviour
 
             if (tagType == "potion")
             {
-                // Potions are purchased directly from the shop and cannot be picked up in the world.
+                WeaponData potionData = item.weaponData;
+                if (potionData == null || potionData.itemType != RewardItemType.Potion)
+                {
+                    foreach (var c in targetColliders) c.enabled = true;
+                    continue;
+                }
+
+                int potionQuantity = Mathf.Max(1, item.quantity);
+                if (TryAddPotion(potionData, potionQuantity))
+                {
+                    ConsumeCollectedItem(item, targetGameObject);
+                    break;
+                }
+
                 foreach (var c in targetColliders) c.enabled = true;
                 continue;
             }

@@ -232,7 +232,11 @@ public class RangedWeapon : NetworkBehaviour
         PlayerController playerController = owner.GetComponent<PlayerController>();
         if (playerController != null)
         {
-            playerController.RequestPlayerProjectile(projectilePrefab, origin, direction, damage);
+            playerController.RequestPlayerProjectile(
+                projectilePrefab, origin, direction, damage,
+                weaponData != null ? weaponData.poisonDamagePerTick : 0,
+                weaponData != null ? weaponData.poisonDuration : 0f,
+                weaponData != null ? weaponData.poisonTickInterval : 1f);
             return;
         }
 
@@ -247,6 +251,10 @@ public class RangedWeapon : NetworkBehaviour
         projectile.SetDirection(direction.normalized);
         projectile.SetOwnerTag(owner.tag);
         projectile.SetDamage(damage);
+        if (weaponData != null)
+        {
+            projectile.SetPoison(weaponData.poisonDamagePerTick, weaponData.poisonDuration, weaponData.poisonTickInterval);
+        }
     }
 
     private static Vector3 GetPlayerFacingDirection(Transform owner)

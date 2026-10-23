@@ -184,7 +184,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Projectile
   ShowTopMostFoldoutHeaderGroup: 1
-  speed: 12
+  speed: 18
   lifeTime: 2
   projectileType: 0
   explode: 0

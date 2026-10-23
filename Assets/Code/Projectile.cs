@@ -17,6 +17,9 @@ public class Projectile : NetworkBehaviour
     [SerializeField] private bool explode = false;
     [SerializeField] private float explosionRadius = 2.5f;
     [SerializeField] private int damage = 10;
+    private int poisonDamagePerTick;
+    private float poisonDuration;
+    private float poisonTickInterval = 1f;
     [SerializeField] private GameObject explosionPrefab;
     [SerializeField] private LayerMask damageMask = ~0;
     [SerializeField] private Vector3 directionRotationOffset;
@@ -64,6 +67,13 @@ public class Projectile : NetworkBehaviour
     public void SetDamage(int amount)
     {
         damage = amount;
+    }
+
+    public void SetPoison(int damagePerTick, float duration, float tickInterval)
+    {
+        poisonDamagePerTick = Mathf.Max(0, damagePerTick);
+        poisonDuration = Mathf.Max(0f, duration);
+        poisonTickInterval = Mathf.Max(0.1f, tickInterval);
     }
 
     public void SetProjectileType(ProjectileType newType)
@@ -178,6 +188,10 @@ public class Projectile : NetworkBehaviour
             if (!IsEnemyProjectile())
             {
                 enemy.TakeDamage(damage);
+                if (poisonDamagePerTick > 0 && poisonDuration > 0f)
+                {
+                    enemy.ApplyPoison(poisonDamagePerTick, poisonDuration, poisonTickInterval);
+                }
                 NetworkSpawnUtility.DespawnOrDestroy(gameObject);
             }
             return;

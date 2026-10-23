@@ -149,8 +149,8 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   projectilePrefab: {fileID: 2053575100479928261, guid: 437c5a999d2817596ba0470424cd7f70, type: 3}
   muzzlePoint: {fileID: 246885474510530972}
-  fireRate: 0.5
-  objectToDisableAfterShooting: {fileID: 2053575100479928261, guid: 437c5a999d2817596ba0470424cd7f70, type: 3}
+  fireRate: 0.35
+  objectToDisableAfterShooting: {fileID: 0}
 --- !u!1001 &4181403554171346145
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -23,6 +23,10 @@ public class WeaponData : ScriptableObject
     public GameObject weaponPrefab;
     public int damage;
     public float cooldown;
+    [Header("Poison Effect")]
+    [Min(0)] public int poisonDamagePerTick;
+    [Min(0f)] public float poisonDuration;
+    [Min(0.1f)] public float poisonTickInterval = 1f;
     public int currencyAmount = 40;
     [Header("Audio")]
     public AudioClip attackSound;

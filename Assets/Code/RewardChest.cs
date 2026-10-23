@@ -151,7 +151,8 @@ public class RewardChest : NetworkBehaviour
 
         WeaponData rewardData = Instantiate(template);
         spawnedRewardData.Add(rewardData);
-        if (rewardData.itemType == RewardItemType.Weapon)
+        if (rewardData.itemType == RewardItemType.Weapon &&
+            !string.Equals(rewardData.weaponName, "minigun", System.StringComparison.OrdinalIgnoreCase))
         {
             rewardData.damage = Random.Range(10, 51);
 

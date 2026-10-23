@@ -16,9 +16,12 @@ MonoBehaviour:
   weaponName: slime gun
   weaponImage: {fileID: 0}
   weaponPrefab: {fileID: 8121844578747262991, guid: 7b1dd842c975d4074bba714c432fe33d, type: 3}
-  damage: 0
+  damage: 5
   cooldown: 0
   currencyAmount: 99999999
+  poisonDamagePerTick: 2
+  poisonDuration: 4
+  poisonTickInterval: 1
   attackSound: {fileID: 8300000, guid: 5a2e06b68448ec44d93058ff5379ba01, type: 3}
   reloadSound: {fileID: 8300000, guid: e7ddf75b9b441574ba7b956694f5f9fe, type: 3}
   potionType: 0

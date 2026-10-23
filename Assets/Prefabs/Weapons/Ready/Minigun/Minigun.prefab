@@ -195,7 +195,7 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   projectilePrefab: {fileID: 0}
   muzzlePoint: {fileID: 7637558564501231024}
-  fireRate: 0.02
+  fireRate: 0.006
   objectToDisableAfterShooting: {fileID: 0}
 --- !u!136 &8204410301017013386
 CapsuleCollider:

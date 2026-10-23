@@ -29,6 +29,7 @@ public class EnemyAi : NetworkBehaviour
     protected NavMeshAgent navMeshAgent;
     protected float nextAttackTime;
     protected int currentHealth;
+    private Coroutine poisonCoroutine;
     private readonly NetworkVariable<int> replicatedHealth = new NetworkVariable<int>(
         100,
         NetworkVariableReadPermission.Everyone,
@@ -425,6 +426,25 @@ public class EnemyAi : NetworkBehaviour
         }
 
         ApplyDamage(amount);
+    }
+
+    public void ApplyPoison(int damagePerTick, float duration, float tickInterval)
+    {
+        if (damagePerTick <= 0 || duration <= 0f || (IsSpawned && !IsServer)) return;
+        if (poisonCoroutine != null) StopCoroutine(poisonCoroutine);
+        poisonCoroutine = StartCoroutine(ApplyPoisonOverTime(damagePerTick, duration, Mathf.Max(0.1f, tickInterval)));
+    }
+
+    private System.Collections.IEnumerator ApplyPoisonOverTime(int damagePerTick, float duration, float tickInterval)
+    {
+        float elapsed = 0f;
+        while (elapsed < duration && currentHealth > 0)
+        {
+            yield return new WaitForSeconds(tickInterval);
+            elapsed += tickInterval;
+            if (elapsed <= duration && currentHealth > 0) TakeDamage(damagePerTick);
+        }
+        poisonCoroutine = null;
     }
 
     [ServerRpc(RequireOwnership = false)]

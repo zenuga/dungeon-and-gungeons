@@ -14,8 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WeaponData
   itemType: 2
   weaponName: Speed Potion
-  weaponImage: {fileID: 0}
-  weaponPrefab: {fileID: 0}
+  weaponImage: {fileID: 21300000, guid: e40d7996b070f81ef964327626c945c6, type: 3}
+  weaponPrefab: {fileID: 5518914489083406423, guid: 350fac10a820280cc9f788cdce8c37b8, type: 3}
   damage: 0
   cooldown: 0
   currencyAmount: 100
@@ -27,6 +27,8 @@ MonoBehaviour:
   hitscanLayers:
     serializedVersion: 2
     m_Bits: 4294967295
+  hitscanPelletCount: 1
+  hitscanSpreadAngle: 0
   impactParticlePrefab: {fileID: 0}
   hitscanShootDuration: 3
   hitscanReloadTime: 2

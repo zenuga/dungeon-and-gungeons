@@ -2774,7 +2774,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CurrencyShop
   shopUI: {fileID: 4631683265681144774}
-  spawnOffset: {x: 0, y: 1, z: 1.5}
   itemPool:
   - {fileID: 11400000, guid: 11a25e377da988b109de119ef4149d6f, type: 2}
   - {fileID: 11400000, guid: 41735ac478d1a7ad7bab22947cbec1f3, type: 2}
@@ -2783,8 +2782,9 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 83f09e338e644453691e7b995e727caa, type: 2}
   - {fileID: 11400000, guid: 72f3d3255541a3ab7b772979fb37cb89, type: 2}
   - {fileID: 11400000, guid: 5b823bec0262f5235b2abe497f37fb7a, type: 2}
-  - {fileID: 11400000, guid: 7401afc7b7de421aa98f554821adea02, type: 2}
   - {fileID: 11400000, guid: 56a8712dfde94b0e88d41643aadf2134, type: 2}
+  - {fileID: 11400000, guid: b4d6f32b60dc33fb0912bf50a2402d0e, type: 2}
+  - {fileID: 11400000, guid: 752a487a983c1584cbfc6c287fcd74d8, type: 2}
   - {fileID: 11400000, guid: 6c8847caef134087ab5264ab354a87c1, type: 2}
   slots:
   - itemImage: {fileID: 2166298974459802857}

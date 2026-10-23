@@ -3813,7 +3813,8 @@ MonoBehaviour:
   potionText: {fileID: 4262862493354170118}
   bombImage: {fileID: 4637554894338015591}
   bombText: {fileID: 1577237872887920610}
-  activePotionEffectImage: {fileID: 0}
+  activePotionEffectImage: {fileID: 615014788593950885}
+  activePotionEffectIcon: {fileID: 3027398277744881624}
   activePotionEffectCountdown: {fileID: 0}
   reloadUIObject: {fileID: 0}
   reloadImage: {fileID: 0}
@@ -4068,9 +4069,9 @@ MonoBehaviour:
   gravity: -9.81
   settings: {fileID: 0}
   playerAnimation: {fileID: -5182337449797207385}
-  walkAnimationClip: {fileID: -4159849291455229913, guid: 2b2738d0691349044b2a4d86da8da239, type: 3}
-  swingAttackAnimationClip: {fileID: 4781951162920444690, guid: 2b2738d0691349044b2a4d86da8da239, type: 3}
-  shootAnimationClip: {fileID: 0}
+  walkAnimationClip: {fileID: 4677992259941259231, guid: 53e670f2b5eae0442803b4cfc04b9cd2, type: 3}
+  swingAttackAnimationClip: {fileID: 4781951162920444690, guid: 53e670f2b5eae0442803b4cfc04b9cd2, type: 3}
+  shootAnimationClip: {fileID: 4781951162920444690, guid: 53e670f2b5eae0442803b4cfc04b9cd2, type: 3}
 --- !u!114 &6638607713950294724
 MonoBehaviour:
   m_ObjectHideFlags: 0
