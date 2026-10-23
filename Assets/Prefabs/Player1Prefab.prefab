@@ -1095,7 +1095,6 @@ MonoBehaviour:
   indicatorUI: {fileID: 5162094534527239825}
   indicatorImage: {fileID: 2098026854045397682}
   edgePadding: 40
-  searchInterval: 5
 --- !u!111 &3437477651772772020
 Animation:
   m_ObjectHideFlags: 0
@@ -3640,7 +3639,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 130, y: 1}
+  m_AnchoredPosition: {x: -7, y: 1}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1783206953471062106
@@ -5026,7 +5025,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -7, y: 1}
+  m_AnchoredPosition: {x: 129, y: 1}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &2979770786272531694
@@ -5134,6 +5133,8 @@ MonoBehaviour:
   reloadImage: {fileID: 0}
   maxPotions: 8
   maxBombs: 15
+  standardBombPrefab: {fileID: 5044361957461935648, guid: 96808716cdada1e1a94e15ca877cfb7b, type: 3}
+  alternateBombPrefab: {fileID: 5044361957461935648, guid: 32b37e7f1c3b12057baa8534758213b0, type: 3}
 --- !u!114 &8995526368518515291
 MonoBehaviour:
   m_ObjectHideFlags: 0

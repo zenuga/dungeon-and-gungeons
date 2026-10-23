@@ -17,7 +17,7 @@ MonoBehaviour:
   weaponImage: {fileID: 0}
   weaponPrefab: {fileID: 0}
   damage: 30
-  cooldown: 4
+  cooldown: 6
   currencyAmount: 40
   attackSound: {fileID: 0}
   reloadSound: {fileID: 0}
@@ -27,6 +27,8 @@ MonoBehaviour:
   hitscanLayers:
     serializedVersion: 2
     m_Bits: 4294967295
+  hitscanPelletCount: 1
+  hitscanSpreadAngle: 0
   impactParticlePrefab: {fileID: 0}
   hitscanShootDuration: 3
   hitscanReloadTime: 2

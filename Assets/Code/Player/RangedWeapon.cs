@@ -181,9 +181,16 @@ public class RangedWeapon : NetworkBehaviour
     {
         float range = weaponData != null ? weaponData.hitscanRange : 100f;
         LayerMask mask = weaponData != null ? weaponData.hitscanLayers : ~0;
+        int pelletCount = weaponData != null ? Mathf.Max(1, weaponData.hitscanPelletCount) : 1;
+        float spreadAngle = weaponData != null ? Mathf.Max(0f, weaponData.hitscanSpreadAngle) : 0f;
+        int pelletDamage = Mathf.Max(1, Mathf.RoundToInt((float)damage / pelletCount));
 
-        if (Physics.Raycast(origin, direction, out RaycastHit hit, range, mask))
+        for (int i = 0; i < pelletCount; i++)
         {
+            float yawOffset = pelletCount == 1 ? 0f : Random.Range(-spreadAngle * 0.5f, spreadAngle * 0.5f);
+            Vector3 pelletDirection = Quaternion.AngleAxis(yawOffset, Vector3.up) * direction;
+            if (!Physics.Raycast(origin, pelletDirection, out RaycastHit hit, range, mask)) continue;
+
             WallHealth wallHealth = hit.collider.GetComponentInParent<WallHealth>();
             if (wallHealth == null && weaponData != null && weaponData.impactParticlePrefab != null)
             {
@@ -197,23 +204,23 @@ public class RangedWeapon : NetworkBehaviour
 
             if (owner != null && (hit.transform == owner || hit.transform.IsChildOf(owner)))
             {
-                return;
+                continue;
             }
 
             if (wallHealth != null)
             {
-                wallHealth.TakeDamageAtPosition(damage, hit.point, hit.normal);
-                return;
+                wallHealth.TakeDamageAtPosition(pelletDamage, hit.point, hit.normal);
+                continue;
             }
 
             IDamageable damageable = hit.collider.GetComponentInParent<IDamageable>();
             if (damageable != null)
             {
-                damageable.TakeDamage(damage);
+                damageable.TakeDamage(pelletDamage);
             }
             else
             {
-                hit.collider.gameObject.SendMessageUpwards("TakeDamage", damage, SendMessageOptions.DontRequireReceiver);
+                hit.collider.gameObject.SendMessageUpwards("TakeDamage", pelletDamage, SendMessageOptions.DontRequireReceiver);
             }
         }
     }

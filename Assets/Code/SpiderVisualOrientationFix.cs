@@ -22,7 +22,7 @@ public sealed class SpiderVisualOrientationFix : MonoBehaviour
         }
 
         foreach (Transform branch in visualBranches)
-            branch.SetParent(visualPivot, true);
+            branch.SetParent(visualPivot, false);
 
         if (visualBranches.Count == 0)
             Destroy(visualPivot.gameObject);

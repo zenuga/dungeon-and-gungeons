@@ -121,12 +121,16 @@ public class GameAudioManager : MonoBehaviour
 
     public void SpawnMeleeSlash(Vector3 position, Vector3 direction)
     {
+        if (meleeSlashPrefab == null) return;
+
         Vector3 flatDirection = direction;
         flatDirection.y = 0f;
         if (flatDirection.sqrMagnitude <= 0.001f) flatDirection = Vector3.forward;
 
-        float facingYaw = Quaternion.LookRotation(flatDirection.normalized, Vector3.up).eulerAngles.y;
-        SpawnParticleEffect(meleeSlashPrefab, position, Quaternion.Euler(-90f, facingYaw, 0f), 2.5f);
+        // The slash prefab lies flat because of its authored transform rotation.
+        // Rotate the particles around that plane to match the mouse aim direction.
+        float startRotation = Mathf.Atan2(flatDirection.x, flatDirection.z);
+        SpawnParticleEffect(meleeSlashPrefab, position, meleeSlashPrefab.transform.rotation, 2.5f, startRotation);
     }
 
     public void SpawnRockWallImpact(Vector3 position, Vector3 surfaceNormal)
@@ -157,6 +161,11 @@ public class GameAudioManager : MonoBehaviour
 
     private static void SpawnParticleEffect(GameObject prefab, Vector3 position, Quaternion rotation, float scale)
     {
+        SpawnParticleEffect(prefab, position, rotation, scale, null);
+    }
+
+    private static void SpawnParticleEffect(GameObject prefab, Vector3 position, Quaternion rotation, float scale, float? particleStartRotation)
+    {
         if (prefab == null) return;
 
         GameObject effect = Instantiate(prefab, position, rotation);
@@ -165,7 +174,16 @@ public class GameAudioManager : MonoBehaviour
         float lifetime = 1f;
         foreach (ParticleSystem particle in particles)
         {
+            if (particleStartRotation.HasValue)
+            {
+                particle.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            }
+
             ParticleSystem.MainModule main = particle.main;
+            if (particleStartRotation.HasValue)
+            {
+                main.startRotation = new ParticleSystem.MinMaxCurve(particleStartRotation.Value);
+            }
             lifetime = Mathf.Max(lifetime, main.duration + main.startLifetime.constantMax);
             particle.Play(true);
         }

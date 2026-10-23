@@ -34,6 +34,8 @@ public class PlayerPickupManager : NetworkBehaviour
     [Header("Inventory Setup")]
     [SerializeField] private int maxPotions = 8;
     [SerializeField] private int maxBombs = 15;
+    [SerializeField] private GameObject standardBombPrefab;
+    [SerializeField] private GameObject alternateBombPrefab;
 
     private int currentPotions = 0;
     private int currentBombs = 0;
@@ -108,7 +110,7 @@ public class PlayerPickupManager : NetworkBehaviour
             TryPickupItem();
         }
 
-        bool bombPressed = Keyboard.current.bKey.wasPressedThisFrame ||
+        bool bombPressed = Keyboard.current.eKey.wasPressedThisFrame ||
             (playerType == PlayerType.Player2 && Keyboard.current.uKey.wasPressedThisFrame);
         if (bombPressed)
         {
@@ -286,12 +288,54 @@ public class PlayerPickupManager : NetworkBehaviour
         currentBombs--;
         UpdateBombUI();
 
-        Instantiate(currentBombData.weaponPrefab, transform.position, Quaternion.identity);
+        bool isAlternateBomb = currentBombData.weaponPrefab.name == "ExplodingBomb";
+        if (NetworkSpawnUtility.IsNetworkSessionActive && IsSpawned)
+        {
+            if (IsServer)
+            {
+                SpawnNetworkBomb(isAlternateBomb, transform.position);
+            }
+            else
+            {
+                PlaceBombServerRpc(isAlternateBomb, transform.position);
+            }
+        }
+        else
+        {
+            Instantiate(currentBombData.weaponPrefab, transform.position, Quaternion.identity);
+        }
 
         if (currentBombs <= 0)
         {
             currentBombData = null;
         }
+    }
+
+    [ServerRpc]
+    private void PlaceBombServerRpc(bool isAlternateBomb, Vector3 position)
+    {
+        SpawnNetworkBomb(isAlternateBomb, position);
+    }
+
+    private void SpawnNetworkBomb(bool isAlternateBomb, Vector3 position)
+    {
+        GameObject prefab = isAlternateBomb ? alternateBombPrefab : standardBombPrefab;
+        if (prefab == null)
+        {
+            Debug.LogError("Cannot place bomb: the network bomb prefab is not assigned.", this);
+            return;
+        }
+
+        GameObject bomb = Instantiate(prefab, position, Quaternion.identity);
+        NetworkObject networkObject = bomb.GetComponent<NetworkObject>();
+        if (networkObject == null)
+        {
+            Debug.LogError($"Cannot place bomb: '{prefab.name}' has no NetworkObject.", prefab);
+            Destroy(bomb);
+            return;
+        }
+
+        networkObject.Spawn();
     }
 
     private void UsePotion()
@@ -643,12 +687,14 @@ public class PlayerPickupManager : NetworkBehaviour
         
         BoxCollider boxCol = itemObj.GetComponent<BoxCollider>();
         if (boxCol == null) boxCol = itemObj.AddComponent<BoxCollider>();
-        boxCol.isTrigger = true;
+        boxCol.isTrigger = false;
         boxCol.excludeLayers = LayerMask.GetMask("Player");
         
         Rigidbody rb = itemObj.GetComponent<Rigidbody>();
         if (rb == null) rb = itemObj.AddComponent<Rigidbody>();
         rb.isKinematic = false;
+        rb.useGravity = true;
+        rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
 
         CollectibleItem dropData = itemObj.GetComponent<CollectibleItem>();
         if (dropData == null)

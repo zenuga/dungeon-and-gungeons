@@ -33,6 +33,8 @@ public class WeaponData : ScriptableObject
     public bool isHitscan = false;
     public float hitscanRange = 100f;
     public LayerMask hitscanLayers = ~0; 
+    [Min(1)] public int hitscanPelletCount = 1;
+    [Min(0f)] public float hitscanSpreadAngle = 0f;
     public GameObject impactParticlePrefab;
     
     // CHANGED: Added shoot duration and reload time for hitscan clip mechanics

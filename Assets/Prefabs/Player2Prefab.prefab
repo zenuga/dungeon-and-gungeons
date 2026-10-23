@@ -3819,6 +3819,8 @@ MonoBehaviour:
   reloadImage: {fileID: 0}
   maxPotions: 8
   maxBombs: 15
+  standardBombPrefab: {fileID: 5044361957461935648, guid: 96808716cdada1e1a94e15ca877cfb7b, type: 3}
+  alternateBombPrefab: {fileID: 5044361957461935648, guid: 32b37e7f1c3b12057baa8534758213b0, type: 3}
 --- !u!114 &7143698602305220402
 MonoBehaviour:
   m_ObjectHideFlags: 0

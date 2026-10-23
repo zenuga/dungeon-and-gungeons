@@ -591,6 +591,12 @@ public class SessionManager : MonoBehaviour
 
     public void StartGame()
     {
+        if (Instance != null && Instance != this)
+        {
+            Instance.StartGame();
+            return;
+        }
+
         if (gameStarting)
         {
             return;

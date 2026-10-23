@@ -27,6 +27,8 @@ MonoBehaviour:
   hitscanLayers:
     serializedVersion: 2
     m_Bits: 4294967295
+  hitscanPelletCount: 8
+  hitscanSpreadAngle: 18
   impactParticlePrefab: {fileID: 4112264626245002651, guid: a211ab1d587643715bd19d74d2bbff5c, type: 3}
   hitscanShootDuration: 5
   hitscanReloadTime: 0.5

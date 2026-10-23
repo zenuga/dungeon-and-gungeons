@@ -1,6 +1,7 @@
 using UnityEngine;
+using Unity.Netcode;
 
-public class PlacedBomb : MonoBehaviour
+public class PlacedBomb : NetworkBehaviour
 {
     [Header("Explosion Setup")]
     [SerializeField] private float fuseTime = 3f;
@@ -61,7 +62,7 @@ public class PlacedBomb : MonoBehaviour
             }
         }
 
-        if (timer >= fuseTime)
+        if (timer >= fuseTime && (!IsSpawned || IsServer))
         {
             Explode();
         }
@@ -74,6 +75,13 @@ public class PlacedBomb : MonoBehaviour
             Instantiate(explosionPrefab, transform.position, Quaternion.identity);
         }
 
-        Destroy(gameObject);
+        if (IsSpawned)
+        {
+            NetworkObject.Despawn(true);
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
     }
 }
